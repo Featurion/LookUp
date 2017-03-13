@@ -1,15 +1,17 @@
 import queue
 from threading import Event, Thread
 from src.ai.ClientManagerAI import ClientManagerAI
-from src.base.globals import PROTOCOL_VERSION, SERVER_ID
+from src.base import utils
+from src.base.globals import PROTOCOL_VERSION, SERVER_ID, INVALID_COMMAND
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
-from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER
+from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_ERR
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS
 from src.base.globals import DEBUG_END, DEBUG_RECV_PROTOCOL_VERION
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_DISCONNECT_WAIT
 from src.base.globals import ERR_SEND, ERR_RECV, ERR_MISSING_FIELD, RECV_ERROR
-from src.base.globals import NetworkError, isNameInvalid
+from src.base.globals import ERR_CLIENT_UNREGISTERED
+from src.base.globals import NetworkError
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
@@ -22,8 +24,8 @@ class RequestManagerAI(Notifier):
         self.ai = client_ai
         self.socket = client_ai.socket
         self.outbox = queue.Queue()
-        self.send_handler = Thread(target=self._send)
-        self.recv_handler = Thread(target=self._recv)
+        self.send_handler = Thread(target=self._send, daemon=True)
+        self.recv_handler = Thread(target=self._recv, daemon=True)
         self.sending = False
         self.receiving = False
 
@@ -108,7 +110,7 @@ class RequestManagerAI(Notifier):
                                ERR_CLIENT_UNREGISTERED,
                                message.from_id)
             return
-        elif isNameInvalid(message.data):
+        elif utils.isNameInvalid(message.data):
             self.__handleError(INVALID_NAME,
                                ERR_INVALID_NAME,
                                message.from_id)
@@ -117,7 +119,7 @@ class RequestManagerAI(Notifier):
             self.ai.register(message.from_id, message.data)
 
     def __handleError(self, code, msg, *args):
-        self.sendMessage(Message(COMMAND_ERR, error=code))
+        self.sendMessage(Message(COMMAND_ERR, err=code))
         self.notify.error(msg, *args)
         self.__stop()
 

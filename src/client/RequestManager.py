@@ -2,7 +2,7 @@ import queue
 from threading import Event, Thread
 from src.base.globals import SERVER_ID, PROTOCOL_VERSION
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_END
-from src.base.globals import RELAY_COMMANDS
+from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
 from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP
@@ -20,8 +20,8 @@ class RequestManager(Notifier):
         self.client = client
         self.socket = client.socket
         self.outbox = queue.Queue()
-        self.send_handler = Thread(target=self._send)
-        self.recv_handler = Thread(target=self._recv)
+        self.send_handler = Thread(target=self._send, daemon=True)
+        self.recv_handler = Thread(target=self._recv, daemon=True)
         self.sending = False
         self.receiving = False
 

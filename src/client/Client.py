@@ -1,13 +1,14 @@
 from threading import Thread
 import uuid
+from src.base import utils
 from src.base.globals import COMMAND_END
 from src.base.globals import DEBUG_CLIENT_START
 from src.base.globals import DEBUG_SYNC_WAIT, DEBUG_SYNC_DONE
 from src.base.globals import ERR_SESSION_END
-from src.base.globals import isNameInvalid
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
 from src.client.RequestManager import RequestManager
+from src.gui.ClientUI import ClientUI
 from src.sessions.SessionManager import SessionManager
 
 
@@ -20,6 +21,7 @@ class Client(Notifier):
         self.socket = SocketHandler(addr, port)
         self.request_manager = RequestManager(self)
         self.session_manager = SessionManager(self)
+        self.ui = ClientUI(self)
 
     @property
     def id(self):
@@ -37,10 +39,11 @@ class Client(Notifier):
         self.request_manager.start()
         self.request_manager.sendProtocolVersion()
         self.session_manager.start()
+        self.ui.start()
 
     def register(self, name): # TODO: hook to UI
         assert isinstance(name, str)
-        if isNameInvalid(name):
+        if utils.isNameInvalid(name):
             pass # TODO: callback invalid name
         else:
             self.setName(name)
@@ -78,3 +81,6 @@ class Client(Notifier):
             if self.socket.connected:
                 self.socket.disconnect()
             self.socket = None
+        if self.ui:
+            self.ui.stop()
+            self.ui = None

@@ -30,6 +30,7 @@ COMMAND_REGISTER = 2
 COMMAND_REQ_ID = 3
 COMMAND_REQ_NAME = 4
 COMMAND_RELAY = 5
+COMMAND_ERR = 6
 
 RELAY_COMMANDS = [
     COMMAND_VERSION,
@@ -87,6 +88,11 @@ ERR_INVALID_NAME = 'id {0} tried to register an invalid name'
 ERR_SESSION_END = 'error exiting sessions'
 ERR_CONN_CLOSED = 'server closed the connection'
 
+TITLE_INVALID_NAME = 'Invalid username'
+TITLE_EMPTY_NAME = 'No username provided'
+
+EMPTY_NAME = 'Please enter a nickname'
+
 # Exceptions
 
 class GenericError(Exception):
@@ -99,16 +105,3 @@ class GenericError(Exception):
 
 class NetworkError(GenericError):
     pass
-
-
-# Functions
-
-def isNameInvalid(name):
-    if not name:
-        return INVALID_NAME_EMPTY
-    elif not name.isalnum():
-        return INVALID_NAME_CONTENT
-    elif len(name) > MAX_NAME_LENGTH:
-        return INVALID_NAME_LENGTH
-    else:
-        return VALID_NAME
