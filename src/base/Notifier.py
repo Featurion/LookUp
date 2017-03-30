@@ -29,7 +29,6 @@ class Notifier(object):
         @formatter
         def error(self, msg):
             self.__channel.error(msg)
-            raise Exception(msg)
 
         @formatter
         def critical(self, msg):

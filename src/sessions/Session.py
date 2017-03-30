@@ -1,13 +1,49 @@
+import base64
+import queue
+from src.base.utils import secureStrCmp
+from src.base.Message import Message
 from src.base.Notifier import Notifier
+from src.crypto.CryptoUtils import CryptoUtils
 
 
 class Session(Notifier):
 
-    def __init__(self):
+    def __init__(self, session_id, client, *partners):
         Notifier.__init__(self)
+        self.client = client
+        self.__id = session_id
+        self.__members = partners
+        self.message_queue = queue.Queue()
+        self.incoming_message_num = 0
+        self.outgoing_message_num = 0
+        self.crypto = CryptoUtils()
+        self.crypto.generateDHKey()
+        self.encrypted = False
 
-    def start(self):
-        pass # TODO
+    @property
+    def id(self):
+        return self.__id
 
-    def stop(self):
-        pass # TODO
+    def __verifyHmac(self, hmac, data):
+        generated_hmac = self.crypto.generateHmac(data)
+        return secureStrCmp(generated_hmac, base64.b64decode(hmac))
+
+    def getDecryptedData(self, message):
+        if self.encrypted:
+            data = message.getEncryptedDataAsBinaryString()
+            enc_num = message.getMessageNumAsBinaryString()
+            if not self.__verifyHmac(message.hmac, data): # check hmac
+                pass # TODO: hmac error
+            else:
+                try:
+                    num = int(self.crypto.aesDecrypt(enc_num))
+                    if self.incoming_message_num > num:
+                        pass # TODO: num mismatch
+                    elif self.incoming_message_num < num:
+                        pass # TODO: num mismatch
+                    self.incoming_message_num += 1
+                    data = self.crypto.aesDecrypt(data)
+                except:
+                    pass # TODO: crypto error
+        else:
+            return message.data

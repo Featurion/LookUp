@@ -18,7 +18,7 @@ USER_STANDARD = 1
 # Name codes
 
 VALID_NAME = 0
-INVALID_NAME_EMPTY = 1
+INVALID_EMPTY_NAME = 1
 INVALID_NAME_CONTENT = 2
 INVALID_NAME_LENGTH = 3
 
@@ -31,12 +31,25 @@ COMMAND_REQ_ID = 3
 COMMAND_REQ_NAME = 4
 COMMAND_RELAY = 5
 COMMAND_ERR = 6
+COMMAND_REQ_SESSION = 7
+COMMAND_HELO = 8
+COMMAND_REDY = 9
+COMMAND_REJECT = 10
+COMMAND_PUBKEY = 11
 
 RELAY_COMMANDS = [
     COMMAND_VERSION,
     COMMAND_REGISTER,
     COMMAND_REQ_ID,
     COMMAND_REQ_NAME,
+    COMMAND_REQ_SESSION,
+]
+
+SESSION_COMMANDS = [
+    COMMAND_HELO,
+    COMMAND_REDY,
+    COMMAND_REJECT,
+    COMMAND_PUBKEY,
 ]
 
 # Error codes
@@ -53,7 +66,7 @@ RECV_ERROR = 7
 
 # Notifier messages
 
-DEBUG_END = 'ended connection to {0}'
+DEBUG_END = 'ended session {0}'
 DEBUG_END_REQ = '{0} requested to end session'
 DEBUG_SYNC_WAIT = 'polling for response'
 DEBUG_SYNC_DONE = 'received response'
@@ -62,6 +75,8 @@ DEBUG_CLIENT_START = 'starting client'
 DEBUG_CLIENT_CONNECTED = 'connected to server'
 DEBUG_CLIENT_DISCONNECTED = 'disconnected from server'
 DEBUG_SERVER_START = 'starting server'
+DEBUG_SESSION_START = 'started session {0}'
+DEBUG_SESSION_JOIN = 'joined session {0}'
 DEBUG_CONN_CLOSED = 'connection unavailable'
 DEBUG_RECV_CONN = 'got connection from {0}:{1}'
 DEBUG_SEND_STOP = 'stopped sending messages'
@@ -71,7 +86,13 @@ DEBUG_REGISTERED = 'client registered: {0}, {1}'
 DEBUG_UNREGISTERED = 'client unregistered: {0}, {1}'
 DEBUG_SERVER_STOP = 'stopping server'
 DEBUG_DISCONNECT_WAIT = 'waiting for clean disconnect'
+DEBUG_UNAVAILABLE = '{0} is unavailable'
+DEBUG_CONNECTED_PRIVATE = 'already connected to {0}'
+DEBUG_CONNECTED_GROUP = 'already connected to group'
+DEBUG_HELO = 'received HELO from {0}'
+DEBUG_REDY = 'received REDY from {0}'
 
+ERR_NO_CONNECTION = 'could not connect to server'
 ERR_INVALID_ADDR = 'received invalid address: {0}'
 ERR_INVALID_PORT = 'received invalid port: {0}'
 ERR_INVALID_SEND = 'tried sending invalid message to id: {0}'
@@ -90,8 +111,12 @@ ERR_CONN_CLOSED = 'server closed the connection'
 
 TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
+TITLE_SELF_CONNECT = 'Tried connecting to self'
 
-EMPTY_NAME = 'Please enter a nickname'
+EMPTY_NAME = 'Please enter a username'
+NAME_LENGTH = 'Username is too long'
+NAME_CONTENT = 'Username contains invalid characters'
+SELF_CONNECT = "You cannot connect to yourself"
 
 # Exceptions
 

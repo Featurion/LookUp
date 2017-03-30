@@ -1,4 +1,6 @@
+import uuid
 from src.ai.RequestManagerAI import RequestManagerAI
+from src.ai.SessionAI import SessionAI
 from src.base.globals import USER_STANDARD, USER_ADMIN
 from src.base.Notifier import Notifier
 
@@ -8,6 +10,7 @@ class ClientAI(Notifier):
     def __init__(self, ai, socket):
         Notifier.__init__(self)
         self.ai = ai
+        self.session_manager = ai.session_manager
         self.socket = socket
         self.__id = None
         self.__name = None
@@ -48,8 +51,26 @@ class ClientAI(Notifier):
     def register(self, client_id, name):
         self.setId(client_id)
         self.setName(name)
-        self.ai.monitor(self) # Track client
+        self.ai.client_manager.addClient(self) # Track client
         self.monitored = True
+
+    def sendMessage(self, message):
+        self.request_manager.sendMessage(message)
+
+    def forwardMessage(self, message):
+        self.ai.sendMessage(message)
+
+    def getIdByName(self, user_name):
+        return self.ai.getIdByName(user_name)
+
+    def getNameById(self, user_id):
+        return self.ai.getNameById(user_id)
+
+    def generateSession(self):
+        session_id = uuid.uuid4().hex
+        session_ai = SessionAI(self, session_id)
+        self.session_manager.addSession(session_ai)
+        return session_id
 
     def stop(self):
         if self.request_manager:
@@ -57,5 +78,5 @@ class ClientAI(Notifier):
                 self.request_manager.stop()
             self.request_manager = None
         if self.monitored:
-            self.ai.unmonitor(self) # Untrack client
+            self.ai.client_manager.removeClient(self) # Untrack client
         self.monitored = False

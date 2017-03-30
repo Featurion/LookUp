@@ -3,8 +3,9 @@ import os
 import signal
 import socket
 import sys
-from src.ai.ClientManagerAI import ClientManagerAI
 from src.ai.ClientAI import ClientAI
+from src.ai.ClientManagerAI import ClientManagerAI
+from src.ai.SessionManagerAI import SessionManagerAI
 from src.base.globals import DEBUG_RECV_CONN, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_SERVER_START, DEBUG_SERVER_STOP
 from src.base.globals import ERR_INVALID_ADDR, ERR_INVALID_PORT
@@ -47,7 +48,7 @@ class Server(Notifier):
 
     def __startManagers(self):
         self.client_manager = ClientManagerAI(self)
-        self.client_manager.start()
+        self.session_manager = SessionManagerAI(self)
 
     def __connect(self):
         try:
@@ -60,13 +61,18 @@ class Server(Notifier):
             self.notify.critical(ERR_SERVER_START)
             sys.exit()
 
-    def monitor(self, client_ai):
-        assert isinstance(client_ai, ClientAI)
-        self.client_manager.addClient(client_ai)
+    def sendMessage(self, message):
+        user = self.client_manager.getClient(message.to_id)
+        if user:
+            user.sendMessage(message)
+        else:
+            pass # TODO: error; should not be possible
 
-    def unmonitor(self, client_ai):
-        assert isinstance(client_ai, ClientAI)
-        self.client_manager.removeClient(client_ai)
+    def getIdByName(self, user_name):
+        return self.client_manager.getIdByName(user_name)
+
+    def getNameById(self, user_id):
+        return self.client_manager.getNameById(user_id)
 
     def stop(self):
         if self.client_manager:

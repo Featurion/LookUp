@@ -4,8 +4,9 @@ from src.ai.ClientManagerAI import ClientManagerAI
 from src.base import utils
 from src.base.globals import PROTOCOL_VERSION, SERVER_ID, INVALID_COMMAND
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
+from src.base.globals import COMMAND_REQ_SESSION, COMMAND_REDY
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_ERR
-from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS
+from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import DEBUG_END, DEBUG_RECV_PROTOCOL_VERION
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_DISCONNECT_WAIT
@@ -132,8 +133,9 @@ class RequestManagerAI(Notifier):
             try:
                 self.socket.send(message.toJson())
             except Exception as e:
-                self.notify.error(ERR_SEND, message.to_id, message.from_id)
-                self.__stop()
+                if message.to_id != message.from_id:
+                    self.notify.error(ERR_SEND, message.to_id, message.from_id)
+                break
             finally:
                 self.outbox.task_done()
         self.sending = False
@@ -164,6 +166,8 @@ class RequestManagerAI(Notifier):
                                 message.data = self.ai.getIdByName(message.data)
                             elif message.command == COMMAND_REQ_NAME:
                                 message.data = self.ai.getNameById(message.data)
+                            elif message.command == COMMAND_REQ_SESSION:
+                                message.data = self.ai.generateSession()
                             else:
                                 message.data = ''
                         except:
@@ -174,6 +178,9 @@ class RequestManagerAI(Notifier):
                             message.from_id = SERVER_ID
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
+                        if message.command == COMMAND_REDY:
+                            session = self.ai.session_manager.getSession(message.from_id)
+                            session.addMember(message.to_id)
                         self.ai.forwardMessage(message)
                     else:
                         self.__handleError(INVALID_COMMAND,

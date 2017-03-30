@@ -21,10 +21,10 @@ class ClientUI(QApplication):
             if not lw.restart:
                 del self._lw_widget
                 break
-        self.client.register(lw.name)
-        self.chat_window = ChatWindow(self)
-        self.chat_window.show()
-        if not self.running:
+        if lw.name and not self.running:
+            self.client.register(lw.name)
+            self.chat_window = ChatWindow(self.client)
+            self.chat_window.show()
             self.running = True
             self.exec_()
 

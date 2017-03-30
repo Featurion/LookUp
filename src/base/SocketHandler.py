@@ -1,6 +1,7 @@
 import socket
 import struct
-from src.base.globals import MAX_PORT_SIZE, NetworkError
+import sys
+from src.base.globals import MAX_PORT_SIZE, NetworkError, ERR_NO_CONNECTION
 from src.base.globals import DEBUG_CONN_CLOSED, ERR_CONN_CLOSED, CONN_CLOSED
 from src.base.Notifier import Notifier
 
@@ -40,6 +41,9 @@ class SocketHandler(Notifier):
         try:
             self.socket.connect((self.addr, self.port))
             self.connected = True
+        except ConnectionRefusedError as e:
+            self.notify.error(ERR_NO_CONNECTION)
+            sys.exit()
         except socket.error as e:
             self.notify.error(str(e))
             self.connected = False

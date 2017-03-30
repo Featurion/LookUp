@@ -1,12 +1,12 @@
 import os
 from PyQt5.QtWidgets import QDesktopWidget
-from src.base.globals import INVALID_NAME_EMPTY, INVALID_NAME_CONTENT
+from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
 
 def isNameInvalid(name):
     if not name:
-        return INVALID_NAME_EMPTY
+        return INVALID_EMPTY_NAME
     elif not name.isalnum():
         return INVALID_NAME_CONTENT
     elif len(name) > MAX_NAME_LENGTH:

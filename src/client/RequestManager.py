@@ -1,12 +1,15 @@
+import pickle
 import queue
 from threading import Event, Thread
 from src.base.globals import SERVER_ID, PROTOCOL_VERSION
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_END
-from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS
+from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
+from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
+from src.base.globals import COMMAND_PUBKEY
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
 from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP
-from src.base.globals import DEBUG_CLIENT_CONNECTED, DEBUG_CLIENT_DISCONNECTED
+from src.base.globals import DEBUG_HELO, DEBUG_REDY
 from src.base.globals import ERR_INVALID_SEND, ERR_INVALID_RECV, ERR_SEND
 from src.base.globals import NetworkError
 from src.base.Message import Message
@@ -31,12 +34,10 @@ class RequestManager(Notifier):
         self.sending = True
         self.recv_handler.start()
         self.receiving = True
-        self.notify.info(DEBUG_CLIENT_CONNECTED)
 
     def stop(self):
         self.__sendServerCommand(COMMAND_END)
         self.__waitForDisconnect()
-        self.notify.info(DEBUG_CLIENT_DISCONNECTED)
 
     def __stop(self):
         if self.socket:
@@ -90,9 +91,9 @@ class RequestManager(Notifier):
                         self.__stop()
                         break
                     else:
-                        self.client.endSession(message.to_id)
+                        self.client.closeSession(message.to_id)
                     self.notify.debug(DEBUG_END, message.to_id)
-                elif message.command in RELAY_COMMANDS:
+                elif message.command in RELAY_COMMANDS + SESSION_COMMANDS:
                     self.socket.send(message.toJson())
                 else:
                     self.notify.warning(ERR_INVALID_SEND, message.to_id)
@@ -118,7 +119,31 @@ class RequestManager(Notifier):
                         self.__stop()
                         break
                     else:
-                        self.client.endSession(message.from_id)
+                        self.client.closeSession(message.from_id)
+                elif message.command in SESSION_COMMANDS:
+                    if message.command == COMMAND_HELO:
+                        self.notify.info(DEBUG_HELO, message.from_id)
+                        if True: # TODO: UI accept
+                            _partners = pickle.loads(message.data.encode())
+                            if len(_partners) > 1:
+                                self.client.session_manager.joinGroupSession(
+                                    message.from_id,
+                                    *_partners)
+                            else:
+                                self.client.session_manager.joinPrivateSession(
+                                    message.from_id,
+                                    *_partners)
+                        else: # TODO: UI reject
+                            pass
+                    elif message.command == COMMAND_REDY:
+                        self.notify.info(DEBUG_REDY, message.from_id)
+                        session = self.client.session_manager.getSession(message.from_id)
+                        session.message_queue.put(message)
+                    elif message.command == COMMAND_REJECT:
+                        pass
+                    elif message.command == COMMAND_PUBKEY:
+                        pass
                 else:
                     self.notify.error(ERR_INVALID_RECV, message.from_id)
+                    break
         self.receiving = False
