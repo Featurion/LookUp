@@ -2,6 +2,7 @@ import json
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.base.globals import COMMAND_HELO, COMMAND_REDY
+from src.base.globals import ERR_CONN_REJECTED, ERR_BAD_HANDSHAKE
 from src.sessions.Session import Session
 
 
@@ -26,12 +27,15 @@ class PrivateSession(Session, Notifier):
     def __getHandshakeMessageData(self, expected):
         message = self.message_queue.get()
         if message.command != expected:
+            # Client ended
             if message.command == COMMAND_END:
-                pass # TODO: client ended
+                self.stop() # TODO: Zach
+            # Client rejected connection
             elif message.command == COMMAND_REJECT:
-                pass # TODO: client rejected connection
+                self.notify.error(ERR_CONN_REJECTED)
+            # Handshake failed
             else:
-                pass # TODO: handshake failed
+                self.notify.error(ERR_BAD_HANDSHAKE, message.from_id)
         else:
             _data = self.getDecryptedData(message)
             self.message_queue.task_done()
