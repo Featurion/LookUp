@@ -19,7 +19,7 @@ class LoginWindow(QDialog):
         vbox.addStretch(1)
         vbox.addWidget(InputWidget(self,
                                    'images/splash_icon.png', 200,
-                                   'Username:'))
+                                   'Username:', 'Login'))
         vbox.addStretch(1)
         self.setLayout(vbox)
         utils.resizeWindow(self, 500, 200)

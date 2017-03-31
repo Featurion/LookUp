@@ -10,7 +10,10 @@ from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME, EMPTY_NAME
 
 class InputWidget(QWidget):
 
-    def __init__(self, parent, image, image_width, label, connector=None):
+    def __init__(self, parent,
+                 image, image_width,
+                 label_text, button_text,
+                 connector=None):
         QWidget.__init__(self, parent)
         self._connect = parent.connect
         self._restart = parent.restart
@@ -18,14 +21,14 @@ class InputWidget(QWidget):
         _image = _image.scaledToWidth(image_width, Qt.SmoothTransformation)
         self.image = QLabel(self)
         self.image.setPixmap(_image)
-        self.input_label = QLabel(label, self)
+        self.input_label = QLabel(label_text, self)
         if hasattr(parent, 'name'):
             self.input = QLineEdit(parent.name, self)
         else:
             self.input = QLineEdit('', self)
         self.input.setMaxLength(MAX_NAME_LENGTH)
         self.input.returnPressed.connect(self.__connect)
-        self.connect_button = QPushButton("Login", self)
+        self.connect_button = QPushButton(button_text, self)
         self.connect_button.resize(self.connect_button.sizeHint())
         self.connect_button.setAutoDefault(False)
         if connector:

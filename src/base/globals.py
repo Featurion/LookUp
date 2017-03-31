@@ -63,7 +63,6 @@ INVALID_NAME = 5
 NAME_IN_USE = 6
 RECV_ERROR = 7
 
-
 # Notifier messages
 
 DEBUG_END = 'ended session {0}'
@@ -128,6 +127,7 @@ SELF_CONNECT = "You cannot connect to yourself"
 # Exceptions
 
 class NetworkError(Exception):
+
     def __init__(self, err=0, msg=None):
         Exception.__init__(self)
         self.err = err

@@ -1,12 +1,16 @@
 import logging
 
+
 def formatter(func):
     def wrapper(self, string, *args):
         return func(self, ' ' + string.format(*args))
     return wrapper
 
+
 class Notifier(object):
+
     class _ChannelHandler(object):
+
         def __init__(self, channel):
             self.__channel = channel
 

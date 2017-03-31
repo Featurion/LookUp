@@ -21,7 +21,8 @@ class ChatTab(QWidget):
         self.widget_stack = QStackedWidget(self)
         self.widget_stack.addWidget(InputWidget(self,
                                                 'images/new_chat.png', 150,
-                                                'Username:', self.connect))
+                                                'Username:', 'LookUp',
+                                                self.connect))
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(ChatWidget(self))
         self.widget_stack.setCurrentIndex(0)
