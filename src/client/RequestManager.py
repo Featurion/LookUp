@@ -1,4 +1,4 @@
-import pickle
+import json
 import queue
 from threading import Event, Thread
 from src.base.globals import SERVER_ID, PROTOCOL_VERSION
@@ -124,7 +124,7 @@ class RequestManager(Notifier):
                     if message.command == COMMAND_HELO:
                         self.notify.info(DEBUG_HELO, message.from_id)
                         if True: # TODO: UI accept
-                            _partners = pickle.loads(message.data.encode())
+                            _partners = json.loads(message.data)
                             if len(_partners) > 1:
                                 self.client.session_manager.joinGroupSession(
                                     message.from_id,
