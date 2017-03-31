@@ -1,4 +1,4 @@
-import pickle
+import json
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.base.globals import COMMAND_HELO, COMMAND_REDY
@@ -16,7 +16,7 @@ class PrivateSession(Session, Notifier):
         self.smp_step_1 = None
 
     def start(self):
-        data = pickle.dumps([self.client.id], 0).decode()
+        data = json.dumps([self.client.id], ensure_ascii=True)
         self.sendMessage(COMMAND_HELO, data)
         self.__getHandshakeMessageData(COMMAND_REDY)
 
