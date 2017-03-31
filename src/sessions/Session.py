@@ -4,7 +4,7 @@ from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.crypto.CryptoUtils import CryptoUtils
-
+from src.base.globals import *
 
 class Session(Notifier):
 
@@ -33,17 +33,17 @@ class Session(Notifier):
             data = message.getEncryptedDataAsBinaryString()
             enc_num = message.getMessageNumAsBinaryString()
             if not self.__verifyHmac(message.hmac, data): # check hmac
-                pass # TODO: hmac error
+                self.notify.error(ERR_INVALID_HMAC)
             else:
                 try:
                     num = int(self.crypto.aesDecrypt(enc_num))
                     if self.incoming_message_num > num:
-                        pass # TODO: num mismatch
+                        self.notify.error(ERR_MESSAGE_REPLAY)
                     elif self.incoming_message_num < num:
-                        pass # TODO: num mismatch
+                        self.notify.error(ERR_MESSAGE_DELETION)
                     self.incoming_message_num += 1
                     data = self.crypto.aesDecrypt(data)
                 except:
-                    pass # TODO: crypto error
+                    self.notify.error(ERR_DECRYPT_FAILURE)
         else:
             return message.data
