@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
-
 def isNameInvalid(name):
     if not name:
         return INVALID_EMPTY_NAME
@@ -14,10 +13,8 @@ def isNameInvalid(name):
     else:
         return VALID_NAME
 
-
 def getTimestamp():
     return time.strftime('%H:%M:%S', time.localtime())
-
 
 def getResourcePath(relative_path):
     try:
@@ -35,7 +32,6 @@ def getResourcePath(relative_path):
     else:
         return path
 
-
 def secureStrCmp(left, right):
     equal = True
     if len(left) != len(right):
@@ -45,13 +41,11 @@ def secureStrCmp(left, right):
             equal = False
     return equal
 
-
 def centerWindow(window):
     centerPoint = QDesktopWidget().availableGeometry().center()
     geo = window.frameGeometry()
     geo.moveCenter(centerPoint)
     window.move(geo.topLeft())
-
 
 def resizeWindow(window, width, height):
     window.setGeometry(0, 0, width, height)

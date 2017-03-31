@@ -127,6 +127,5 @@ class GenericError(Exception):
         self.err = err
         self.msg = msg
 
-
 class NetworkError(GenericError):
     pass

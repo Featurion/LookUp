@@ -25,7 +25,7 @@ class InputWidget(QWidget):
             self.input = QLineEdit('', self)
         self.input.setMaxLength(MAX_NAME_LENGTH)
         self.input.returnPressed.connect(self.__connect)
-        self.connect_button = QPushButton("Let's Go", self)
+        self.connect_button = QPushButton("Login", self)
         self.connect_button.resize(self.connect_button.sizeHint())
         self.connect_button.setAutoDefault(False)
         if connector:

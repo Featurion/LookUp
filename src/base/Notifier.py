@@ -1,16 +1,12 @@
 import logging
 
-
 def formatter(func):
     def wrapper(self, string, *args):
         return func(self, ' ' + string.format(*args))
     return wrapper
 
-
 class Notifier(object):
-
     class _ChannelHandler(object):
-
         def __init__(self, channel):
             self.__channel = channel
 
@@ -41,5 +37,5 @@ class Notifier(object):
         return cls._ChannelHandler(channel)
 
     def __init__(self):
-        self.__name = self.__class__.__name__
+        self.__name = str(' ' + self.__class__.__name__)
         self.notify = self.generateLoggingChannel(self.__name)
