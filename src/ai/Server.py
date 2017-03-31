@@ -9,7 +9,7 @@ from src.ai.SessionManagerAI import SessionManagerAI
 from src.base.globals import DEBUG_RECV_CONN, DEBUG_CONN_CLOSED
 from src.base.globals import DEBUG_SERVER_START, DEBUG_SERVER_STOP
 from src.base.globals import ERR_INVALID_ADDR, ERR_INVALID_PORT
-from src.base.globals import ERR_SERVER_START
+from src.base.globals import ERR_SERVER_START, ERR_INVALID_CLIENT
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
 
@@ -66,7 +66,7 @@ class Server(Notifier):
         if user:
             user.sendMessage(message)
         else:
-            pass # TODO: error; should not be possible
+            self.notify.error(ERR_INVALID_CLIENT, message.to_id)
 
     def getIdByName(self, user_name):
         return self.client_manager.getIdByName(user_name)

@@ -98,6 +98,7 @@ ERR_INVALID_PORT = 'received invalid port: {0}'
 ERR_INVALID_SEND = 'tried sending invalid message to id: {0}'
 ERR_INVALID_RECV = 'received invalid message from id: {0}'
 ERR_INVALID_COMMAND = 'received message with invalid command from id: {0}'
+ERR_INVALID_CLIENT = 'failed to get client by id: {0}'
 ERR_SERVER_START = 'failed to start server'
 ERR_MISSING_FIELD = 'received a command with missing field(s)'
 ERR_SEND = 'error sending data with path ({0}, {1})'
@@ -120,12 +121,8 @@ SELF_CONNECT = "You cannot connect to yourself"
 
 # Exceptions
 
-class GenericError(Exception):
-
+class NetworkError(Exception):
     def __init__(self, err=0, msg=None):
         Exception.__init__(self)
         self.err = err
         self.msg = msg
-
-class NetworkError(GenericError):
-    pass
