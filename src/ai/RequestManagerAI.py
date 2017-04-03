@@ -1,10 +1,11 @@
+import json
 import queue
 from threading import Event, Thread
 from src.ai.ClientManagerAI import ClientManagerAI
 from src.base import utils
 from src.base.globals import PROTOCOL_VERSION, SERVER_ID, INVALID_COMMAND
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
-from src.base.globals import COMMAND_REQ_SESSION, COMMAND_REDY
+from src.base.globals import COMMAND_REQ_SESSION, COMMAND_HELO, COMMAND_REDY
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_ERR
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import DEBUG_END, DEBUG_RECV_PROTOCOL_VERION
@@ -167,7 +168,8 @@ class RequestManagerAI(Notifier):
                             elif message.command == COMMAND_REQ_NAME:
                                 message.data = self.ai.getNameById(message.data)
                             elif message.command == COMMAND_REQ_SESSION:
-                                message.data = self.ai.generateSession()
+                                members = json.loads(message.data)
+                                message.data = self.ai.generateSession(members)
                             else:
                                 message.data = ''
                         except:
@@ -178,10 +180,19 @@ class RequestManagerAI(Notifier):
                             message.from_id = SERVER_ID
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
-                        if message.command == COMMAND_REDY:
-                            session = self.ai.session_manager.getSession(message.from_id)
-                            session.addMember(message.to_id)
-                        self.ai.forwardMessage(message)
+                        if message.command == COMMAND_HELO:
+                            partners = json.loads(message.to_id)
+                            message.from_id = message.data
+                            message.data = json.dumps([message.data,
+                                                       partners])
+                            for partner in partners:
+                                message.to_id = partner
+                                self.ai.forwardMessage(message)
+                        elif message.command == COMMAND_REDY:
+                            session_manager = self.ai.session_manager
+                            session_manager.getSession(message.to_id)
+                            session.addMember(message.from_id)
+                            session.sync()
                     else:
                         self.__handleError(INVALID_COMMAND,
                                            ERR_INVALID_COMMAND,

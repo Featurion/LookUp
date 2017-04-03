@@ -89,5 +89,13 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
+    def newClient(self, session_id, client_id, members=[]):
+        name = self.client.getNameById(client_id)
+        if not self.isActiveWindow():
+            utils.showDesktopNotification(self.tray_icon,
+                                          'Chat request from {0}'.format(name),
+                                          '')
+        return ConnectionDialog.getAnswer(self, name, members)
+
     def exit(self):
         self.close()

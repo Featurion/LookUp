@@ -1,11 +1,11 @@
+import json
 from src.base.globals import SERVER_ID, COMMAND_REQ_SESSION
 from src.base.globals import DEBUG_END, DEBUG_SESSION_START, DEBUG_SESSION_JOIN
 from src.base.globals import DEBUG_UNAVAILABLE
 from src.base.globals import DEBUG_CONNECTED_PRIVATE, DEBUG_CONNECTED_GROUP
 from src.base.Message import Message
 from src.base.Notifier import Notifier
-from src.sessions.PrivateSession import PrivateSession
-from src.sessions.GroupSession import GroupSession
+from src.sessions.Session import Session
 
 
 class SessionManager(Notifier):
@@ -14,8 +14,7 @@ class SessionManager(Notifier):
         Notifier.__init__(self)
         self.client = client
         self.__sessions = {}
-        self.__priv_session_partners = []
-        self.__group_session_partners = []
+        self.__session_member_map = {}
 
     @property
     def sessions(self):
@@ -27,62 +26,53 @@ class SessionManager(Notifier):
     def getSession(self, session_id):
         return self.__sessions.get(session_id)
 
-    def _startSession(self, *partners):
+    def getSessionByMembers(self, partners):
+        for i, p in self.__session_member_map.items():
+            if sorted(partners) == p:
+                return self.getSession(i)
+        return None
+
+    def _startSession(self, partners):
         self.client.sendMessage(Message(COMMAND_REQ_SESSION,
-                                        self.client.id, SERVER_ID))
+                                        self.client.id, SERVER_ID,
+                                        json.dumps([self.client.id] + partners,
+                                                   ensure_ascii=True)))
         session_id = self.client._waitForResp()
-        if len(partners) > 1:
-            session = GroupSession(session_id, self.client, *partners)
-        else:
-            session = PrivateSession(session_id, self.client, *partners)
+        session = Session(session_id, self.client, partners)
         self.__sessions[session.id] = session
+        self.__session_member_map[session.id] = partners
         self.notify.info(DEBUG_SESSION_START, session.id)
         session.start()
 
-    def openPrivateSession(self, name):
-        if name not in self.__priv_session_partners:
-            partner_id = self.client.getIdByName(name)
-            if partner_id != '':
-                self.__priv_session_partners.append(partner_id)
-                self._startSession(partner_id)
-            else:
-                self.notify.info(DEBUG_UNAVAILABLE, name)
-                # TODO: hook back to UI
-        else:
-            self.notify.info(DEBUG_CONNECTED_PRIVATE, name)
+    def openSession(self, partners):
+        partners = sorted(partners)
+        if partners in self.__session_member_map.values():
+            self.notify.info(DEBUG_CONNECTED, name)
             # TODO: hook back to UI
+        else:
+            id2name = {self.client.getIdByName(n): n for n in partners}
+            for i, n in id2name.items():
+                if n == '':
+                    self.notify.info(DEBUG_USER_UNAVAILABLE, n)
+                    del id2name[i]
+            self._startSession(sorted(id2name.keys()))
 
-    def joinPrivateSession(self, session_id, partner_id):
-        session = PrivateSession(session_id, self.client, partner_id)
+    def joinSession(self, session_id, partners):
+        session = Session(session_id, self.client, partners)
         self.__sessions[session.id] = session
         self.notify.info(DEBUG_SESSION_JOIN, session.id)
         session.join()
-
-    def openGroupSession(self, names):
-        names = sorted(names)
-        if names not in self.__group_session_partners:
-            partners = {n: self.client.getIdByName(n) for n in names}
-            for n, i in partners:
-                if i == '':
-                    self.notify.info(DEBUG_USER_UNAVAILABLE, n)
-                    return
-            self.__group_session_partners.append(partners.values())
-            self._startSession(*partners.values())
-        else:
-            self.notify.info(DEBUG_CONNECTED_GROUP, name)
-            # TODO: hook back to UI
-
-    def joinGroupSession(self, session_id): # TODO
-        return NotImplemented
 
     def closeSession(self, session_id):
         session = self.__sessions.get(session_id)
         if session:
             session.stop()
             del self.__sessions[session_id]
+            del self.__session_member_map[session_id]
 
     def stop(self):
         for session_id, session in self.sessions:
             session.stop()
             self.notify.info(DEBUG_END, session_id)
         self.__sessions.clear()
+        self.__session_member_map.clear()

@@ -55,3 +55,7 @@ def centerWindow(window):
 
 def resizeWindow(window, width, height):
     window.setGeometry(0, 0, width, height)
+
+
+def showDesktopNotification(tray_icon, title, message):
+    tray_icon.showMessage(title, message)

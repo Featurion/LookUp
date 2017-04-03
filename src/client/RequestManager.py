@@ -1,7 +1,7 @@
 import json
 import queue
 from threading import Event, Thread
-from src.base.globals import SERVER_ID, PROTOCOL_VERSION
+from src.base.globals import SERVER_ID, PROTOCOL_VERSION, CONN_CLOSED
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_END
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
@@ -123,26 +123,22 @@ class RequestManager(Notifier):
                 elif message.command in SESSION_COMMANDS:
                     if message.command == COMMAND_HELO:
                         self.notify.info(DEBUG_HELO, message.from_id)
-                        if True: # TODO: UI accept
-                            _partners = json.loads(message.data)
-                            if len(_partners) > 1:
-                                self.client.session_manager.joinGroupSession(
-                                    message.from_id,
-                                    *_partners)
-                            else:
-                                self.client.session_manager.joinPrivateSession(
-                                    message.from_id,
-                                    *_partners)
-                        else: # TODO: UI reject
+                        owner, members = json.loads(message.data)
+                        members.remove(self.client.id)
+                        resp = self.client.ui.chat_window.newClient(message.from_id,
+                                                                    owner,
+                                                                    members)
+                        if resp:
+                            self.client.session_manager.joinSession(message.from_id,
+                                                                    members + [owner])
+                        else:
                             pass
-                    elif message.command == COMMAND_REDY:
-                        self.notify.info(DEBUG_REDY, message.from_id)
-                        session = self.client.session_manager.getSession(message.from_id)
-                        session.message_queue.put(message)
-                    elif message.command == COMMAND_REJECT:
-                        pass
-                    elif message.command == COMMAND_PUBKEY:
-                        pass
+                    else:
+                        if message.command == COMMAND_REDY:
+                            self.notify.info(DEBUG_REDY, message.from_id)
+                        else:
+                            session = self.client.session_manager.getSession(message.from_id)
+                            session.message_queue.put(message)
                 else:
                     self.notify.error(ERR_INVALID_RECV, message.from_id)
                     break

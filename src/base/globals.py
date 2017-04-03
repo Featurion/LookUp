@@ -36,6 +36,7 @@ COMMAND_HELO = 8
 COMMAND_REDY = 9
 COMMAND_REJECT = 10
 COMMAND_PUBKEY = 11
+COMMAND_SYNC = 12
 
 RELAY_COMMANDS = [
     COMMAND_VERSION,
@@ -50,6 +51,7 @@ SESSION_COMMANDS = [
     COMMAND_REDY,
     COMMAND_REJECT,
     COMMAND_PUBKEY,
+    COMMAND_SYNC,
 ]
 
 # Error codes
@@ -88,8 +90,10 @@ DEBUG_DISCONNECT_WAIT = 'waiting for clean disconnect'
 DEBUG_UNAVAILABLE = '{0} is unavailable'
 DEBUG_CONNECTED_PRIVATE = 'already connected to {0}'
 DEBUG_CONNECTED_GROUP = 'already connected to group'
+DEBUG_SYNC = 'syncing {0}'
 DEBUG_HELO = 'received HELO from {0}'
 DEBUG_REDY = 'received REDY from {0}'
+DEBUG_CLIENT_CONN = 'client {0} joined {1}'
 
 ERR_NO_CONNECTION = 'could not connect to server'
 ERR_INVALID_ADDR = 'received invalid address: {0}'
@@ -97,7 +101,7 @@ ERR_INVALID_PORT = 'received invalid port: {0}'
 ERR_INVALID_SEND = 'tried sending invalid message to id: {0}'
 ERR_INVALID_RECV = 'received invalid message from id: {0}'
 ERR_INVALID_COMMAND = 'received message with invalid command from id: {0}'
-ERR_INVALID_CLIENT = 'failed to get client by id: {0}'
+ERR_INVALID_CLIENT = 'failed to get client with id: {0}'
 ERR_INVALID_HMAC = 'tampering detected; bad hmac'
 ERR_SERVER_START = 'failed to start server'
 ERR_DECRYPT_FAILURE = 'decryption failure; client may have sent malformed data'

@@ -55,10 +55,8 @@ class Client(Notifier):
             self.request_manager.sendName(name)
 
     def openSession(self, names): # TODO: hook to UI
-        if len(names) > 1:
-            self.session_manager.openGroupSession(names)
-        elif len(names) == 1:
-            self.session_manager.openPrivateSession(names.pop())
+        if names:
+            self.session_manager.openSession(names)
         else: # no usernames provided
             pass # TODO: hook to UI
 

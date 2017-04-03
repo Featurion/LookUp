@@ -33,27 +33,30 @@ class ChatTab(QWidget):
         _layout.addWidget(self.widget_stack)
         self.setLayout(_layout)
 
-    def connect(self, name):
-        status = utils.isNameInvalid(name)
-        if name == self.client.name:
-            msg = (TITLE_SELF_CONNECT, SELF_CONNECT)
-        elif status == VALID_NAME:
-            self.widget_stack.widget(1).setConnectingToName(name)
-            self.widget_stack.setCurrentIndex(1)
-            connect_thread = Thread(target=self.client.openSession,
-                                    args=([name],), # temporary
-                                    daemon=True)
-            connect_thread.start()
-            return
-        elif status == INVALID_NAME_CONTENT:
-            msg = (TITLE_INVALID_NAME, NAME_CONTENT)
-        elif status == INVALID_NAME_LENGTH:
-            msg = (TITLE_INVALID_NAME, NAME_LENGTH)
-        elif status == INVALID_EMPTY_NAME:
-            msg = (TITLE_EMPTY_NAME, EMPTY_NAME)
-        else:
-            pass
-        QMessageBox.warning(self, *msg)
+    def connect(self, input_):
+        names = set(n.strip() for n in input_.split(','))
+        for name in names:
+            status = utils.isNameInvalid(name)
+            msg = None
+            if name == self.client.name:
+                msg = (TITLE_SELF_CONNECT, SELF_CONNECT)
+            elif status == INVALID_NAME_CONTENT:
+                msg = (TITLE_INVALID_NAME, NAME_CONTENT)
+            elif status == INVALID_NAME_LENGTH:
+                msg = (TITLE_INVALID_NAME, NAME_LENGTH)
+            elif status == INVALID_EMPTY_NAME:
+                msg = (TITLE_EMPTY_NAME, EMPTY_NAME)
+            else:
+                pass
+            if msg:
+                QMessageBox.warning(self, *msg)
+                names.remove(name)
+        self.widget_stack.widget(1).setConnectingToName(name)
+        self.widget_stack.setCurrentIndex(1)
+        connect_thread = Thread(target=self.client.openSession,
+                                args=(names,), # temporary
+                                daemon=True)
+        connect_thread.start()
 
     def restart(self):
         pass
