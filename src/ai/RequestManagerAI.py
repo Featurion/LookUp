@@ -182,7 +182,6 @@ class RequestManagerAI(Notifier):
                     elif message.command in SESSION_COMMANDS:
                         if message.command == COMMAND_HELO:
                             partners = json.loads(message.to_id)
-                            message.from_id = message.data
                             message.data = json.dumps([
                                 [
                                     message.data,
@@ -198,7 +197,7 @@ class RequestManagerAI(Notifier):
                                 self.ai.forwardMessage(message)
                         elif message.command == COMMAND_REDY:
                             session_manager = self.ai.session_manager
-                            session_manager.getSession(message.to_id)
+                            session = session_manager.getSession(message.to_id)
                             session.addMember(message.from_id)
                             session.sync()
                     else:

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
@@ -9,9 +9,12 @@ from src.gui.ConnectionDialog import ConnectionDialog
 
 class ChatWindow(QMainWindow):
 
+    new_client_signal = pyqtSignal(str, list, list)
+
     def __init__(self, client):
         QMainWindow.__init__(self)
         self.client = client
+        self.new_client_signal.connect(self.newClient)
         self.status_bar = self.statusBar()
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(utils.getResourcePath('images/icon.ico')))
@@ -90,12 +93,18 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    def newClient(self, session_id, name, members):
+    @pyqtSlot(str, list, list)
+    def newClient(self, session_id, owner, members):
         if not self.isActiveWindow():
             utils.showDesktopNotification(self.tray_icon,
-                                          'Chat request from {0}'.format(name),
+                                          'Chat request from {0}'.format(owner[1]),
                                           '')
-        return ConnectionDialog.getAnswer(self, name, members)
+        resp = ConnectionDialog.getAnswer(self, owner[1], members[1])
+        if resp:
+            self.client.session_manager.joinSession(session_id,
+                                                    members[0] + [owner[0]])
+        else:
+            pass
 
     def exit(self):
         self.close()

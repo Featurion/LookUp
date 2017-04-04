@@ -126,14 +126,10 @@ class RequestManager(Notifier):
                         owner, members = json.loads(message.data)
                         members[0].remove(self.client.id)
                         members[1].remove(self.client.name)
-                        resp = self.client.ui.chat_window.newClient(message.from_id,
-                                                                    owner[1],
-                                                                    members[1])
-                        if resp:
-                            self.client.session_manager.joinSession(message.from_id,
-                                                                    members[0] + [owner[0]])
-                        else:
-                            pass
+                        window = self.client.ui.chat_window
+                        window.new_client_signal.emit(message.from_id,
+                                                      owner,
+                                                      members)
                     else:
                         if message.command == COMMAND_REDY:
                             self.notify.info(DEBUG_REDY, message.from_id)
