@@ -183,8 +183,16 @@ class RequestManagerAI(Notifier):
                         if message.command == COMMAND_HELO:
                             partners = json.loads(message.to_id)
                             message.from_id = message.data
-                            message.data = json.dumps([message.data,
-                                                       partners])
+                            message.data = json.dumps([
+                                [
+                                    message.data,
+                                    self.ai.getNameById(message.data)
+                                ],
+                                [
+                                    partners,
+                                    [self.ai.getNameById(i) for i in partners]
+                                ]
+                            ])
                             for partner in partners:
                                 message.to_id = partner
                                 self.ai.forwardMessage(message)

@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from src.base import utils
 from src.gui.ChatTab import ChatTab
+from src.gui.ConnectionDialog import ConnectionDialog
 
 
 class ChatWindow(QMainWindow):
@@ -89,8 +90,7 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    def newClient(self, session_id, client_id, members=[]):
-        name = self.client.getNameById(client_id)
+    def newClient(self, session_id, name, members):
         if not self.isActiveWindow():
             utils.showDesktopNotification(self.tray_icon,
                                           'Chat request from {0}'.format(name),
