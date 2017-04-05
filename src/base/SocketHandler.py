@@ -52,7 +52,7 @@ class SocketHandler(Notifier):
         try:
             self.socket.shutdown(socket.SHUT_RDWR)
         except OSError:
-            self.notify.warning(DEBUG_CONN_CLOSED)
+            self.notify.debug(DEBUG_CONN_CLOSED)
         self.connected = False
 
     def send(self, data):
@@ -103,7 +103,7 @@ class SocketHandler(Notifier):
                         self.connected = False
                         return
                 return data
-            except socket.error as e:
-                self.notify.error(str(e))
+            except socket.error:
+                pass # Do nothing because the RequestManagerAI handles this itself
         else:
             self.notify.warning(DEBUG_CONN_CLOSED)
