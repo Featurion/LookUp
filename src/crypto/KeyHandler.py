@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from src.crypto import dh
 
 
-class CryptoUtils(object):
+class KeyHandler(object):
 
     def __init__(self):
         self.aes_key = None
@@ -81,8 +81,3 @@ class CryptoUtils(object):
     @staticmethod
     def _unpad(s):
         return s[:-ord(s[len(s)-1:])]
-
-
-def binToDec(binval):
-    import binascii
-    return int(binascii.hexlify(binval), 16)

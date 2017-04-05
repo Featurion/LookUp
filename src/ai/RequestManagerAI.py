@@ -1,3 +1,4 @@
+import base64
 import json
 import queue
 from threading import Event, Thread
@@ -168,8 +169,10 @@ class RequestManagerAI(Notifier):
                             elif message.command == COMMAND_REQ_NAME:
                                 message.data = self.ai.getNameById(message.data)
                             elif message.command == COMMAND_REQ_SESSION:
-                                members = json.loads(message.data)
-                                message.data = self.ai.generateSession(members)
+                                key, id_, members = json.loads(message.data)
+                                message.data = self.ai.generateSession(key,
+                                                                       id_,
+                                                                       members)
                             else:
                                 message.data = ''
                         except:
@@ -198,7 +201,8 @@ class RequestManagerAI(Notifier):
                         elif message.command == COMMAND_REDY:
                             session_manager = self.ai.session_manager
                             session = session_manager.getSession(message.to_id)
-                            session.addMember(message.from_id)
+                            session.addMember(message.from_id,
+                                              base64.b64decode(message.data))
                             session.sync()
                     else:
                         self.__handleError(INVALID_COMMAND,

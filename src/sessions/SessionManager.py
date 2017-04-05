@@ -35,7 +35,9 @@ class SessionManager(Notifier):
     def _startSession(self, partners):
         self.client.sendMessage(Message(COMMAND_REQ_SESSION,
                                         self.client.id, SERVER_ID,
-                                        json.dumps([self.client.id] + partners,
+                                        json.dumps([self.client.pub_key,
+                                                    self.client.id,
+                                                    partners],
                                                    ensure_ascii=True)))
         session_id = self.client._waitForResp()
         session = Session(session_id, self.client, partners)

@@ -7,7 +7,7 @@ class ConnectionDialog(QMessageBox):
 
     def __init__(self, parent, name, members):
         QMessageBox.__init__(self, parent)
-        self.accepted = None
+        self.accepted = False
         self.setWindowTitle('Incoming Connection')
         if members:
             self.setText('Received group request from '

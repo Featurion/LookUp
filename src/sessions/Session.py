@@ -6,7 +6,7 @@ from src.base.globals import *
 from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
-from src.crypto.CryptoUtils import CryptoUtils
+from src.crypto.KeyHandler import KeyHandler
 
 class Session(Notifier):
 
@@ -19,8 +19,8 @@ class Session(Notifier):
         self.message_queue = queue.Queue()
         self.incoming_message_num = 0
         self.outgoing_message_num = 0
-        self.crypto = CryptoUtils()
-        self.crypto.generateDHKey()
+        self.key_handler = KeyHandler()
+        self.key_handler.generateDHKey()
         self.encrypted = False
         self.receiver = Thread(target=self.__receiveMessages)
 
@@ -37,16 +37,18 @@ class Session(Notifier):
         self.receiver.start()
 
     def join(self):
+        _key = base64.b64encode(self.client.pub_key.encode())
         self.client.sendMessage(Message(COMMAND_REDY,
                                         self.client.id,
-                                        self.id))
+                                        self.id,
+                                        _key))
         self.receiver.start()
 
     def stop(self): # TODO
         pass
 
     def __verifyHmac(self, hmac, data):
-        generated_hmac = self.crypto.generateHmac(data)
+        generated_hmac = self.key_handler.generateHmac(data)
         return secureStrCmp(generated_hmac, base64.b64decode(hmac))
 
     def __receiveMessages(self):
@@ -80,13 +82,13 @@ class Session(Notifier):
                 self.notify.error(ERR_INVALID_HMAC)
             else:
                 try:
-                    num = int(self.crypto.aesDecrypt(enc_num))
+                    num = int(self.key_handler.aesDecrypt(enc_num))
                     if self.incoming_message_num > num:
                         self.notify.error(ERR_MESSAGE_REPLAY)
                     elif self.incoming_message_num < num:
                         self.notify.error(ERR_MESSAGE_DELETION)
                     self.incoming_message_num += 1
-                    data = self.crypto.aesDecrypt(data)
+                    data = self.key_handler.aesDecrypt(data)
                 except:
                     self.notify.error(ERR_DECRYPT_FAILURE)
         else:
@@ -97,9 +99,9 @@ class Session(Notifier):
                           self.client.id,
                           self.id)
         if (data is not None) and self.encrypted:
-            enc_data = self.crypto.aesEncrypt(data)
-            num = self.crypto.aesEncrypt(str(self.outgoing_message_num).encode())
-            hmac = self.crypto.generateHmac(enc_data)
+            enc_data = self.key_handler.aesEncrypt(data)
+            num = self.key_handler.aesEncrypt(str(self.outgoing_message_num).encode())
+            hmac = self.key_handler.generateHmac(enc_data)
             message.setEncryptedData(enc_data)
             message.setBinaryHmac(hmac)
             message.setBinaryMessageNum(num)

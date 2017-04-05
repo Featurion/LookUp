@@ -66,9 +66,11 @@ class ClientAI(Notifier):
     def getNameById(self, user_id):
         return self.ai.getNameById(user_id)
 
-    def generateSession(self, members):
+    def generateSession(self, owner_key, owner_id, members):
         session_id = uuid.uuid4().hex
-        session_ai = SessionAI(self, session_id, members)
+        session_ai = SessionAI(self, session_id,
+                               owner_key, owner_id,
+                               members)
         self.session_manager.addSession(session_ai)
         return session_id
 
