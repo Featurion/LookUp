@@ -43,26 +43,26 @@ class SessionManager(Notifier):
         session = Session(session_id, self.client, partners)
         self.__sessions[session.id] = session
         self.__session_member_map[session.id] = partners
-        self.notify.info(DEBUG_SESSION_START, session.id)
+        self.notify.debug(DEBUG_SESSION_START, session.id)
         session.start()
 
     def openSession(self, partners):
         partners = sorted(partners)
         if partners in self.__session_member_map.values():
-            self.notify.info(DEBUG_CONNECTED, name)
+            self.notify.debug(DEBUG_CONNECTED, name)
             # TODO: hook back to UI
         else:
             id2name = {self.client.getIdByName(n): n for n in partners}
             for i, n in id2name.items():
                 if n == '':
-                    self.notify.info(DEBUG_USER_UNAVAILABLE, n)
+                    self.notify.debug(DEBUG_USER_UNAVAILABLE, n)
                     del id2name[i]
             self._startSession(sorted(id2name.keys()))
 
     def joinSession(self, session_id, partners):
         session = Session(session_id, self.client, partners)
         self.__sessions[session.id] = session
-        self.notify.info(DEBUG_SESSION_JOIN, session.id)
+        self.notify.debug(DEBUG_SESSION_JOIN, session.id)
         session.join()
 
     def closeSession(self, session_id):

@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from src.crypto import dh
 
 
-class KeyHandler(object):
+class CryptoHandler(object):
 
     def __init__(self):
         self.aes_key = None

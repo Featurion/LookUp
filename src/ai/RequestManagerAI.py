@@ -94,7 +94,7 @@ class RequestManagerAI(Notifier):
             self.__handleError(PROTOCOL_VERSION_MISMATCH, ERR_PROTOCOL_MISMATCH)
             return
         else:
-            self.notify.info(DEBUG_RECV_PROTOCOL_VERION, message.from_id)
+            self.notify.debug(DEBUG_RECV_PROTOCOL_VERION, message.from_id)
 
     def __receiveName(self):
         try:
@@ -161,7 +161,7 @@ class RequestManagerAI(Notifier):
                             return
                         else:
                             self.ai.forwardMessage(message)
-                            self.notify.info(DEBUG_END, message.to_id)
+                            self.notify.debug(DEBUG_END, message.to_id)
                     elif message.command in RELAY_COMMANDS:
                         try:
                             if message.command == COMMAND_REQ_ID:

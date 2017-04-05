@@ -122,7 +122,7 @@ class RequestManager(Notifier):
                         self.client.closeSession(message.from_id)
                 elif message.command in SESSION_COMMANDS:
                     if message.command == COMMAND_HELO:
-                        self.notify.info(DEBUG_HELO, message.from_id)
+                        self.notify.debug(DEBUG_HELO, message.from_id)
                         owner, members = json.loads(message.data)
                         members[0].remove(self.client.id)
                         members[1].remove(self.client.name)
@@ -132,7 +132,7 @@ class RequestManager(Notifier):
                                                       members)
                     else:
                         if message.command == COMMAND_REDY:
-                            self.notify.info(DEBUG_REDY, message.from_id)
+                            self.notify.debug(DEBUG_REDY, message.from_id)
                         else:
                             session = self.client.session_manager.getSession(message.from_id)
                             session.message_queue.put(message)

@@ -26,13 +26,13 @@ class ClientManagerAI(Notifier):
         self.__id2user = {}
 
     def addClient(self, client_ai):
-        self.notify.info(DEBUG_REGISTERED, client_ai.name, client_ai.id)
+        self.notify.debug(DEBUG_REGISTERED, client_ai.name, client_ai.id)
         self.__users.append(client_ai)
         self.__id2user[client_ai.id] = client_ai
         self.__name2user[client_ai.name] = client_ai
 
     def removeClient(self, client_ai):
-        self.notify.info(DEBUG_UNREGISTERED, client_ai.name, client_ai.id)
+        self.notify.debug(DEBUG_UNREGISTERED, client_ai.name, client_ai.id)
         self.__users.remove(client_ai)
         del self.__id2user[client_ai.id]
         del self.__name2user[client_ai.name]

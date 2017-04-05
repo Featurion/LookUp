@@ -66,7 +66,7 @@ class InputWidget(QWidget):
             msg = (TITLE_INVALID_NAME, INVALID_NAME_CONTENT)
         elif status == INVALID_NAME_LENGTH:
             msg = (TITLE_INVALID_NAME, INVALID_NAME_LENGTH)
-        elif status == INVALID_NAME_EMPTY:
+        elif status == INVALID_EMPTY_NAME:
             msg = (TITLE_EMPTY_NAME, EMPTY_NAME)
         else:
             pass

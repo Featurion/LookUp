@@ -6,7 +6,7 @@ from src.base.globals import *
 from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
-from src.crypto.KeyHandler import KeyHandler
+from src.crypto.CryptoHandler import CryptoHandler
 
 class Session(Notifier):
 
@@ -19,7 +19,7 @@ class Session(Notifier):
         self.message_queue = queue.Queue()
         self.incoming_message_num = 0
         self.outgoing_message_num = 0
-        self.key_handler = KeyHandler()
+        self.key_handler = CryptoHandler()
         self.key_handler.generateDHKey()
         self.encrypted = False
         self.receiver = Thread(target=self.__receiveMessages)
@@ -63,7 +63,7 @@ class Session(Notifier):
                 for member in self.__members:
                     if (member in self.__pending) and (member != self.client.id):
                         self.__pending.remove(member)
-                        self.notify.info(DEBUG_CLIENT_CONN, member, self.id)
+                        self.notify.debug(DEBUG_CLIENT_CONN, member, self.id)
             elif message.command == COMMAND_REJECT:
                 if message.data in self.__pending:
                     self.notify.error(ERR_CONN_REJECT)
