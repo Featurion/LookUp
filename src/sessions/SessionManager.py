@@ -48,12 +48,14 @@ class SessionManager(Notifier):
                 self.notify.debug(DEBUG_CONNECTED, session.getId())
                 # TODO: hook back to UI
                 return
-        _n = set()
+        _m = set()
         for name in members:
-            if self.client.getClientIdByName(name) == '':
+            id_ = self.client.getClientIdByName(name)
+            if id_ == '':
                 self.notify.debug(DEBUG_UNAVAILABLE, name)
-                _n.add(name)
-        self._startSession(members.difference(_n))
+            else:
+                _m.add(id_)
+        self._startSession(_m)
 
     def joinSession(self, id_, members):
         session = Session(id_, self.client, members)

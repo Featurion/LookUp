@@ -71,7 +71,7 @@ class Session(Notifier):
         self.__pending = pending
 
     def start(self):
-        self.sendMessage(COMMAND_HELO, json.dumps(list(self.__pending),
+        self.sendMessage(COMMAND_HELO, json.dumps(list(self.getPendingMembers()),
                                                   ensure_ascii=True))
         self.receiver.start()
 
@@ -98,15 +98,14 @@ class Session(Notifier):
                 # TODO: secure the chat
             elif message.command == COMMAND_SYNC:
                 self.notify.debug(DEBUG_SYNC, self.getId())
-                members = json.loads(message.data)
-                _p, _m = self.getPendingMembers(), set()
+                members, pending = json.loads(message.data)
+                _m = set()
                 for id_, name, key in members:
-                    if id_ in _p:
-                        _p.remove(name)
+                    if id_ in self.getPendingMembers():
                         self.notify.debug(DEBUG_CLIENT_CONN, id_, self.getId())
                     _m.add(Session._Member(id_, name, key))
                 self.setMembers(_m)
-                self.setPendingMembers(_p)
+                self.setPendingMembers(set(i for i in pending))
             elif message.command == COMMAND_REJECT:
                 if message.data in self.getPendingMembers():
                     self.notify.error(ERR_CONN_REJECTED,

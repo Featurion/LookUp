@@ -1,5 +1,7 @@
 import json
-from src.base.globals import COMMAND_SYNC, COMMAND_REDY
+import queue
+from threading import Thread
+from src.base.globals import COMMAND_SYNC, COMMAND_HELO, COMMAND_REDY
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 
@@ -32,7 +34,10 @@ class SessionAI(Notifier):
         self.__members = {SessionAI._Member(owner_id,
                                             _cm.getClientNameById(owner_id),
                                             owner_key)}
-        self.__pending = set(_cm.getClientIdByName(n) for n in members)
+        self.__pending = set(members)
+        self.message_queue = queue.Queue()
+        self.receiver = Thread(target=self.__receiveMessages, daemon=True)
+        self.receiver.start()
 
     def getId(self):
         return self.__id
@@ -48,6 +53,37 @@ class SessionAI(Notifier):
 
     def getPendingMembers(self):
         return self.__pending
+
+    def __receiveMessages(self):
+        while True:
+            message = self.message_queue.get()
+            if message.command == COMMAND_HELO:
+                _cm = self.server.client_manager
+                members = json.loads(message.data)
+                message.data = json.dumps([
+                    message.to_id,
+                    [
+                        message.from_id,
+                        _cm.getClientNameById(message.from_id)
+                    ],
+                    [
+                        members,
+                        [_cm.getClientNameById(i) for i in members]
+                    ]
+                ])
+                for id_ in members:
+                    message.to_id = id_
+                    self.server.sendMessage(message)
+            elif message.command == COMMAND_REDY:
+                _sm = self.server.session_manager
+                session = _sm.getSessionById(message.to_id)
+                session.addMember(message.from_id, message.data)
+                session.sync()
+            elif message.command == COMMAND_REJECT:
+                _sm = self.server.session_manager
+                session = _sm.getSessionById(message.to_id)
+                session.clientRejected(message.to_id)
+                session.sync()
 
     def __memberJoined(self, id_, key):
         _cm = self.server.client_manager
@@ -75,9 +111,17 @@ class SessionAI(Notifier):
     def ready(self):
         self.emit(Message(COMMAND_REDY, self.getId(), None))
 
+    def clientRejected(self):
+        pass
+
     def sync(self):
+        _cm = self.server.client_manager
         self.emit(Message(COMMAND_SYNC,
                           self.getId(), None,
-                          json.dumps(list(self.getMembers()))))
+                          json.dumps([list(self.getMembers()),
+                                      list(self.getPendingMembers())])))
         if not self.__pending:
             self.ready()
+
+    def postMessage(self, message):
+        self.message_queue.put(message)

@@ -186,25 +186,9 @@ class RequestManagerAI(Notifier):
                             message.from_id = SERVER_ID
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
-                        if message.command == COMMAND_HELO:
-                            _cm = self.ai.server.client_manager
-                            members = json.loads(message.data)
-                            message.data = json.dumps([
-                                message.to_id,
-                                _cm.getClientNameById(message.from_id),
-                                [
-                                    members,
-                                    [_cm.getClientIdByName(n) for n in members],
-                                ]
-                            ])
-                            for name in members:
-                                message.to_id = _cm.getClientIdByName(name)
-                                self.ai.server.sendMessage(message)
-                        elif message.command == COMMAND_REDY:
-                            _sm = self.ai.server.session_manager
-                            session = _sm.getSessionById(message.to_id)
-                            session.addMember(message.from_id, message.data)
-                            session.sync()
+                        _sm = self.ai.server.session_manager
+                        session = _sm.getSessionById(message.to_id)
+                        session.postMessage(message)
                     else:
                         self.__handleError(INVALID_COMMAND,
                                            ERR_INVALID_COMMAND,

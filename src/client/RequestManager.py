@@ -121,13 +121,13 @@ class RequestManager(Notifier):
                         self.client.closeSession(message.from_id)
                 elif message.command in SESSION_COMMANDS:
                     if message.command == COMMAND_HELO:
-                        id_, from_, members = json.loads(message.data)
-                        self.notify.debug(DEBUG_HELO, from_)
-                        members[0].remove(self.client.getName())
-                        members[1].remove(self.client.getId())
+                        id_, owner, members = json.loads(message.data)
+                        self.notify.debug(DEBUG_HELO, owner[1])
+                        members[0].remove(self.client.getId())
+                        members[1].remove(self.client.getName())
                         window = self.client.ui.chat_window
                         window.new_client_signal.emit(id_,
-                                                      from_,
+                                                      owner,
                                                       members)
                     else:
                         _sm = self.client.session_manager
