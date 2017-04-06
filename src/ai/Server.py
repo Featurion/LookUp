@@ -62,17 +62,11 @@ class Server(Notifier):
             sys.exit()
 
     def sendMessage(self, message):
-        user = self.client_manager.getClient(message.to_id)
-        if user:
-            user.sendMessage(message)
+        client_ai = self.client_manager.getClientById(message.to_id)
+        if client_ai:
+            client_ai.sendMessage(message)
         else:
             self.notify.error(ERR_INVALID_CLIENT, message.to_id)
-
-    def getIdByName(self, user_name):
-        return self.client_manager.getIdByName(user_name)
-
-    def getNameById(self, user_id):
-        return self.client_manager.getNameById(user_id)
 
     def stop(self):
         if self.client_manager:

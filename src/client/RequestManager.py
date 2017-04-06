@@ -69,7 +69,7 @@ class RequestManager(Notifier):
 
     def __sendServerCommand(self, command, data=None):
         self.notify.debug(DEBUG_SERVER_COMMAND, command)
-        message = Message(command, self.client.id, SERVER_ID, data)
+        message = Message(command, self.client.getId(), SERVER_ID, data)
         self.sendMessage(message)
 
     def sendProtocolVersion(self):
@@ -122,19 +122,20 @@ class RequestManager(Notifier):
                         self.client.closeSession(message.from_id)
                 elif message.command in SESSION_COMMANDS:
                     if message.command == COMMAND_HELO:
-                        self.notify.info(DEBUG_HELO, message.from_id)
-                        owner, members = json.loads(message.data)
-                        members[0].remove(self.client.id)
-                        members[1].remove(self.client.name)
+                        id_, from_, members = json.loads(message.data)
+                        self.notify.info(DEBUG_HELO, from_)
+                        members[0].remove(self.client.getName())
+                        members[1].remove(self.client.getId())
                         window = self.client.ui.chat_window
-                        window.new_client_signal.emit(message.from_id,
-                                                      owner,
+                        window.new_client_signal.emit(id_,
+                                                      from_,
                                                       members)
                     else:
                         if message.command == COMMAND_REDY:
                             self.notify.info(DEBUG_REDY, message.from_id)
                         else:
-                            session = self.client.session_manager.getSession(message.from_id)
+                            _sm = self.client.session_manager
+                            session = _sm.getSessionById(message.from_id)
                             session.message_queue.put(message)
                 else:
                     self.notify.error(ERR_INVALID_RECV, message.from_id)

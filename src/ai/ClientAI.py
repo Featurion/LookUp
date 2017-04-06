@@ -1,41 +1,35 @@
-import uuid
 from src.ai.RequestManagerAI import RequestManagerAI
-from src.ai.SessionAI import SessionAI
 from src.base.globals import USER_STANDARD, USER_ADMIN
 from src.base.Notifier import Notifier
 
 
 class ClientAI(Notifier):
 
-    def __init__(self, ai, socket):
+    def __init__(self, server, socket):
         Notifier.__init__(self)
-        self.ai = ai
-        self.session_manager = ai.session_manager
+        self.server = server
         self.socket = socket
         self.__id = None
         self.__name = None
         self.__mode = USER_STANDARD
         self.monitored = False
 
-    @property
-    def id(self):
+    def getId(self):
         return self.__id
-
-    @property
-    def name(self):
-        return self.__name
-
-    @property
-    def mode(self):
-        return self.__mode
 
     def setId(self, client_id):
         assert isinstance(client_id, str)
         self.__id = client_id
 
+    def getName(self):
+        return self.__name
+
     def setName(self, name):
         assert isinstance(name, str)
         self.__name = name
+
+    def getMode(self):
+        return self.__mode
 
     def setMode(self, mode):
         assert isinstance(mode, int)
@@ -51,28 +45,17 @@ class ClientAI(Notifier):
     def register(self, client_id, name):
         self.setId(client_id)
         self.setName(name)
-        self.ai.client_manager.addClient(self) # Track client
+        self.server.client_manager.addClient(self) # Track client
         self.monitored = True
 
     def sendMessage(self, message):
         self.request_manager.sendMessage(message)
 
-    def forwardMessage(self, message):
-        self.ai.sendMessage(message)
+    def getIdByName(self, name):
+        return self.server.client_manager.getClientIdByName(name)
 
-    def getIdByName(self, user_name):
-        return self.ai.getIdByName(user_name)
-
-    def getNameById(self, user_id):
-        return self.ai.getNameById(user_id)
-
-    def generateSession(self, owner_key, owner_id, members):
-        session_id = uuid.uuid4().hex
-        session_ai = SessionAI(self, session_id,
-                               owner_key, owner_id,
-                               members)
-        self.session_manager.addSession(session_ai)
-        return session_id
+    def getNameById(self, id_):
+        return self.server.client_manager.getClientNameById(id_)
 
     def stop(self):
         if self.request_manager:
@@ -80,5 +63,5 @@ class ClientAI(Notifier):
                 self.request_manager.stop()
             self.request_manager = None
         if self.monitored:
-            self.ai.client_manager.removeClient(self) # Untrack client
+            self.server.client_manager.removeClient(self) # Untrack client
         self.monitored = False

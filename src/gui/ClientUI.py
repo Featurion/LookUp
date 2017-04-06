@@ -21,8 +21,8 @@ class ClientUI(QApplication):
             if not lw.restart:
                 del self._lw_widget
                 break
-        if lw.name and not self.running:
-            self.client.register(lw.name)
+        if lw.getName() and not self.running:
+            self.client.register(lw.getName())
             self.chat_window = ChatWindow(self.client)
             self.chat_window.show()
             self.running = True
@@ -31,7 +31,7 @@ class ClientUI(QApplication):
     def __login(self):
         if not hasattr(self, '_lw_widget'):
             self._lw_widget = QWidget()
-        lw = LoginWindow(self._lw_widget, self.client.name)
+        lw = LoginWindow(self._lw_widget, self.client.getName())
         lw.exec_()
         return lw
 

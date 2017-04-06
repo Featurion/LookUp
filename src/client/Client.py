@@ -26,17 +26,18 @@ class Client(Notifier):
         self.__id = uuid.uuid4().hex
         self.key_handler = KeyHandler()
         self.key_handler.generateDHKey()
-        self.pub_key = str(self.key_handler.getDHPubKey())
+        self.__pub_key = str(self.key_handler.getDHPubKey())
         self.request_manager = RequestManager(self)
         self.session_manager = SessionManager(self)
         self.ui = ClientUI(self)
 
-    @property
-    def id(self):
+    def getId(self):
         return self.__id
 
-    @property
-    def name(self):
+    def getKey(self):
+        return self.__pub_key
+
+    def getName(self):
         return self.__name
 
     def setName(self, name):
@@ -78,12 +79,16 @@ class Client(Notifier):
     def sendMessage(self, message):
         self.request_manager.sendMessage(message)
 
-    def getIdByName(self, user_name):
-        self.sendMessage(Message(COMMAND_REQ_ID, self.id, SERVER_ID, user_name))
+    def getClientIdByName(self, name):
+        self.sendMessage(Message(COMMAND_REQ_ID,
+                                 self.getId(), SERVER_ID,
+                                 name))
         return self._waitForResp()
 
-    def getNameById(self, user_id):
-        self.sendMessage(Message(COMMAND_REQ_NAME, self.id, SERVER_ID, user_id))
+    def getClientNameById(self, id_):
+        self.sendMessage(Message(COMMAND_REQ_NAME,
+                                 self.getId(), SERVER_ID,
+                                 id_))
         return self._waitForResp()
 
     def resp(self, data):

@@ -38,7 +38,7 @@ class ChatTab(QWidget):
         for name in names:
             status = utils.isNameInvalid(name)
             msg = None
-            if name == self.client.name:
+            if name == self.client.getName():
                 msg = (TITLE_SELF_CONNECT, SELF_CONNECT)
             elif status == INVALID_NAME_CONTENT:
                 msg = (TITLE_INVALID_NAME, NAME_CONTENT)
