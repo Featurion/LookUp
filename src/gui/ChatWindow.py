@@ -119,14 +119,16 @@ class ChatWindow(QMainWindow):
             utils.showDesktopNotification(self.tray_icon,
                                           'Chat request from {0}'.format(owner[1]),
                                           '')
-        resp = ConnectionDialog.getAnswer(self, owner[1], members[1])
-        if members[1]:
-            titled_names = utils.oxford_comma([owner[1]] + members[1])
-        else:
-            titled_names = owner[1]
-        if resp is True:
+        if ConnectionDialog.getAnswer(self, owner[1], members[1]):
+            if members[1]:
+                titled_names = utils.oxford_comma([owner[1]] + members[1])
+            else:
+                titled_names = owner[1]
             _sm = self.client.session_manager
-            _sm.joinSession(session_id, set(members[0]), titled_names)
+            tab = self.client.ui.window.addNewTab(titled_names)
+            tab.widget_stack.widget(1).setConnectingToName(titled_names)
+            tab.widget_stack.setCurrentIndex(1)
+            _sm.joinSession(tab, session_id, set(members[0]), titled_names)
         else:
             self.client.sendRejectMessage(session_id)
 

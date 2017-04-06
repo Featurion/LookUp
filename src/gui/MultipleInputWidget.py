@@ -11,7 +11,7 @@ class MultipleInputWidget(QWidget):
                  image, image_width,
                  label_text, button_text,
                  connector, addField,
-                 num_inputs=1):
+                 defaults=[], num_inputs=1):
         QWidget.__init__(self, parent)
         self._data = (parent,
                       image, image_width,
@@ -26,10 +26,10 @@ class MultipleInputWidget(QWidget):
         self.connect_button = QPushButton(button_text, self)
         self.connect_button.resize(self.connect_button.sizeHint())
         self.connect_button.setAutoDefault(False)
-        self.connect_button.clicked.connect(lambda: connector(self.getInputs()))
-        self.build()
+        self.connect_button.clicked.connect(lambda: connector(self.getInputsText()))
+        self.build(defaults[:num_inputs])
 
-    def build(self):
+    def build(self, _defaults):
         hbox1 = QHBoxLayout()
         hbox1.addStretch(1)
         hbox1.addWidget(self.input_label)
@@ -44,6 +44,8 @@ class MultipleInputWidget(QWidget):
                 _button = QPushButton('+', self)
                 _button.clicked.connect(self._data[-1])
                 _hb.addWidget(_button)
+            else:
+                self.inputs[i].setText(_defaults[i])
             vbox.addLayout(_hb)
         vbox.addWidget(self.connect_button)
         vbox.addStretch(1)
@@ -56,4 +58,7 @@ class MultipleInputWidget(QWidget):
         self.setLayout(hbox2)
 
     def getInputs(self):
-        return [i.text() for i in self.inputs]
+        return self.inputs
+
+    def getInputsText(self):
+        return [i.text() for i in self.getInputs()]

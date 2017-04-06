@@ -30,7 +30,7 @@ class SessionManager(Notifier):
     def start(self):
         pass # TODO
 
-    def _startSession(self, members):
+    def _startSession(self, tab, members):
         self.client.sendMessage(Message(COMMAND_REQ_SESSION,
                                         self.client.getId(), SERVER_ID,
                                         json.dumps([self.client.getKey(),
@@ -38,12 +38,12 @@ class SessionManager(Notifier):
                                                     list(members)],
                                                    ensure_ascii=True)))
         id_ = self.client._waitForResp()
-        session = Session(id_, self.client, members)
+        session = Session(tab, id_, self.client, members)
         self.__sessions[id_] = session
         self.notify.debug(DEBUG_SESSION_START, id_)
         session.start()
 
-    def openSession(self, members):
+    def openSession(self, tab, members):
         for id_, session in self.getSessions():
             if session.getMembers() == members:
                 self.notify.debug(DEBUG_CONNECTED, session.getId())
@@ -56,17 +56,13 @@ class SessionManager(Notifier):
                 self.notify.debug(DEBUG_UNAVAILABLE, name)
             else:
                 _m.add(id_)
-        self._startSession(_m)
+        self._startSession(tab, _m)
 
-    def joinSession(self, id_, members, titled_names):
-        session = Session(id_, self.client, set(members))
+    def joinSession(self, tab, id_, members, titled_names):
+        session = Session(tab, id_, self.client, set(members))
         self.__sessions[id_] = session
         self.notify.debug(DEBUG_SESSION_JOIN, id_)
         session.join()
-
-        tab = self.client.ui.window.addNewTab(titled_names)
-        tab.widget_stack.widget(1).setConnectingToName(titled_names)
-        tab.widget_stack.setCurrentIndex(1)
 
     def closeSession(self, id_):
         session = self.__sessions.get(id_)

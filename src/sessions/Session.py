@@ -34,9 +34,10 @@ class Session(Notifier):
         def getKey(self):
             return self.__key
 
-    def __init__(self, id_, client, members):
+    def __init__(self, tab, id_, client, members):
         Notifier.__init__(self)
         self.client = client
+        self.__tab = tab
         self.__id = id_
         self.__members = {Session._Member(self.client.getId(),
                                           self.client.getName(),
@@ -49,6 +50,9 @@ class Session(Notifier):
         self.key_handler.generateDHKey()
         self.encrypted = False
         self.receiver = Thread(target=self.__receiveMessages, daemon=True)
+
+    def getTab(self):
+        return self.__tab
 
     def getId(self):
         return self.__id
@@ -96,6 +100,7 @@ class Session(Notifier):
             elif message.command == COMMAND_REDY:
                 self.notify.debug(DEBUG_REDY, message.from_id)
                 self.encrypted = True
+                self.getTab().widget_stack.setCurrentIndex(2)
                 # TODO: secure the chat
             elif message.command == COMMAND_REJECT:
                 self.notify.debug(DEBUG_CLIENT_REJECT,

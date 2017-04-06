@@ -52,20 +52,20 @@ class Client(Notifier):
         while not self.ui.running:
             self.ui.start()
 
-    def register(self, name): # TODO: hook to UI
+    def register(self, name):
         assert isinstance(name, str)
         self.setName(name)
         self.request_manager.sendName(name)
         if self._waitForResp():
             raise LookupError()
 
-    def openSession(self, names): # TODO: hook to UI
+    def openSession(self, tab, names):
         if names:
-            self.session_manager.openSession(names)
+            self.session_manager.openSession(tab, names)
         else: # no usernames provided
-            pass # TODO: hook to UI
+            pass
 
-    def closeSession(self, session_id): # TODO: hook to UI
+    def closeSession(self, session_id): # TODO: finish implementation
         self.session_manager.closeSession(session_id)
 
     def _waitForResp(self):

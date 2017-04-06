@@ -36,6 +36,7 @@ class ChatTab(QWidget):
 
     def addInput(self):
         _iw = MultipleInputWidget(*self.input_widget._data,
+                                  self.input_widget.getInputsText(),
                                   len(self.input_widget.inputs) + 1)
         self.widget_stack.removeWidget(self.input_widget)
         self.input_widget = _iw
@@ -64,7 +65,7 @@ class ChatTab(QWidget):
         self.widget_stack.setCurrentIndex(1)
         self.window.setTabTitle(self, titled_names)
         connect_thread = Thread(target=self.client.openSession,
-                                args=(names,),
+                                args=(self, names,),
                                 daemon=True)
         connect_thread.start()
 
