@@ -27,9 +27,12 @@ def getResourcePath(relative_path):
             base_path = os.path.dirname(sys.modules[''].__file__)
         except Exception:
             base_path = ''
+
         if not os.path.exists(os.path.join(base_path, relative_path)):
             base_path = ''
+
     path = os.path.join(base_path, relative_path)
+
     if not os.path.exists(path):
         return None
     else:
@@ -38,11 +41,14 @@ def getResourcePath(relative_path):
 
 def secureStrCmp(left, right):
     equal = True
+
     if len(left) != len(right):
         equal = False
+
     for i in range(0, min(len(left), len(right))):
         if left[i] != right[i]:
             equal = False
+
     return equal
 
 
@@ -59,3 +65,17 @@ def resizeWindow(window, width, height):
 
 def showDesktopNotification(tray_icon, title, message):
     tray_icon.showMessage(title, message)
+
+
+def oxford_comma(list_of_strings):
+    str_ = ''
+    len_ = len(list_of_strings)
+
+    for i in range(len_):
+        if i == (len_ - 1):
+            str_ += ' and '
+        else:
+            str_ += ', '
+        str_ += list_of_strings[i]
+
+    return str_

@@ -2,27 +2,52 @@ import base64
 import json
 import queue
 from threading import Thread
-from src.base.globals import *
+from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_END
+from src.base.globals import COMMAND_SYNC, COMMAND_REJECT
+from src.base.globals import DEBUG_CLIENT_CONN, DEBUG_SYNC, DEBUG_REDY
+from src.base.globals import ERR_CONN_REJECTED, ERR_BAD_HANDSHAKE
+from src.base.globals import ERR_MESSAGE_REPLAY, ERR_MESSAGE_DELETION
+from src.base.globals import ERR_DECRYPT_FAILURE, ERR_INVALID_HMAC
 from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
-from src.crypto.CryptoHandler import CryptoHandler
+from src.crypto.KeyHandler import KeyHandler
 
 class Session(Notifier):
+
+    class _Member(tuple):
+
+        def __new__(cls, id_, name, key):
+            _m = tuple.__new__(cls, (id_, name, key))
+            _m.__id = id_
+            _m.__name = name
+            _m.__key = key
+            return _m
+
+        def getId(self):
+            return self.__id
+
+        def getName(self):
+            return self.__name
+
+        def getKey(self):
+            return self.__key
 
     def __init__(self, id_, client, members):
         Notifier.__init__(self)
         self.client = client
         self.__id = id_
-        self.__pending = members
-        self.__members = {self.client.getId()}
+        self.__members = {Session._Member(self.client.getId(),
+                                          self.client.getName(),
+                                          self.client.getKey())}
+        self.__pending = set(members)
         self.message_queue = queue.Queue()
         self.incoming_message_num = 0
         self.outgoing_message_num = 0
-        self.key_handler = CryptoHandler()
+        self.key_handler = KeyHandler()
         self.key_handler.generateDHKey()
         self.encrypted = False
-        self.receiver = Thread(target=self.__receiveMessages)
+        self.receiver = Thread(target=self.__receiveMessages, daemon=True)
 
     def getId(self):
         return self.__id
@@ -30,19 +55,28 @@ class Session(Notifier):
     def getMembers(self):
         return set(self.__members)
 
+    def getMemberIds(self):
+        return [m.getId() for m in self.getMembers()]
+
+    def getMemberNames(self):
+        return [m.getName() for m in self.getMembers()]
+
+    def setMembers(self, members):
+        self.__members = members
+
+    def getPendingMembers(self):
+        return set(self.__pending)
+
+    def setPendingMembers(self, pending):
+        self.__pending = pending
+
     def start(self):
-        self.client.sendMessage(Message(COMMAND_HELO,
-                                        self.client.getId(),
-                                        self.getId(),
-                                        json.dumps(list(self.__pending),
-                                                   ensure_ascii=True)))
+        self.sendMessage(COMMAND_HELO, json.dumps(list(self.__pending),
+                                                  ensure_ascii=True))
         self.receiver.start()
 
     def join(self):
-        self.client.sendMessage(Message(COMMAND_REDY,
-                                        self.client.getId(),
-                                        self.getId(),
-                                        self.client.getKey()))
+        self.sendMessage(COMMAND_REDY, self.client.getKey())
         self.receiver.start()
 
     def stop(self): # TODO
@@ -56,24 +90,32 @@ class Session(Notifier):
         while True:
             message = self.message_queue.get()
             if message.command == COMMAND_END:
-                pass # TODO
+                self.message_queue.task_done()
+                return # TODO
+            elif message.command == COMMAND_REDY:
+                self.notify.debug(DEBUG_REDY, message.from_id)
+                self.encrypted = True
+                # TODO: secure the chat
             elif message.command == COMMAND_SYNC:
                 self.notify.debug(DEBUG_SYNC, self.getId())
                 members = json.loads(message.data)
-                self.__members = members
-                for member in self.__members:
-                    if (member in self.__pending) and (member != self.client.getId()):
-                        self.__pending.remove(member)
-                        self.notify.debug(DEBUG_CLIENT_CONN, member, self.getId())
+                _p, _m = self.getPendingMembers(), set()
+                for id_, name, key in members:
+                    if id_ in _p:
+                        _p.remove(name)
+                        self.notify.debug(DEBUG_CLIENT_CONN, id_, self.getId())
+                    _m.add(Session._Member(id_, name, key))
+                self.setMembers(_m)
+                self.setPendingMembers(_p)
             elif message.command == COMMAND_REJECT:
-                if message.data in self.__pending:
-                    self.notify.error(ERR_CONN_REJECT)
+                if message.data in self.getPendingMembers():
+                    self.notify.error(ERR_CONN_REJECTED,
+                                      self.client.getClientNameById(message.data))
                 else:
                     self.notify.error(ERR_BAD_HANDSHAKE, message.data)
             else:
                 _data = self.getDecryptedData(message)
-                self.message_queue.task_done()
-                return _data
+                pass
 
     def getDecryptedData(self, message):
         if self.encrypted:
@@ -112,3 +154,12 @@ class Session(Notifier):
         else:
             pass
         self.client.sendMessage(message)
+
+    def sendChatMessage(self, text):
+        self.sendMessage(COMMAND_MSG, data=text)
+
+    def sendTypingMessage(self, status):
+        self.sendMessage(COMMAND_TYPING, data=str(status))
+
+    def postMessage(self, message):
+        self.message_queue.put(message)

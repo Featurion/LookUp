@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
+from src.base import utils
 
 
 class ConnectionDialog(QMessageBox):
@@ -12,8 +13,7 @@ class ConnectionDialog(QMessageBox):
         if members:
             self.setText('Received group request from '
                          + name
-                         + ' and '
-                         + ', '.join(members))
+                         + utils.oxford_comma(members))
         else:
             self.setText('Received connection request from ' + name)
         self.setIcon(QMessageBox.Question)

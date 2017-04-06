@@ -8,8 +8,7 @@ from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
 from src.base.globals import COMMAND_PUBKEY
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
 from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_CONN_CLOSED
-from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP
-from src.base.globals import DEBUG_HELO, DEBUG_REDY
+from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_HELO
 from src.base.globals import ERR_INVALID_SEND, ERR_INVALID_RECV, ERR_SEND
 from src.base.globals import NetworkError
 from src.base.Message import Message
@@ -131,12 +130,9 @@ class RequestManager(Notifier):
                                                       from_,
                                                       members)
                     else:
-                        if message.command == COMMAND_REDY:
-                            self.notify.debug(DEBUG_REDY, message.from_id)
-                        else:
-                            _sm = self.client.session_manager
-                            session = _sm.getSessionById(message.from_id)
-                            session.message_queue.put(message)
+                        _sm = self.client.session_manager
+                        session = _sm.getSessionById(message.from_id)
+                        session.postMessage(message)
                 else:
                     self.notify.error(ERR_INVALID_RECV, message.from_id)
                     break

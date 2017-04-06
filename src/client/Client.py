@@ -1,3 +1,4 @@
+import sys
 from threading import Thread
 import uuid
 from src.base import utils
@@ -11,7 +12,7 @@ from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
 from src.client.RequestManager import RequestManager
-from src.crypto.CryptoHandler import CryptoHandler
+from src.crypto.KeyHandler import KeyHandler
 from src.gui.ClientUI import ClientUI
 from src.sessions.SessionManager import SessionManager
 
@@ -24,7 +25,7 @@ class Client(Notifier):
         self._resp = None
         self.socket = SocketHandler(addr, port)
         self.__id = uuid.uuid4().hex
-        self.key_handler = CryptoHandler()
+        self.key_handler = KeyHandler()
         self.key_handler.generateDHKey()
         self.__pub_key = str(self.key_handler.getDHPubKey())
         self.request_manager = RequestManager(self)
@@ -110,3 +111,4 @@ class Client(Notifier):
         if self.ui:
             self.ui.stop()
             self.ui = None
+        sys.exit(0)

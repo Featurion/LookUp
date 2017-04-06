@@ -123,7 +123,7 @@ class ChatWindow(QMainWindow):
             utils.showDesktopNotification(self.tray_icon,
                                           'Chat request from {0}'.format(owner),
                                           '')
-        resp = ConnectionDialog.getAnswer(self, owner, members[1])
+        resp = ConnectionDialog.getAnswer(self, owner, members[0])
         if resp:
             self.client.session_manager.joinSession(session_id,
                                                     set(members[0] + [owner]))
