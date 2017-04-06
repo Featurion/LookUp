@@ -126,9 +126,7 @@ class RequestManager(Notifier):
                         members[0].remove(self.client.getId())
                         members[1].remove(self.client.getName())
                         window = self.client.ui.chat_window
-                        window.new_client_signal.emit(id_,
-                                                      owner,
-                                                      members)
+                        window.new_client_signal.emit(id_, owner, members)
                     else:
                         _sm = self.client.session_manager
                         session = _sm.getSessionById(message.from_id)

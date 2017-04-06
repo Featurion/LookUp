@@ -124,11 +124,11 @@ class ChatWindow(QMainWindow):
                                           'Chat request from {0}'.format(owner[1]),
                                           '')
         resp = ConnectionDialog.getAnswer(self, owner[1], members[1])
-        if resp:
+        if resp is True:
             _sm = self.client.session_manager
             _sm.joinSession(session_id, set(members[0]))
         else:
-            pass
+            self.client.sendRejectMessage(session_id)
 
     def exit(self):
         self.close()

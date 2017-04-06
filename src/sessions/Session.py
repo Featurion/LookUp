@@ -4,10 +4,11 @@ import queue
 from threading import Thread
 from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_END
 from src.base.globals import COMMAND_SYNC, COMMAND_REJECT
-from src.base.globals import DEBUG_CLIENT_CONN, DEBUG_SYNC, DEBUG_REDY
-from src.base.globals import ERR_CONN_REJECTED, ERR_BAD_HANDSHAKE
-from src.base.globals import ERR_MESSAGE_REPLAY, ERR_MESSAGE_DELETION
-from src.base.globals import ERR_DECRYPT_FAILURE, ERR_INVALID_HMAC
+from src.base.globals import DEBUG_REDY, DEBUG_SYNC, DEBUG_CLIENT_REJECT
+from src.base.globals import DEBUG_CLIENT_CONN
+from src.base.globals import ERR_BAD_HANDSHAKE, ERR_MESSAGE_REPLAY
+from src.base.globals import ERR_MESSAGE_DELETION, ERR_DECRYPT_FAILURE
+from src.base.globals import ERR_INVALID_HMAC
 from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
@@ -96,22 +97,30 @@ class Session(Notifier):
                 self.notify.debug(DEBUG_REDY, message.from_id)
                 self.encrypted = True
                 # TODO: secure the chat
+            elif message.command == COMMAND_REJECT:
+                self.notify.debug(DEBUG_CLIENT_REJECT,
+                                  message.data,
+                                  message.to_id)
             elif message.command == COMMAND_SYNC:
                 self.notify.debug(DEBUG_SYNC, self.getId())
                 members, pending = json.loads(message.data)
-                _m = set()
-                for id_, name, key in members:
-                    if id_ in self.getPendingMembers():
-                        self.notify.debug(DEBUG_CLIENT_CONN, id_, self.getId())
-                    _m.add(Session._Member(id_, name, key))
+                _m = set(Session._Member(i, n, k) for i, n, k in members)
                 self.setMembers(_m)
-                self.setPendingMembers(set(i for i in pending))
-            elif message.command == COMMAND_REJECT:
-                if message.data in self.getPendingMembers():
-                    self.notify.error(ERR_CONN_REJECTED,
-                                      self.client.getClientNameById(message.data))
-                else:
-                    self.notify.error(ERR_BAD_HANDSHAKE, message.data)
+                for id_ in self.getPendingMembers():
+                    if (id_ not in pending) and (id_ in self.getMemberIds()):
+                        self.notify.debug(DEBUG_CLIENT_CONN,
+                                          id_,
+                                          self.getId())
+                    elif id_ in pending:
+                        pass # still pending
+                    elif id_ not in self.getMemberIds():
+                        self.notify.debug(DEBUG_CLIENT_REJECT,
+                                          id_,
+                                          self.getId())
+                    else:
+                        self.notify.error(ERR_BAD_HANDSHAKE, message.data)
+                        return
+                self.setPendingMembers(set(pending))
             else:
                 _data = self.getDecryptedData(message)
                 pass

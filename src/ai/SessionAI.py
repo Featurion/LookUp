@@ -2,6 +2,7 @@ import json
 import queue
 from threading import Thread
 from src.base.globals import COMMAND_SYNC, COMMAND_HELO, COMMAND_REDY
+from src.base.globals import COMMAND_REJECT
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 
@@ -82,7 +83,7 @@ class SessionAI(Notifier):
             elif message.command == COMMAND_REJECT:
                 _sm = self.server.session_manager
                 session = _sm.getSessionById(message.to_id)
-                session.clientRejected(message.to_id)
+                session.clientRejected(message.from_id)
                 session.sync()
 
     def __memberJoined(self, id_, key):
@@ -111,8 +112,8 @@ class SessionAI(Notifier):
     def ready(self):
         self.emit(Message(COMMAND_REDY, self.getId(), None))
 
-    def clientRejected(self):
-        pass
+    def clientRejected(self, id_):
+        self.__pending.remove(id_)
 
     def sync(self):
         _cm = self.server.client_manager

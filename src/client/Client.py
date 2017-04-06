@@ -1,9 +1,9 @@
 import sys
 from threading import Thread
 import uuid
-from src.base.globals import SERVER_ID
+from src.base.globals import SERVER_ID, COMMAND_REJECT
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
-from src.base.globals import DEBUG_CLIENT_START
+from src.base.globals import DEBUG_CLIENT_START, DEBUG_REJECT
 from src.base.globals import DEBUG_SYNC_WAIT, DEBUG_SYNC_DONE
 from src.base.globals import DEBUG_CLIENT_CONNECTED, DEBUG_CLIENT_DISCONNECTED
 from src.base.globals import ERR_SESSION_END
@@ -78,6 +78,12 @@ class Client(Notifier):
 
     def sendMessage(self, message):
         self.request_manager.sendMessage(message)
+
+    def sendRejectMessage(self, id_):
+        self.notify.debug(DEBUG_REJECT, id_)
+        self.sendMessage(Message(COMMAND_REJECT,
+                                 self.getId(), id_,
+                                 self.getName()))
 
     def getClientIdByName(self, name):
         self.sendMessage(Message(COMMAND_REQ_ID,
