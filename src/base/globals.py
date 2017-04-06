@@ -1,6 +1,5 @@
 import os
 
-
 BASE_PATH = os.getcwd()
 LOG_PATH = BASE_PATH + '/logs'
 DEFAULT_ADDR = '127.0.0.1'
@@ -21,6 +20,19 @@ VALID_NAME = 0
 INVALID_EMPTY_NAME = 1
 INVALID_NAME_CONTENT = 2
 INVALID_NAME_LENGTH = 3
+
+# Chatting
+URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
+
+TYPING_TIMEOUT = 1500
+TYPING_START = 0
+TYPING_STOP_WITHOUT_TEXT = 1
+TYPING_STOP_WITH_TEXT = 2
+
+# Message sources
+SENDER = 0
+RECEIVER = 1
+SERVICE = 2
 
 # Commands
 

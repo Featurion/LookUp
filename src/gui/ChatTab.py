@@ -25,7 +25,7 @@ class ChatTab(QWidget):
                                                 self.connect, self.addInput)
         self.widget_stack.addWidget(self.input_widget)
         self.widget_stack.addWidget(ConnectingWidget(self))
-        self.widget_stack.addWidget(ChatWidget(self))
+        self.widget_stack.addWidget(ChatWidget(self.client, self))
         self.widget_stack.setCurrentIndex(0)
         self.build()
 

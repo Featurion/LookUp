@@ -128,6 +128,7 @@ class ChatWindow(QMainWindow):
             tab = self.client.ui.window.addNewTab(titled_names)
             tab.widget_stack.widget(1).setConnectingToName(titled_names)
             tab.widget_stack.setCurrentIndex(1)
+            # tab.showNowChattingMessage() - TODO: Zach
             _sm.joinSession(tab, session_id, set(members[0]), titled_names)
         else:
             self.client.sendRejectMessage(session_id)
