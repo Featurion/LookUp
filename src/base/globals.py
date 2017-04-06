@@ -122,11 +122,14 @@ ERR_CONN_CLOSED = 'server closed the connection'
 TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
 TITLE_SELF_CONNECT = 'Tried connecting to self'
+TITLE_NAME_IN_USE = 'Username is taken'
 
-EMPTY_NAME = 'Please enter a username'
-NAME_LENGTH = 'Username is too long'
-NAME_CONTENT = 'Username contains invalid characters'
-SELF_CONNECT = "You cannot connect to yourself"
+CHOOSE = 'Please choose another'
+EMPTY_NAME = 'Please enter a username.'
+NAME_LENGTH = 'That username is too long. {0}.'.format(CHOOSE)
+NAME_CONTENT = 'That username contains invalid characters. {0}.'.format(CHOOSE)
+SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
+NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
 
 # Exceptions
 

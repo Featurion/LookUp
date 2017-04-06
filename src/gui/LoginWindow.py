@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QMessageBox
 from src.base import utils
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
-from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME, EMPTY_NAME
+from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME
+from src.base.globals import NAME_CONTENT, NAME_LENGTH, EMPTY_NAME
 from src.gui.InputWidget import InputWidget
 
 
@@ -41,9 +42,9 @@ class LoginWindow(QDialog):
             self.connect(name)
             return
         elif status == INVALID_NAME_CONTENT:
-            msg = (TITLE_INVALID_NAME, INVALID_NAME_CONTENT) # FIX
+            msg = (TITLE_INVALID_NAME, NAME_CONTENT)
         elif status == INVALID_NAME_LENGTH:
-            msg = (TITLE_INVALID_NAME, INVALID_NAME_LENGTH) # FIX
+            msg = (TITLE_INVALID_NAME, NAME_LENGTH)
         elif status == INVALID_EMPTY_NAME:
             msg = (TITLE_EMPTY_NAME, EMPTY_NAME)
         else:

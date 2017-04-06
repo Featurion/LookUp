@@ -1,5 +1,6 @@
 from PyQt5.QtGui import QPalette
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
+from src.base.globals import TITLE_NAME_IN_USE, NAME_IN_USE
 from src.gui.ChatWindow import ChatWindow
 from src.gui.LoginWindow import LoginWindow
 
@@ -22,7 +23,13 @@ class ClientUI(QApplication):
                 del self._lw_widget
                 break
         if lw.getName() and not self.running:
-            self.client.register(lw.getName())
+            try:
+                self.client.register(lw.getName())
+            except LookupError:
+                QMessageBox.warning(QWidget(),
+                                    TITLE_NAME_IN_USE,
+                                    NAME_IN_USE)
+                return
             self.chat_window = ChatWindow(self.client)
             self.chat_window.show()
             self.running = True

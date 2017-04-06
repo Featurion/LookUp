@@ -1,7 +1,6 @@
 import sys
 from threading import Thread
 import uuid
-from src.base import utils
 from src.base.globals import SERVER_ID
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
 from src.base.globals import DEBUG_CLIENT_START
@@ -50,15 +49,15 @@ class Client(Notifier):
         self.notify.info(DEBUG_CLIENT_CONNECTED)
         self.request_manager.sendProtocolVersion()
         self.session_manager.start()
-        self.ui.start()
+        while not self.ui.running:
+            self.ui.start()
 
     def register(self, name): # TODO: hook to UI
         assert isinstance(name, str)
-        if utils.isNameInvalid(name):
-            pass # TODO: callback invalid name
-        else:
-            self.setName(name)
-            self.request_manager.sendName(name)
+        self.setName(name)
+        self.request_manager.sendName(name)
+        if self._waitForResp():
+            raise LookupError()
 
     def openSession(self, names): # TODO: hook to UI
         if names:

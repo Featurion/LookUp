@@ -119,7 +119,13 @@ class RequestManagerAI(Notifier):
                                message.from_id)
             return
         else:
-            self.ai.register(message.from_id, message.data)
+            _cm = self.ai.server.client_manager
+            _msg = Message(COMMAND_RELAY, SERVER_ID, message.from_id)
+            if not _cm.getClientIdByName(message.data):
+                self.ai.register(message.from_id, message.data)
+            else:
+                _msg.data = None
+            self.sendMessage(_msg)
 
     def __handleError(self, code, msg, *args):
         self.sendMessage(Message(COMMAND_ERR, err=code))
@@ -182,8 +188,8 @@ class RequestManagerAI(Notifier):
                             message.data = ''
                         finally:
                             message.command = COMMAND_RELAY
-                            message.to_id = message.from_id
                             message.from_id = SERVER_ID
+                            message.to_id = message.from_id
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
                         _sm = self.ai.server.session_manager

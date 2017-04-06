@@ -5,7 +5,7 @@ from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME, EMPTY_NAME
 from src.base.globals import TITLE_SELF_CONNECT, SELF_CONNECT, NAME_CONTENT
-from src.base.globals import NAME_CONTENT
+from src.base.globals import NAME_LENGTH
 from src.gui.InputWidget import InputWidget
 from src.gui.ConnectingWidget import ConnectingWidget
 from src.gui.ChatWidget import ChatWidget
