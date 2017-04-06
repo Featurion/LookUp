@@ -211,7 +211,9 @@ class RequestManagerAI(Notifier):
                                            message.from_id)
                         break
                 else:
-                    self.notify.warning(DEBUG_CONN_CLOSED)
+                    self.notify.debug(DEBUG_CONN_CLOSED)
+                    self.__stop()
+                    break
             except NetworkError as e:
                 if e.err != CONN_CLOSED:
                     self.__handleError(RECV_ERROR, ERR_RECV)
