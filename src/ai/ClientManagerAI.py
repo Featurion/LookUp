@@ -3,7 +3,6 @@ from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 from src.base.globals import DEBUG_REGISTERED, DEBUG_UNREGISTERED
 from src.base.Notifier import Notifier
 
-
 class ClientManagerAI(Notifier):
 
     @staticmethod
@@ -21,35 +20,45 @@ class ClientManagerAI(Notifier):
     def __init__(self, ai):
         Notifier.__init__(self)
         self.ai = ai
-        self.__users = []
-        self.__name2user = {}
-        self.__id2user = {}
+        self.__clients = []
+        self.__name2client = {}
+        self.__id2client = {}
+
+    def getClients(self):
+        return self.__clients
+
+    def getClientById(self, id_):
+        return self.__id2client.get(id_)
+
+    def getClientByName(self, name):
+        return self.__name2client.get(name)
 
     def addClient(self, client_ai):
-        self.notify.debug(DEBUG_REGISTERED, client_ai.name, client_ai.id)
-        self.__users.append(client_ai)
-        self.__id2user[client_ai.id] = client_ai
-        self.__name2user[client_ai.name] = client_ai
+        self.notify.debug(DEBUG_REGISTERED,
+                         client_ai.getName(),
+                         client_ai.getId())
+        self.__clients.append(client_ai)
+        self.__id2client[client_ai.getId()] = client_ai
+        self.__name2client[client_ai.getName()] = client_ai
 
     def removeClient(self, client_ai):
-        self.notify.debug(DEBUG_UNREGISTERED, client_ai.name, client_ai.id)
-        self.__users.remove(client_ai)
-        del self.__id2user[client_ai.id]
-        del self.__name2user[client_ai.name]
+        self.notify.debug(DEBUG_UNREGISTERED,
+                         client_ai.getName(),
+                         client_ai.getId())
+        self.__clients.remove(client_ai)
+        del self.__id2client[client_ai.getId()]
+        del self.__name2client[client_ai.getName()]
 
-    def getClient(self, user_id):
-        return self.__id2user.get(user_id)
-
-    def getIdByName(self, user_name):
-        user = self.__name2user.get(user_name)
-        if user:
-            return user.id
+    def getClientIdByName(self, name):
+        client_ai = self.__name2client.get(name)
+        if client_ai:
+            return client_ai.getId()
         else:
             return ''
 
-    def getNameById(self, user_id):
-        user = self.__id2user.get(user_id)
-        if user:
-            return user.name
+    def getClientNameById(self, id_):
+        client_ai = self.__id2client.get(id_)
+        if client_ai:
+            return client_ai.getName()
         else:
             return ''

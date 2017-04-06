@@ -160,19 +160,22 @@ class RequestManagerAI(Notifier):
                             self.__stop()
                             return
                         else:
-                            self.ai.forwardMessage(message)
+                            self.ai.server.sendMessage(message)
                             self.notify.debug(DEBUG_END, message.to_id)
                     elif message.command in RELAY_COMMANDS:
                         try:
                             if message.command == COMMAND_REQ_ID:
-                                message.data = self.ai.getIdByName(message.data)
+                                _cm = self.ai.server.client_manager
+                                message.data = _cm.getClientIdByName(message.data)
                             elif message.command == COMMAND_REQ_NAME:
-                                message.data = self.ai.getNameById(message.data)
+                                _cm = self.ai.server.client_manager
+                                message.data = _cm.getClientNameById(message.data)
                             elif message.command == COMMAND_REQ_SESSION:
+                                _sm = self.ai.server.session_manager
                                 key, id_, members = json.loads(message.data)
-                                message.data = self.ai.generateSession(key,
-                                                                       id_,
-                                                                       members)
+                                message.data = _sm.generateSession(key,
+                                                                   id_,
+                                                                   set(members))
                             else:
                                 message.data = ''
                         except:
@@ -184,25 +187,23 @@ class RequestManagerAI(Notifier):
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
                         if message.command == COMMAND_HELO:
-                            partners = json.loads(message.to_id)
+                            _cm = self.ai.server.client_manager
+                            members = json.loads(message.data)
                             message.data = json.dumps([
+                                message.to_id,
+                                _cm.getClientNameById(message.from_id),
                                 [
-                                    message.data,
-                                    self.ai.getNameById(message.data)
-                                ],
-                                [
-                                    partners,
-                                    [self.ai.getNameById(i) for i in partners]
+                                    members,
+                                    [_cm.getClientIdByName(n) for n in members],
                                 ]
                             ])
-                            for partner in partners:
-                                message.to_id = partner
-                                self.ai.forwardMessage(message)
+                            for name in members:
+                                message.to_id = _cm.getClientIdByName(name)
+                                self.ai.server.sendMessage(message)
                         elif message.command == COMMAND_REDY:
-                            session_manager = self.ai.session_manager
-                            session = session_manager.getSession(message.to_id)
-                            session.addMember(message.from_id,
-                                              base64.b64decode(message.data))
+                            _sm = self.ai.server.session_manager
+                            session = _sm.getSessionById(message.to_id)
+                            session.addMember(message.from_id, message.data)
                             session.sync()
                     else:
                         self.__handleError(INVALID_COMMAND,

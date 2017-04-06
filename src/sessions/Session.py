@@ -10,12 +10,12 @@ from src.crypto.CryptoHandler import CryptoHandler
 
 class Session(Notifier):
 
-    def __init__(self, session_id, client, partners):
+    def __init__(self, id_, client, members):
         Notifier.__init__(self)
         self.client = client
-        self.__id = session_id
-        self.__pending = partners
-        self.__members = [self.client.id]
+        self.__id = id_
+        self.__pending = members
+        self.__members = {self.client.getId()}
         self.message_queue = queue.Queue()
         self.incoming_message_num = 0
         self.outgoing_message_num = 0
@@ -24,24 +24,25 @@ class Session(Notifier):
         self.encrypted = False
         self.receiver = Thread(target=self.__receiveMessages)
 
-    @property
-    def id(self):
+    def getId(self):
         return self.__id
+
+    def getMembers(self):
+        return set(self.__members)
 
     def start(self):
         self.client.sendMessage(Message(COMMAND_HELO,
-                                        self.id,
-                                        json.dumps(self.__pending,
-                                                   ensure_ascii=True),
-                                        self.client.id))
+                                        self.client.getId(),
+                                        self.getId(),
+                                        json.dumps(list(self.__pending),
+                                                   ensure_ascii=True)))
         self.receiver.start()
 
     def join(self):
-        _key = base64.b64encode(self.client.pub_key.encode())
         self.client.sendMessage(Message(COMMAND_REDY,
-                                        self.client.id,
-                                        self.id,
-                                        _key))
+                                        self.client.getId(),
+                                        self.getId(),
+                                        self.client.getKey()))
         self.receiver.start()
 
     def stop(self): # TODO
@@ -57,13 +58,13 @@ class Session(Notifier):
             if message.command == COMMAND_END:
                 pass # TODO
             elif message.command == COMMAND_SYNC:
-                self.notify.debug(DEBUG_SYNC, self.id)
+                self.notify.debug(DEBUG_SYNC, self.getId())
                 members = json.loads(message.data)
                 self.__members = members
                 for member in self.__members:
-                    if (member in self.__pending) and (member != self.client.id):
+                    if (member in self.__pending) and (member != self.client.getId()):
                         self.__pending.remove(member)
-                        self.notify.debug(DEBUG_CLIENT_CONN, member, self.id)
+                        self.notify.debug(DEBUG_CLIENT_CONN, member, self.getId())
             elif message.command == COMMAND_REJECT:
                 if message.data in self.__pending:
                     self.notify.error(ERR_CONN_REJECT)
@@ -96,8 +97,8 @@ class Session(Notifier):
 
     def sendMessage(self, command, data=None):
         message = Message(command,
-                          self.client.id,
-                          self.id)
+                          self.client.getId(),
+                          self.getId())
         if (data is not None) and self.encrypted:
             enc_data = self.key_handler.aesEncrypt(data)
             num = self.key_handler.aesEncrypt(str(self.outgoing_message_num).encode())

@@ -7,74 +7,70 @@ from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.sessions.Session import Session
 
-
 class SessionManager(Notifier):
 
     def __init__(self, client):
         Notifier.__init__(self)
         self.client = client
         self.__sessions = {}
-        self.__session_member_map = {}
 
-    @property
-    def sessions(self):
+    def getSessions(self):
         return self.__sessions.items()
+
+    def getSessionById(self, id_):
+        return self.__sessions.get(id_)
+
+    def getSessionByMembers(self, members):
+        for id_, session in self.getSessions():
+            if session.getMembers() == members:
+                return self.getSessionById(id_)
+        return None
 
     def start(self):
         pass # TODO
 
-    def getSession(self, session_id):
-        return self.__sessions.get(session_id)
-
-    def getSessionByMembers(self, partners):
-        for i, p in self.__session_member_map.items():
-            if sorted(partners) == p:
-                return self.getSession(i)
-        return None
-
-    def _startSession(self, partners):
+    def _startSession(self, members):
         self.client.sendMessage(Message(COMMAND_REQ_SESSION,
-                                        self.client.id, SERVER_ID,
-                                        json.dumps([self.client.pub_key,
-                                                    self.client.id,
-                                                    partners],
+                                        self.client.getId(), SERVER_ID,
+                                        json.dumps([self.client.getKey(),
+                                                    self.client.getId(),
+                                                    list(members)],
                                                    ensure_ascii=True)))
-        session_id = self.client._waitForResp()
-        session = Session(session_id, self.client, partners)
-        self.__sessions[session.id] = session
-        self.__session_member_map[session.id] = partners
-        self.notify.debug(DEBUG_SESSION_START, session.id)
+        id_ = self.client._waitForResp()
+        session = Session(id_, self.client, members)
+        self.__sessions[id_] = session
+        self.notify.debug(DEBUG_SESSION_START, id_)
         session.start()
 
-    def openSession(self, partners):
-        partners = sorted(partners)
-        if partners in self.__session_member_map.values():
-            self.notify.debug(DEBUG_CONNECTED, name)
-            # TODO: hook back to UI
-        else:
-            id2name = {self.client.getIdByName(n): n for n in partners}
-            for i, n in id2name.items():
-                if n == '':
-                    self.notify.debug(DEBUG_USER_UNAVAILABLE, n)
-                    del id2name[i]
-            self._startSession(sorted(id2name.keys()))
+    def openSession(self, members):
+        for id_, session in self.getSessions():
+            if session.getMembers() == members:
+                self.notify.debug(DEBUG_CONNECTED, session.getId())
+                # TODO: hook back to UI
+                return
+        _n = set()
+        for name in members:
+            if self.client.getClientIdByName(name) == '':
+                self.notify.debug(DEBUG_UNAVAILABLE, name)
+                _n.add(name)
+        self._startSession(members.difference(_n))
 
-    def joinSession(self, session_id, partners):
-        session = Session(session_id, self.client, partners)
-        self.__sessions[session.id] = session
-        self.notify.debug(DEBUG_SESSION_JOIN, session.id)
+    def joinSession(self, id_, members):
+        session = Session(id_, self.client, members)
+        self.__sessions[id_] = session
+        self.notify.debug(DEBUG_SESSION_JOIN, id_)
         session.join()
 
-    def closeSession(self, session_id):
-        session = self.__sessions.get(session_id)
+    def closeSession(self, id_):
+        session = self.__sessions.get(id_)
         if session:
             session.stop()
-            del self.__sessions[session_id]
-            del self.__session_member_map[session_id]
+            del self.__sessions[id_]
+        else:
+            pass # TODO: error; should not happen
 
     def stop(self):
-        for session_id, session in self.sessions:
+        for id_, session in self.getSessions():
             session.stop()
-            self.notify.info(DEBUG_END, session_id)
+            self.notify.debug(DEBUG_END, id_)
         self.__sessions.clear()
-        self.__session_member_map.clear()

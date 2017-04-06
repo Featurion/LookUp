@@ -9,7 +9,7 @@ from src.gui.ConnectionDialog import ConnectionDialog
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, list, list)
+    new_client_signal = pyqtSignal(str, str, list)
 
     def __init__(self, client):
         QMainWindow.__init__(self)
@@ -117,16 +117,16 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, list, list)
+    @pyqtSlot(str, str, list)
     def newClient(self, session_id, owner, members):
         if not self.isActiveWindow():
             utils.showDesktopNotification(self.tray_icon,
-                                          'Chat request from {0}'.format(owner[1]),
+                                          'Chat request from {0}'.format(owner),
                                           '')
-        resp = ConnectionDialog.getAnswer(self, owner[1], members[1])
+        resp = ConnectionDialog.getAnswer(self, owner, members[1])
         if resp:
             self.client.session_manager.joinSession(session_id,
-                                                    members[0] + [owner[0]])
+                                                    set(members[0] + [owner]))
         else:
             pass
 
