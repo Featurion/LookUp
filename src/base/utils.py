@@ -68,16 +68,14 @@ def showDesktopNotification(tray_icon, title, message):
 
 
 def oxford_comma(list_of_strings):
-    str_ = ''
     len_ = len(list_of_strings)
-
-    for i in range(len_):
-        if i == 0:
-            pass
-        elif i == (len_ - 1):
-            str_ += ', and '
-        else:
-            str_ += ', '
-        str_ += list_of_strings[i]
-
-    return str_
+    if len_ == 0:
+        return ''
+    elif len_ == 1:
+        return list_of_strings[0]
+    elif len_ == 2:
+        return ' and '.join(list_of_strings)
+    else:
+        str_ = ', '.join(list_of_strings[:-1] + [''])
+        str_ += 'and ' + list_of_strings[-1]
+        return str_

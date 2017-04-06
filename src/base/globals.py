@@ -68,7 +68,7 @@ RECV_ERROR = 7
 # Notifier messages
 
 DEBUG_END = 'ended session {0}'
-DEBUG_END_REQ = '{0} requested to end session'
+DEBUG_END_REQ = 'session {0} ended'
 DEBUG_SYNC_WAIT = 'polling for response'
 DEBUG_SYNC_DONE = 'received response'
 DEBUG_SERVER_COMMAND = 'sending server command: {0}'

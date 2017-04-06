@@ -59,12 +59,17 @@ class ChatTab(QWidget):
             if msg:
                 QMessageBox.warning(self, *msg)
                 names.remove(name)
-        self.widget_stack.widget(1).setConnectingToName(utils.oxford_comma(names))
+        titled_names = utils.oxford_comma(names)
+        self.widget_stack.widget(1).setConnectingToName(titled_names)
         self.widget_stack.setCurrentIndex(1)
+        self.window.setTabTitle(self, titled_names)
         connect_thread = Thread(target=self.client.openSession,
-                                args=(names,), # temporary
+                                args=(names,),
                                 daemon=True)
         connect_thread.start()
+
+    def stop(self):
+        pass
 
     def restart(self):
         pass

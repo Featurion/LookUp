@@ -113,11 +113,11 @@ class RequestManager(Notifier):
                 if message.command == COMMAND_RELAY:
                     self.client.resp(message.data)
                 elif message.command == COMMAND_END:
-                    self.notify.debug(DEBUG_END_REQ, message.from_id)
                     if message.from_id == SERVER_ID:
                         self.__stop()
                         break
                     else:
+                        self.notify.debug(DEBUG_END_REQ, message.from_id)
                         self.client.closeSession(message.from_id)
                 elif message.command in SESSION_COMMANDS:
                     if message.command == COMMAND_HELO:
@@ -125,7 +125,7 @@ class RequestManager(Notifier):
                         self.notify.debug(DEBUG_HELO, owner[1])
                         members[0].remove(self.client.getId())
                         members[1].remove(self.client.getName())
-                        window = self.client.ui.chat_window
+                        window = self.client.ui.window
                         window.new_client_signal.emit(id_, owner, members)
                     else:
                         _sm = self.client.session_manager

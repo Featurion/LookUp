@@ -12,7 +12,7 @@ class ClientUI(QApplication):
         self.client = client
         self.running = False
         self.theme = self.palette().color(QPalette.Window)
-        self.chat_window = None
+        self.window = None
         self.waiting_dialog = None
         self.aboutToQuit.connect(self.__stop)
 
@@ -30,8 +30,8 @@ class ClientUI(QApplication):
                                     TITLE_NAME_IN_USE,
                                     NAME_IN_USE)
                 return
-            self.chat_window = ChatWindow(self.client)
-            self.chat_window.show()
+            self.window = ChatWindow(self.client)
+            self.window.show()
             self.running = True
             self.exec_()
 
@@ -47,6 +47,6 @@ class ClientUI(QApplication):
             self.client.stop()
 
     def stop(self):
-        if self.chat_window:
-            self.chat_window.close()
-            self.chat_window = None
+        if self.window:
+            self.window.close()
+            self.window = None

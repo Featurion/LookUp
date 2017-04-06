@@ -1,4 +1,5 @@
 import json
+from src.base import utils
 from src.base.globals import SERVER_ID, COMMAND_REQ_SESSION
 from src.base.globals import DEBUG_END, DEBUG_SESSION_START, DEBUG_SESSION_JOIN
 from src.base.globals import DEBUG_UNAVAILABLE
@@ -57,11 +58,15 @@ class SessionManager(Notifier):
                 _m.add(id_)
         self._startSession(_m)
 
-    def joinSession(self, id_, members):
-        session = Session(id_, self.client, members)
+    def joinSession(self, id_, members, titled_names):
+        session = Session(id_, self.client, set(members))
         self.__sessions[id_] = session
         self.notify.debug(DEBUG_SESSION_JOIN, id_)
         session.join()
+
+        tab = self.client.ui.window.addNewTab(titled_names)
+        tab.widget_stack.widget(1).setConnectingToName(titled_names)
+        tab.widget_stack.setCurrentIndex(1)
 
     def closeSession(self, id_):
         session = self.__sessions.get(id_)

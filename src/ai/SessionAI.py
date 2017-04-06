@@ -2,7 +2,7 @@ import json
 import queue
 from threading import Thread
 from src.base.globals import COMMAND_SYNC, COMMAND_HELO, COMMAND_REDY
-from src.base.globals import COMMAND_REJECT
+from src.base.globals import COMMAND_REJECT, COMMAND_END, SERVER_ID
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 
@@ -58,7 +58,10 @@ class SessionAI(Notifier):
     def __receiveMessages(self):
         while True:
             message = self.message_queue.get()
-            if message.command == COMMAND_HELO:
+            if message.command == COMMAND_END:
+                self.emit(message)
+                return
+            elif message.command == COMMAND_HELO:
                 _cm = self.server.client_manager
                 members = json.loads(message.data)
                 message.data = json.dumps([
@@ -121,8 +124,14 @@ class SessionAI(Notifier):
                           self.getId(), None,
                           json.dumps([list(self.getMembers()),
                                       list(self.getPendingMembers())])))
-        if not self.__pending:
+
+        if (len(self.getMembers()) > 1) and not self.getPendingMembers():
             self.ready()
+        elif self.getPendingMembers():
+            pass # still pending
+        else:
+            self.postMessage(Message(COMMAND_END, self.getId(), None))
+            self.server.session_manager.removeSession(self)
 
     def postMessage(self, message):
         self.message_queue.put(message)

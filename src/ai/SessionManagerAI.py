@@ -36,5 +36,5 @@ class SessionManagerAI(Notifier):
         self.__id2session[session_ai.getId()] = session_ai
 
     def removeSession(self, session_ai):
-        self.__sessions.remote(session_ai)
+        self.__sessions.remove(session_ai)
         del self.__id2session[session_ai.getId()]
