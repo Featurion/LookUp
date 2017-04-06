@@ -12,8 +12,7 @@ class ConnectionDialog(QMessageBox):
         self.setWindowTitle('Incoming Connection')
         if members:
             self.setText('Received group request from '
-                         + name
-                         + utils.oxford_comma(members))
+                         + utils.oxford_comma([name] + members))
         else:
             self.setText('Received connection request from ' + name)
         self.setIcon(QMessageBox.Question)

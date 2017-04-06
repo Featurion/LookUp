@@ -6,7 +6,7 @@ from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME, EMPTY_NAME
 from src.base.globals import TITLE_SELF_CONNECT, SELF_CONNECT, NAME_CONTENT
 from src.base.globals import NAME_LENGTH
-from src.gui.InputWidget import InputWidget
+from src.gui.MultipleInputWidget import MultipleInputWidget
 from src.gui.ConnectingWidget import ConnectingWidget
 from src.gui.ChatWidget import ChatWidget
 
@@ -19,10 +19,11 @@ class ChatTab(QWidget):
         self.client = window.client
         self.unread = 0
         self.widget_stack = QStackedWidget(self)
-        self.widget_stack.addWidget(InputWidget(self,
+        self.input_widget = MultipleInputWidget(self,
                                                 'images/new_chat.png', 150,
-                                                'Username:', 'LookUp',
-                                                self.connect))
+                                                'Usernames:', 'LookUp',
+                                                self.connect, self.addInput)
+        self.widget_stack.addWidget(self.input_widget)
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(ChatWidget(self))
         self.widget_stack.setCurrentIndex(0)
@@ -33,9 +34,16 @@ class ChatTab(QWidget):
         _layout.addWidget(self.widget_stack)
         self.setLayout(_layout)
 
-    def connect(self, input_):
-        names = set(n.strip() for n in input_.split(','))
-        for name in names:
+    def addInput(self):
+        _iw = MultipleInputWidget(*self.input_widget._data,
+                                  len(self.input_widget.inputs) + 1)
+        self.widget_stack.removeWidget(self.input_widget)
+        self.input_widget = _iw
+        self.widget_stack.insertWidget(0, self.input_widget)
+        self.widget_stack.setCurrentIndex(0)
+
+    def connect(self, names):
+        for name in set(names):
             status = utils.isNameInvalid(name)
             msg = None
             if name == self.client.getName():
@@ -51,7 +59,7 @@ class ChatTab(QWidget):
             if msg:
                 QMessageBox.warning(self, *msg)
                 names.remove(name)
-        self.widget_stack.widget(1).setConnectingToName(name)
+        self.widget_stack.widget(1).setConnectingToName(utils.oxford_comma(names))
         self.widget_stack.setCurrentIndex(1)
         connect_thread = Thread(target=self.client.openSession,
                                 args=(names,), # temporary

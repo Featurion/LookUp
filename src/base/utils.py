@@ -72,8 +72,10 @@ def oxford_comma(list_of_strings):
     len_ = len(list_of_strings)
 
     for i in range(len_):
-        if i == (len_ - 1):
-            str_ += ' and '
+        if i == 0:
+            pass
+        elif i == (len_ - 1):
+            str_ += ', and '
         else:
             str_ += ', '
         str_ += list_of_strings[i]
