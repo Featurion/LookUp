@@ -4,7 +4,6 @@ from Crypto.Hash import *
 from Crypto.Cipher import AES
 from src.crypto import dh
 
-
 class KeyHandler(object):
 
     def __init__(self):

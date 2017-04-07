@@ -35,9 +35,13 @@ class Server(Notifier):
         self.__startManagers()
         while True: # Wait for client to connect
             try:
-                socket, (addr, port) = self.socket.accept()
-                self.notify.info(DEBUG_RECV_CONN, addr, port)
-                client_socket = SocketHandler(addr, port, socket)
+                while True:
+                    socket, (addr, port) = self.socket.accept()
+                    self.notify.info(DEBUG_RECV_CONN, addr, port)
+                    client_socket = SocketHandler(addr, port, socket)
+                    client_socket.doHandshake()
+                    if client_socket.handshake_done:
+                        break
                 client_ai = ClientAI(self, client_socket)
                 client_ai.start()
             except KeyboardInterrupt:

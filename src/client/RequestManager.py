@@ -28,7 +28,6 @@ class RequestManager(Notifier):
         self.receiving = False
 
     def start(self):
-        self.socket.connect()
         self.send_handler.start()
         self.sending = True
         self.recv_handler.start()

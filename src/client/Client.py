@@ -44,7 +44,12 @@ class Client(Notifier):
         self.__name = name
 
     def start(self):
-        self.notify.info(DEBUG_CLIENT_START)
+        while True:
+            self.notify.info(DEBUG_CLIENT_START)
+            self.socket.connect()
+            self.socket.initiateHandshake()
+            if self.socket.handshake_done:
+                break
         self.request_manager.start()
         self.notify.info(DEBUG_CLIENT_CONNECTED)
         self.request_manager.sendProtocolVersion()

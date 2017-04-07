@@ -1,10 +1,11 @@
+import base64
 import socket
 import struct
 import sys
 from src.base.globals import MAX_PORT_SIZE, NetworkError, ERR_NO_CONNECTION
 from src.base.globals import DEBUG_CONN_CLOSED, ERR_CONN_CLOSED, CONN_CLOSED
 from src.base.Notifier import Notifier
-
+from src.crypto.KeyHandler import KeyHandler
 
 class SocketHandler(Notifier):
 
@@ -30,6 +31,9 @@ class SocketHandler(Notifier):
         Notifier.__init__(self)
         self.addr = addr
         self.port = port
+        self.handshake_done = False
+        self.key_handler = KeyHandler()
+        self.key_handler.generateDHKey()
         if sock:
             self.socket = sock
             self.connected = True
@@ -55,11 +59,38 @@ class SocketHandler(Notifier):
             self.notify.debug(DEBUG_CONN_CLOSED)
         self.connected = False
 
+    def initiateHandshake(self):
+        our_key = base64.b64encode(str(self.key_handler.getDHPubKey()).encode()) # Get our public key
+        self.send(our_key) # Send our public key
+
+        their_key = self.recv() # Receive the data from the server
+        self.key_handler.computeDHSecret(int(base64.b64decode(their_key)))
+
+        self.handshake_done = True
+
+    def doHandshake(self):
+        their_key = self.recv() # Receive the data from the client
+        self.key_handler.computeDHSecret(int(base64.b64decode(their_key)))
+
+        our_key = base64.b64encode(str(self.key_handler.getDHPubKey()).encode()) # Get our public key
+        self.send(our_key) # Send our public key
+
+        self.handshake_done = True
+
     def send(self, data):
-        data = data.encode('utf-8')
-        size = len(data)
-        self._send(struct.pack('I', socket.htonl(size)), 4) # Send size
-        self._send(data, size) # Send data
+        if not self.handshake_done:
+            size = len(data)
+
+            self._send(struct.pack('I', socket.htonl(size)), 4) # Send size
+            self._send(data, size) # Send data
+        else:
+            enc_data = base64.b64encode(data.encode('utf-8'))
+            data = self.key_handler.aesEncrypt(enc_data)
+
+            size = len(data)
+
+            self._send(struct.pack('I', socket.htonl(size)), 4) # Send size
+            self._send(data, size) # Send data
 
     def _send(self, data, size):
         if self.connected:
@@ -84,8 +115,10 @@ class SocketHandler(Notifier):
         indicator = self._recv(4)
         if indicator:
             size = socket.ntohl(struct.unpack('I', indicator)[0]) # Receive size
-            data = self._recv(size).decode('utf-8') # Receive data
-            return data
+            data = self._recv(size) # Receive data
+            if self.handshake_done:
+                data = base64.b64decode(self.key_handler.aesDecrypt(data))
+            return data.decode('utf-8')
         else:
             return None
 
