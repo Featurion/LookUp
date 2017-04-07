@@ -104,6 +104,6 @@ class SocketHandler(Notifier):
                         return
                 return data
             except socket.error:
-                pass # Do nothing because the RequestManagerAI handles this itself
+                pass # Do nothing because the RequestManagers handle this themselves
         else:
             self.notify.warning(DEBUG_CONN_CLOSED)

@@ -10,7 +10,7 @@ from src.base.globals import COMMAND_REQ_SESSION, COMMAND_HELO, COMMAND_REDY
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_ERR
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import DEBUG_END, DEBUG_RECV_PROTOCOL_VERION
-from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_CONN_CLOSED
+from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_CLIENT_CONN_CLOSED
 from src.base.globals import DEBUG_DISCONNECT_WAIT
 from src.base.globals import ERR_SEND, ERR_RECV, ERR_MISSING_FIELD, RECV_ERROR
 from src.base.globals import ERR_CLIENT_UNREGISTERED
@@ -200,8 +200,8 @@ class RequestManagerAI(Notifier):
                                            ERR_INVALID_COMMAND,
                                            message.from_id)
                         break
-                else:
-                    self.notify.debug(DEBUG_CONN_CLOSED)
+                else: # The client closed the connection unexpectedly
+                    self.notify.debug(DEBUG_CLIENT_CONN_CLOSED)
                     self.socket.disconnect()
             except NetworkError as e:
                 if e.err != CONN_CLOSED:

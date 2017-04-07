@@ -7,7 +7,7 @@ from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
 from src.base.globals import COMMAND_PUBKEY
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
-from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_CONN_CLOSED
+from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_SERVER_CONN_CLOSED
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_HELO
 from src.base.globals import ERR_INVALID_SEND, ERR_INVALID_RECV, ERR_SEND
 from src.base.globals import NetworkError
@@ -134,4 +134,8 @@ class RequestManager(Notifier):
                 else:
                     self.notify.error(ERR_INVALID_RECV, message.from_id)
                     break
+            else: # The server closed the connection unexpectedly (this shouldn't happen)
+                # TODO Zach: UI error callback here
+                self.notify.info(DEBUG_SERVER_CONN_CLOSED)
+                self.socket.disconnect()
         self.receiving = False
