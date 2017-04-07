@@ -3,10 +3,8 @@ import datetime
 import logging
 import os
 import sys
-from src.ai.Server import Server
 from src.base.globals import DEFAULT_ADDR, DEFAULT_PORT
 from src.base.globals import LOG_PATH
-from src.client.Client import Client
 
 
 class Launcher(object):
@@ -65,9 +63,11 @@ class Launcher(object):
                                 level=logging.ERROR)
 
     def __launchAIServer(self, addr, port):
+        from src.ai.Server import Server
         return Server(addr, port)
 
     def __launchClient(self, addr, port, name):
+        from src.client.Client import Client
         if name == '':
             return Client(addr, port, name)
         else:
