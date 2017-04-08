@@ -11,7 +11,6 @@ from src.base.globals import DEBUG_CLIENT_CONN
 from src.base.globals import ERR_BAD_HANDSHAKE, ERR_MESSAGE_REPLAY
 from src.base.globals import ERR_MESSAGE_DELETION, ERR_DECRYPT_FAILURE
 from src.base.globals import ERR_INVALID_HMAC
-from src.base.utils import secureStrCmp
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.crypto.KeyHandler import KeyHandler
@@ -158,7 +157,7 @@ class Session(Notifier):
                 self.getTab().new_message_signal.emit(data)
             elif message.command == COMMAND_CLIENT_MSG:
                 data = MSG_TEMPLATE.format('#000000',
-                                           utils.getTimestamp(),
+                                           '',
                                            'server',
                                            message.data)
                 self.getTab().new_message_signal.emit(data)

@@ -140,7 +140,7 @@ class SessionAI(Notifier):
             src_color = '#CC0000'
 
         msg = MSG_TEMPLATE.format(src_color,
-                                  utils.getTimestamp(),
+                                  utils.formatTimestamp(message.time),
                                   _cm.getClientNameById(message.from_id),
                                   message.data)
 

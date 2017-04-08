@@ -1,5 +1,5 @@
 import os
-import time
+import datetime
 from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
@@ -17,7 +17,11 @@ def isNameInvalid(name):
 
 
 def getTimestamp():
-    return time.strftime('%H:%M:%S', time.localtime())
+    return datetime.datetime.now().timestamp()
+
+
+def formatTimestamp(ts):
+    return datetime.datetime.fromtimestamp(float(ts)).strftime('(%H:%M:%S) ')
 
 
 def getResourcePath(relative_path):

@@ -1,18 +1,23 @@
 import base64
 import json
+from src.base import utils
 from src.base.globals import SERVER_ID
 
 
 class Message(object):
 
     def __init__(self, command, from_id=SERVER_ID, to_id=SERVER_ID, data='',
-                 hmac='', err='', num=''):
+                 hmac='', err='', time=''):
         self.command = int(command)
         self.from_id = str(from_id)
         self.to_id = str(to_id)
         self.data = str(data)
         self.hmac = str(hmac)
         self.err = str(err)
+        if time:
+            self.time = time
+        else:
+            self.time = str(utils.getTimestamp())
 
     def toJson(self):
         return json.dumps({
@@ -22,6 +27,7 @@ class Message(object):
             'data': self.data,
             'hmac': self.hmac,
             'err': self.err,
+            'time': self.time,
         })
 
     @staticmethod
@@ -34,6 +40,7 @@ class Message(object):
             js['data'],
             js['hmac'],
             js['err'],
+            js['time'],
         )
 
     def getEncryptedDataAsBinaryString(self):
