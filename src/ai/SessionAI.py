@@ -48,7 +48,6 @@ class SessionAI(Notifier):
         self.__pending = set(members)
 
         self.message_queue = queue.Queue()
-        self.message_num = 0
 
         self.receiver = Thread(target=self.__receiveMessages, daemon=True)
         self.receiver.start()
@@ -118,23 +117,14 @@ class SessionAI(Notifier):
         _kh = self.key_handler
         _kh.computeDHSecret(self.getMemberPubKey(message.from_id))
 
-        enc_num = message.getMessageNumAsBinaryString()
         enc_data = message.getEncryptedDataAsBinaryString()
         hmac = message.getHmacAsBinaryString()
 
         if self.__verifyHmac(hmac, enc_data):
             try:
-                num = int(_kh.aesDecrypt(enc_num))
-                if self.message_num > num:
-                    self.notify.error(ERR_MESSAGE_REPLAY)
-                elif self.message_num < num:
-                    self.notify.error(ERR_MESSAGE_DELETION)
-                else:
-                    message.data = _kh.aesDecrypt(enc_data).decode()
-                    self.emitMessage(message, self.__encryptForMember)
-                    self.message_num += 1
-            except Exception as e:
-                print(e)
+                message.data = _kh.aesDecrypt(enc_data).decode()
+                self.emitMessage(message, self.__encryptForMember)
+            except:
                 self.notify.error(ERR_DECRYPT_FAILURE)
         else:
             self.notify.error(ERR_INVALID_HMAC)
@@ -154,12 +144,10 @@ class SessionAI(Notifier):
                                   _cm.getClientNameById(message.from_id),
                                   message.data)
 
-        enc_num = _kh.aesEncrypt(str(self.message_num).encode())
         enc_data = _kh.aesEncrypt(msg)
         hmac = _kh.generateHmac(enc_data)
 
         message = Message(COMMAND_MSG, self.getId(), id_)
-        message.setBinaryMessageNum(enc_num)
         message.setEncryptedData(enc_data)
         message.setBinaryHmac(hmac)
         return message

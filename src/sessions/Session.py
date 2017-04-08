@@ -49,7 +49,6 @@ class Session(Notifier):
         self.__pending = set(members)
 
         self.message_queue = queue.Queue()
-        self.message_num = 0
         self.encrypted = False
 
         self.receiver = Thread(target=self.__receiveMessages, daemon=True)
@@ -184,20 +183,12 @@ class Session(Notifier):
         _kh = self.key_handler
         _kh.computeDHSecret(self.getAltPubKey())
 
-        enc_num = message.getMessageNumAsBinaryString()
         enc_data = message.getEncryptedDataAsBinaryString()
         hmac = message.getHmacAsBinaryString()
 
         if self.__verifyHmac(hmac, enc_data):
             try:
-                num = int(_kh.aesDecrypt(enc_num))
-                if self.message_num > num:
-                    self.notify.error(ERR_MESSAGE_REPLAY)
-                elif self.message_num < num:
-                    self.notify.error(ERR_MESSAGE_DELETION)
-                else:
-                    self.message_num += 1
-                    return _kh.aesDecrypt(enc_data).decode()
+                return _kh.aesDecrypt(enc_data).decode()
             except:
                 self.notify.error(ERR_DECRYPT_FAILURE)
         else:
@@ -210,11 +201,9 @@ class Session(Notifier):
             _kh = self.key_handler
             _kh.computeDHSecret(self.getAltPubKey())
 
-            enc_num = _kh.aesEncrypt(str(self.message_num).encode())
             enc_data = _kh.aesEncrypt(data)
             hmac = _kh.generateHmac(enc_data)
 
-            message.setBinaryMessageNum(enc_num)
             message.setEncryptedData(enc_data)
             message.setBinaryHmac(hmac)
         elif data is not None:

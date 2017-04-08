@@ -13,7 +13,6 @@ class Message(object):
         self.data = str(data)
         self.hmac = str(hmac)
         self.err = str(err)
-        self.num = str(num)
 
     def toJson(self):
         return json.dumps({
@@ -23,7 +22,6 @@ class Message(object):
             'data': self.data,
             'hmac': self.hmac,
             'err': self.err,
-            'num': self.num,
         })
 
     @staticmethod
@@ -36,7 +34,6 @@ class Message(object):
             js['data'],
             js['hmac'],
             js['err'],
-            js['num'],
         )
 
     def getEncryptedDataAsBinaryString(self):
@@ -50,9 +47,3 @@ class Message(object):
 
     def setBinaryHmac(self, hmac):
         self.hmac = base64.b64encode(hmac).decode()
-
-    def getMessageNumAsBinaryString(self):
-        return base64.b64decode(self.num)
-
-    def setBinaryMessageNum(self, num):
-        self.num = base64.b64encode(num).decode()
