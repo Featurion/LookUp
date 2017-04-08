@@ -1,18 +1,23 @@
+import base64
 import json
+from src.base import utils
 from src.base.globals import SERVER_ID
 
 
 class Message(object):
 
     def __init__(self, command, from_id=SERVER_ID, to_id=SERVER_ID, data='',
-                 hmac='', err='', num=''):
+                 hmac='', err='', time=''):
         self.command = int(command)
         self.from_id = str(from_id)
         self.to_id = str(to_id)
         self.data = str(data)
         self.hmac = str(hmac)
         self.err = str(err)
-        self.num = str(num)
+        if time:
+            self.time = time
+        else:
+            self.time = str(utils.getTimestamp())
 
     def toJson(self):
         return json.dumps({
@@ -22,7 +27,7 @@ class Message(object):
             'data': self.data,
             'hmac': self.hmac,
             'err': self.err,
-            'num': self.num,
+            'time': self.time,
         })
 
     @staticmethod
@@ -35,7 +40,7 @@ class Message(object):
             js['data'],
             js['hmac'],
             js['err'],
-            js['num'],
+            js['time'],
         )
 
     def getEncryptedDataAsBinaryString(self):
@@ -48,10 +53,4 @@ class Message(object):
         return base64.b64decode(self.hmac)
 
     def setBinaryHmac(self, hmac):
-        self.hmac = base64.b64encode(self.hmac).decode()
-
-    def getMessageNumAsBinaryString(self):
-        return base64.b64decode(self.num)
-
-    def setBinaryMessageNum(self, num):
-        self.num = base64.b64encode(num).decode()
+        self.hmac = base64.b64encode(hmac).decode()

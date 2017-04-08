@@ -33,13 +33,12 @@ class SessionManager(Notifier):
     def _startSession(self, tab, members):
         self.client.sendMessage(Message(COMMAND_REQ_SESSION,
                                         self.client.getId(), SERVER_ID,
-                                        json.dumps([self.client.getKey(),
-                                                    self.client.getId(),
-                                                    list(members)],
+                                        json.dumps(list(members),
                                                    ensure_ascii=True)))
         id_ = self.client._waitForResp()
         session = Session(tab, id_, self.client, members)
         self.__sessions[id_] = session
+        tab.setSession(session)
         self.notify.debug(DEBUG_SESSION_START, id_)
         session.start()
 
@@ -56,11 +55,13 @@ class SessionManager(Notifier):
                 self.notify.debug(DEBUG_UNAVAILABLE, name)
             else:
                 _m.add(id_)
+        _m.add(self.client.getId())
         self._startSession(tab, _m)
 
     def joinSession(self, tab, id_, members, titled_names):
         session = Session(tab, id_, self.client, set(members))
         self.__sessions[id_] = session
+        tab.setSession(session)
         self.notify.debug(DEBUG_SESSION_JOIN, id_)
         session.join()
 

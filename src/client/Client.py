@@ -24,18 +24,12 @@ class Client(Notifier):
         self._resp = None
         self.socket = SocketHandler(addr, port)
         self.__id = uuid.uuid4().hex
-        self.key_handler = KeyHandler()
-        self.key_handler.generateDHKey()
-        self.__pub_key = str(self.key_handler.getDHPubKey())
         self.request_manager = RequestManager(self)
         self.session_manager = SessionManager(self)
         self.ui = ClientUI(self)
 
     def getId(self):
         return self.__id
-
-    def getKey(self):
-        return self.__pub_key
 
     def getName(self):
         return self.__name

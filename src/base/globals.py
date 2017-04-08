@@ -22,17 +22,9 @@ INVALID_NAME_CONTENT = 2
 INVALID_NAME_LENGTH = 3
 
 # Chatting
+
 URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
-
-TYPING_TIMEOUT = 1500
-TYPING_START = 0
-TYPING_STOP_WITHOUT_TEXT = 1
-TYPING_STOP_WITH_TEXT = 2
-
-# Message sources
-SENDER = 0
-RECEIVER = 1
-SERVICE = 2
+MSG_TEMPLATE = "<font color='{0}'>{1} <strong>{2}:</strong></font> {3}"
 
 # Commands
 
@@ -49,6 +41,8 @@ COMMAND_REDY = 9
 COMMAND_REJECT = 10
 COMMAND_PUBKEY = 11
 COMMAND_SYNC = 12
+COMMAND_MSG = 13
+COMMAND_CLIENT_MSG = 14
 
 RELAY_COMMANDS = [
     COMMAND_VERSION,
@@ -64,6 +58,7 @@ SESSION_COMMANDS = [
     COMMAND_REJECT,
     COMMAND_PUBKEY,
     COMMAND_SYNC,
+    COMMAND_MSG,
 ]
 
 # Error codes
@@ -145,6 +140,7 @@ NAME_LENGTH = 'That username is too long. {0}.'.format(CHOOSE)
 NAME_CONTENT = 'That username contains invalid characters. {0}.'.format(CHOOSE)
 SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
 NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
+CLIENT_JOINED = '{0} is ready to chat.'
 
 # Exceptions
 

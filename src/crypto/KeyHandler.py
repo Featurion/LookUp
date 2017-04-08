@@ -1,6 +1,6 @@
 import os
 from Crypto import Random
-from Crypto.Hash import *
+from Crypto.Hash import HMAC, SHA256
 from Crypto.Cipher import AES
 from src.crypto import dh
 
@@ -41,18 +41,14 @@ class KeyHandler(object):
         return AES.new(self.aes_key, self.aes_mode, self.aes_iv)
 
     def generateHmac(self, message):
-        hmac = HMAC.HMAC(self.aes_key, message).digest()
-        return hmac
+        return HMAC.HMAC(self.aes_key, message).digest()
 
     def generateHash(self, message):
-        if hasattr(message, "encode"):
-            message = message.encode()
-        new_hash = SHA256.new(message).digest()
-        return new_hash
+        return SHA256.new(message).digest()
 
     def stringHash(self, message):
         digest = self.generateHash(message)
-        hex_val = hex(self.__octx_to_num(digest))[2:-1].upper()
+        hex_val = hex(self.__octxToNum(digest))[2:-1].upper()
         return hex_val
 
     def mapStringToInt(self, string):
@@ -62,7 +58,7 @@ class KeyHandler(object):
             shift += 8
         return num
 
-    def __octx_to_num(self, data):
+    def __octxToNum(self, data):
         converted = 0
         length = len(data)
         for i in range(length):

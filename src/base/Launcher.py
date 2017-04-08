@@ -6,6 +6,7 @@ import sys
 from src.base.globals import DEFAULT_ADDR, DEFAULT_PORT
 from src.base.globals import LOG_PATH
 
+
 class Launcher(object):
 
     def __init__(self):

@@ -1,10 +1,14 @@
+import datetime
 import os
+import re
 from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
+
 def isLightTheme():
     return False
+
 
 def isNameInvalid(name):
     if not name:
@@ -16,8 +20,21 @@ def isNameInvalid(name):
     else:
         return VALID_NAME
 
+
 def getTimestamp():
-    return time.strftime('%H:%M:%S', time.localtime())
+    return datetime.datetime.now().timestamp()
+
+
+def parseTimestampFromMessage(msg):
+    ts = re.search('\d+\.\d+', msg).group()
+    ts = datetime.datetime.fromtimestamp(float(ts)).timestamp()
+    msg = re.sub(str(ts), '({0})', msg)
+    return (msg, ts)
+
+
+def formatTimestamp(ts):
+    return datetime.datetime.fromtimestamp(float(ts)).strftime('%H:%M:%S')
+
 
 def getResourcePath(relative_path):
     try:
@@ -38,17 +55,19 @@ def getResourcePath(relative_path):
     else:
         return path
 
+
 def secureStrCmp(left, right):
     equal = True
 
     if len(left) != len(right):
         equal = False
 
-    for i in range(0, min(len(left), len(right))):
-        if left[i] != right[i]:
+    for a, b in zip(left, right):
+        if a != b:
             equal = False
 
     return equal
+
 
 def centerWindow(window):
     centerPoint = QDesktopWidget().availableGeometry().center()
@@ -56,11 +75,14 @@ def centerWindow(window):
     geo.moveCenter(centerPoint)
     window.move(geo.topLeft())
 
+
 def resizeWindow(window, width, height):
     window.setGeometry(0, 0, width, height)
 
+
 def showDesktopNotification(tray_icon, title, message):
     tray_icon.showMessage(title, message)
+
 
 def oxford_comma(list_of_strings):
     len_ = len(list_of_strings)
