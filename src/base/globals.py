@@ -25,7 +25,7 @@ INVALID_NAME_LENGTH = 3
 # Chatting
 
 URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
-MSG_TEMPLATE = "<font color='{0}'>{1}<strong>{2}:</strong></font> {3}"
+MSG_TEMPLATE = "<font color='{0}'>{1} <strong>{2}:</strong></font> {3}"
 
 TYPING_TIMEOUT = 1500
 TYPING_START = 0

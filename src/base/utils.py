@@ -1,5 +1,6 @@
-import os
 import datetime
+import os
+import re
 from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
@@ -20,8 +21,15 @@ def getTimestamp():
     return datetime.datetime.now().timestamp()
 
 
+def parseTimestampFromMessage(msg):
+    ts = re.search('\d+\.\d+', msg).group()
+    ts = datetime.datetime.fromtimestamp(float(ts)).timestamp()
+    msg = re.sub(str(ts), '({0})', msg)
+    return (msg, ts)
+
+
 def formatTimestamp(ts):
-    return datetime.datetime.fromtimestamp(float(ts)).strftime('(%H:%M:%S) ')
+    return datetime.datetime.fromtimestamp(float(ts)).strftime('%H:%M:%S')
 
 
 def getResourcePath(relative_path):

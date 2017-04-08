@@ -14,7 +14,7 @@ from src.gui.ChatWidget import ChatWidget
 
 class ChatTab(QWidget):
 
-    new_message_signal = pyqtSignal(str)
+    new_message_signal = pyqtSignal(str, float)
 
     def __init__(self, window):
         QWidget.__init__(self)
@@ -85,16 +85,13 @@ class ChatTab(QWidget):
                args=(self, names,),
                daemon=True).start()
 
-    @pyqtSlot(str)
-    def newMessage(self, msg):
-        should_scroll = True
-        scrollbar = self.chat_widget.log.verticalScrollBar()
-        if (scrollbar.value() != scrollbar.maximum())  and (from_ != SENDER):
-            should_scroll = False
-        else:
-            scrollbar.setValue(scrollbar.maximum())
+    @pyqtSlot(str, float)
+    def newMessage(self, msg, ts):
+        self.chat_widget.log.addMessage(msg, ts)
 
-        self.chat_widget.log.append(msg)
+        scrollbar = self.chat_widget.chat_log.verticalScrollBar()
+        if scrollbar.value() == scrollbar.maximum():
+            scrollbar.setValue(scrollbar.maximum())
 
     def stop(self):
         pass

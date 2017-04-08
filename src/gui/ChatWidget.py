@@ -10,6 +10,25 @@ from src.base.globals import URL_REGEX
 
 class ChatWidget(QWidget):
 
+    class _MessageLog(list):
+
+        def __init__(self, widget, *args):
+            list.__init__(self, args)
+            self.sort()
+            self.widget = widget
+
+        def sort(self):
+            list.sort(self, key=lambda i: i[0])
+
+        def addMessage(self, msg, ts):
+            list.append(self, (ts, msg))
+            self.sort()
+            self.update()
+
+        def update(self):
+            full_text = '<br>'.join(msg for ts, msg in self)
+            self.widget.chat_log.setText(full_text)
+
     def __init__(self, parent):
         QWidget.__init__(self, parent)
         self.tab = parent
@@ -18,9 +37,10 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.cleared = False
         self.url_regex = re.compile(URL_REGEX)
+        self.log = ChatWidget._MessageLog(self)
 
-        self.log = QTextBrowser()
-        self.log.setOpenExternalLinks(True)
+        self.chat_log = QTextBrowser()
+        self.chat_log.setOpenExternalLinks(True)
 
         self.input = QTextEdit()
         self.input.textChanged.connect(self.chatInputTextChanged)
@@ -44,7 +64,7 @@ class ChatWidget(QWidget):
         input_wrapper.setMinimumHeight(font_metrics.lineSpacing() * 3.7)
 
         splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.log)
+        splitter.addWidget(self.chat_log)
         splitter.addWidget(input_wrapper)
         splitter.setSizes([int(self.tab.height()), 1])
 

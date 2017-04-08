@@ -154,13 +154,17 @@ class Session(Notifier):
                 else:
                     data = message.data
 
-                self.getTab().new_message_signal.emit(data)
+                data, timestamp = utils.parseTimestampFromMessage(data)
+                data = data.format(utils.formatTimestamp(timestamp))
+
+                self.getTab().new_message_signal.emit(data, timestamp)
             elif message.command == COMMAND_CLIENT_MSG:
                 data = MSG_TEMPLATE.format('#000000',
                                            '',
                                            'server',
                                            message.data)
-                self.getTab().new_message_signal.emit(data)
+                self.getTab().new_message_signal.emit(data,
+                                                      utils.getTimestamp())
             else:
                 pass # unexpected command
 
