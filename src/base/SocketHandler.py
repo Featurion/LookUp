@@ -61,7 +61,7 @@ class SocketHandler(Notifier):
 
     def initiateHandshake(self):
         our_key = base64.b64encode(str(self.key_handler.getDHPubKey()).encode()) # Get our public key
-        self.send(our_key) # Send our public key
+        self.send(our_key) # send public key
 
         their_key = self.recv() # Receive the data from the server
         self.key_handler.computeDHSecret(int(base64.b64decode(their_key)))
@@ -137,6 +137,6 @@ class SocketHandler(Notifier):
                         return
                 return data
             except socket.error:
-                pass # Do nothing because the RequestManagers handle this themselves
+                pass # RequestManager handles this
         else:
             self.notify.warning(DEBUG_CONN_CLOSED)
