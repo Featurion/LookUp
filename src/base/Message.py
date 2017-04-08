@@ -1,3 +1,4 @@
+import base64
 import json
 from src.base.globals import SERVER_ID
 
@@ -48,7 +49,7 @@ class Message(object):
         return base64.b64decode(self.hmac)
 
     def setBinaryHmac(self, hmac):
-        self.hmac = base64.b64encode(self.hmac).decode()
+        self.hmac = base64.b64encode(hmac).decode()
 
     def getMessageNumAsBinaryString(self):
         return base64.b64decode(self.num)

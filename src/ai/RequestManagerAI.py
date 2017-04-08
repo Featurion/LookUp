@@ -178,13 +178,12 @@ class RequestManagerAI(Notifier):
                                 message.data = _cm.getClientNameById(message.data)
                             elif message.command == COMMAND_REQ_SESSION:
                                 _sm = self.ai.server.session_manager
-                                key, id_, members = json.loads(message.data)
-                                message.data = _sm.generateSession(key,
-                                                                   id_,
-                                                                   set(members))
+                                members = json.loads(message.data)
+                                message.data = _sm.generateSession(set(members))
                             else:
                                 message.data = ''
-                        except:
+                        except Exception as e:
+                            print(e)
                             message.data = ''
                         finally:
                             message.command = COMMAND_RELAY

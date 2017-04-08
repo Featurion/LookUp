@@ -22,12 +22,9 @@ class SessionManagerAI(Notifier):
                 return session
         return None
 
-    def generateSession(self, key, id_, members):
+    def generateSession(self, members):
         session_id = uuid.uuid4().hex
-        session_ai = SessionAI(self.server,
-                               session_id,
-                               key, id_,
-                               members)
+        session_ai = SessionAI(self.server, session_id, members)
         self.addSession(session_ai)
         return session_id
 

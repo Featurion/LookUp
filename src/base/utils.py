@@ -1,4 +1,5 @@
 import os
+import time
 from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
@@ -45,8 +46,8 @@ def secureStrCmp(left, right):
     if len(left) != len(right):
         equal = False
 
-    for i in range(0, min(len(left), len(right))):
-        if left[i] != right[i]:
+    for a, b in zip(left, right):
+        if a != b:
             equal = False
 
     return equal
