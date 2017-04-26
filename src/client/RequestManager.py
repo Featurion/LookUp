@@ -105,7 +105,6 @@ class RequestManager(Notifier):
         self.sending = False
 
     def _recv(self):
-        print(self.socket.connected)
         while self.socket and self.socket.connected:
             data = self.socket.recv()
             if data:
