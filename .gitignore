@@ -1,6 +1,9 @@
 # LookUp logs
 logs/
 
+# Crypto
+certs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
