@@ -20,7 +20,6 @@ class RequestManager(Notifier):
     def __init__(self, client):
         Notifier.__init__(self)
         self.client = client
-        self.socket = client.socket
         self.outbox = queue.Queue()
         self.send_handler = Thread(target=self._send, daemon=True)
         self.recv_handler = Thread(target=self._recv, daemon=True)
@@ -28,6 +27,7 @@ class RequestManager(Notifier):
         self.receiving = False
 
     def start(self):
+        self.socket = self.client.socket
         self.send_handler.start()
         self.sending = True
         self.recv_handler.start()
@@ -105,6 +105,7 @@ class RequestManager(Notifier):
         self.sending = False
 
     def _recv(self):
+        print(self.socket.connected)
         while self.socket and self.socket.connected:
             data = self.socket.recv()
             if data:

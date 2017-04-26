@@ -3,6 +3,7 @@ import os
 import signal
 import socket
 import sys
+import ssl
 from src.ai.ClientAI import ClientAI
 from src.ai.ClientManagerAI import ClientManagerAI
 from src.ai.SessionManagerAI import SessionManagerAI
@@ -58,12 +59,13 @@ class Server(Notifier):
         try:
             self.notify.info(DEBUG_SERVER_START)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.socket = ssl.wrap_socket(self.socket, keyfile='certs/ca.key', certfile='certs/ca.crt',
+                                          cert_reqs=ssl.CERT_NONE, ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                          ciphers='ECDH', do_handshake_on_connect=True)
             self.socket.bind((self.addr, self.port))
             self.socket.listen(0) # Refuse all unaccepted connections
         except:
             self.notify.critical(ERR_SERVER_START)
-            sys.exit()
 
     def sendMessage(self, message):
         client_ai = self.client_manager.getClientById(message.to_id)

@@ -1,4 +1,6 @@
 import sys
+import ssl
+import socket
 from threading import Thread
 import uuid
 from src.base.globals import SERVER_ID, COMMAND_REJECT
@@ -6,7 +8,7 @@ from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
 from src.base.globals import DEBUG_CLIENT_START, DEBUG_REJECT
 from src.base.globals import DEBUG_SYNC_WAIT, DEBUG_SYNC_DONE
 from src.base.globals import DEBUG_CLIENT_CONNECTED, DEBUG_CLIENT_DISCONNECTED
-from src.base.globals import ERR_SESSION_END
+from src.base.globals import ERR_SESSION_END, ERR_CLIENT_START
 from src.base.Message import Message
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
@@ -20,9 +22,11 @@ class Client(Notifier):
 
     def __init__(self, addr, port, name=None):
         Notifier.__init__(self)
+        self._addr = addr
+        self._port = port
         self.__name = name
         self._resp = None
-        self.socket = SocketHandler(addr, port)
+        self.socket = None
         self.__id = uuid.uuid4().hex
         self.request_manager = RequestManager(self)
         self.session_manager = SessionManager(self)
@@ -38,8 +42,9 @@ class Client(Notifier):
         self.__name = name
 
     def start(self):
+        self._connect()
         while True:
-            self.notify.info(DEBUG_CLIENT_START)
+            self.socket = SocketHandler(self._addr, self._port, self.socket)
             self.socket.connect()
             self.socket.initiateHandshake()
             if self.socket.handshake_done:
@@ -50,6 +55,14 @@ class Client(Notifier):
         self.session_manager.start()
         while not self.ui.running:
             self.ui.start()
+
+    def _connect(self):
+        try:
+            self.notify.info(DEBUG_CLIENT_START)
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = ssl.wrap_socket(self.socket, ssl_version=ssl.PROTOCOL_TLSv1_2, ciphers='ECDH')
+        except:
+            self.notify.critical(ERR_CLIENT_START)
 
     def register(self, name):
         assert isinstance(name, str)
