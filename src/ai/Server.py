@@ -61,7 +61,7 @@ class Server(Notifier):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket = ssl.wrap_socket(self.socket, server_side=True, keyfile='certs/ca.key', certfile='certs/ca.crt',
                                           cert_reqs=ssl.CERT_NONE, ssl_version=ssl.PROTOCOL_TLSv1_2,
-                                          ciphers='ECDHE', do_handshake_on_connect=True)
+                                          ciphers='ECDHE-RSA-AES256-GCM-SHA384', do_handshake_on_connect=True)
             self.socket.bind((self.addr, self.port))
             self.socket.listen(0) # Refuse all unaccepted connections
         except:

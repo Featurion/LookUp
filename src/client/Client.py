@@ -60,7 +60,7 @@ class Client(Notifier):
         try:
             self.notify.info(DEBUG_CLIENT_START)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket = ssl.wrap_socket(self.socket, ssl_version=ssl.PROTOCOL_TLSv1_2, ciphers='ECDH')
+            self.socket = ssl.wrap_socket(self.socket, ssl_version=ssl.PROTOCOL_TLSv1_2, ciphers='ECDHE-RSA-AES256-GCM-SHA384')
         except:
             self.notify.critical(ERR_CLIENT_START)
 
