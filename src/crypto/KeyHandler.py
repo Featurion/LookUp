@@ -1,6 +1,8 @@
 import os
+import hmac
+import hashlib
 from Crypto import Random
-from Crypto.Hash import HMAC, SHA256
+from Crypto.Hash import SHA256
 from Crypto.Cipher import AES
 from src.crypto import dh
 
@@ -41,7 +43,7 @@ class KeyHandler(object):
         return AES.new(self.aes_key, self.aes_mode, self.aes_iv)
 
     def generateHmac(self, message):
-        return HMAC.HMAC(self.aes_key, message).digest()
+        return hmac.new(self.aes_key, msg=message, digestmod=hashlib.sha256).digest()
 
     def generateHash(self, message):
         return SHA256.new(message).digest()
