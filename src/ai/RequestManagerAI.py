@@ -8,7 +8,7 @@ from src.base.globals import PROTOCOL_VERSION, SERVER_ID, INVALID_COMMAND
 from src.base.globals import COMMAND_END, COMMAND_REQ_ID, COMMAND_REQ_NAME
 from src.base.globals import COMMAND_REQ_SESSION, COMMAND_HELO, COMMAND_REDY
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_ERR
-from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
+from src.base.globals import COMMAND_RELAY, REQ_COMMANDS, SESSION_COMMANDS
 from src.base.globals import DEBUG_END, DEBUG_RECV_PROTOCOL_VERION
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_CLIENT_CONN_CLOSED
 from src.base.globals import DEBUG_DISCONNECT_WAIT
@@ -168,7 +168,7 @@ class RequestManagerAI(Notifier):
                         else:
                             self.ai.server.sendMessage(message)
                             self.notify.debug(DEBUG_END, message.to_id)
-                    elif message.command in RELAY_COMMANDS:
+                    elif message.command in REQ_COMMANDS:
                         try:
                             if message.command == COMMAND_REQ_ID:
                                 _cm = self.ai.server.client_manager
@@ -186,8 +186,8 @@ class RequestManagerAI(Notifier):
                             message.data = ''
                         finally:
                             message.command = COMMAND_RELAY
-                            message.from_id = SERVER_ID
-                            message.to_id = message.from_id
+                            message.from_id = message.to_id
+                            message.to_id = self.ai.getName()
                             self.sendMessage(message)
                     elif message.command in SESSION_COMMANDS:
                         _sm = self.ai.server.session_manager

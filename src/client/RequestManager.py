@@ -4,6 +4,7 @@ from threading import Event, Thread
 from src.base.globals import SERVER_ID, PROTOCOL_VERSION, CONN_CLOSED
 from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_END
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
+from src.base.globals import REQ_COMMANDS
 from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
 from src.base.globals import COMMAND_PUBKEY
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
@@ -91,7 +92,7 @@ class RequestManager(Notifier):
                     else:
                         self.client.closeSession(message.to_id)
                     self.notify.debug(DEBUG_END, message.to_id)
-                elif message.command in RELAY_COMMANDS + SESSION_COMMANDS:
+                elif message.command in RELAY_COMMANDS + REQ_COMMANDS + SESSION_COMMANDS:
                     self.socket.send(message.toJson())
                 else:
                     self.notify.warning(ERR_INVALID_SEND, message.to_id)
