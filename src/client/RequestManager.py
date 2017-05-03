@@ -6,7 +6,6 @@ from src.base.globals import COMMAND_VERSION, COMMAND_REGISTER, COMMAND_END
 from src.base.globals import COMMAND_RELAY, RELAY_COMMANDS, SESSION_COMMANDS
 from src.base.globals import REQ_COMMANDS
 from src.base.globals import COMMAND_HELO, COMMAND_REDY, COMMAND_REJECT
-from src.base.globals import COMMAND_PUBKEY
 from src.base.globals import DEBUG_SERVER_COMMAND, DEBUG_END, DEBUG_END_REQ
 from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_SERVER_CONN_CLOSED
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_HELO
