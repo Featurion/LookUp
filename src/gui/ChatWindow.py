@@ -52,30 +52,37 @@ class ChatWindow(QMainWindow):
         menu_icon = QIcon(utils.getResourcePath('images/menu.png'))
 
         new_chat_action = QAction(new_chat_icon, '&New chat', self)
+        new_group_chat_action = QAction(new_chat_icon, '&New group chat', self)
         auth_chat_action = QAction(new_chat_icon, '&Authenticate chat', self)
         exit_action = QAction(exit_icon, '&Exit', self)
 
         new_chat_action.triggered.connect(self.addNewTab)
+        new_group_chat_action.triggered.connect(self.addNewGroupTab)
         auth_chat_action.triggered.connect(self.__showAuthDialog)
         exit_action.triggered.connect(self.exit)
 
         new_chat_action.setShortcut('Ctrl+N')
+        new_group_chat_action.setShortcut('Ctrl+M')
         exit_action.setShortcut('Ctrl+Q')
 
         options_menu = QMenu()
         options_menu.addAction(new_chat_action)
+        options_menu.addAction(new_group_chat_action)
         options_menu.addAction(auth_chat_action)
         options_menu.addAction(exit_action)
 
         options_menu_button = QToolButton()
         new_chat_button = QToolButton()
+        new_group_chat_button = QToolButton()
         exit_button = QToolButton()
 
         new_chat_button.clicked.connect(self.addNewTab)
+        new_group_chat_button.clicked.connect(self.addNewGroupTab)
         exit_button.clicked.connect(self.exit)
 
         options_menu_button.setIcon(menu_icon)
         new_chat_button.setIcon(new_chat_icon)
+        new_group_chat_button.setIcon(new_chat_icon)
         exit_button.setIcon(exit_icon)
 
         options_menu_button.setMenu(options_menu)
@@ -84,6 +91,7 @@ class ChatWindow(QMainWindow):
         toolbar = QToolBar(self)
         toolbar.addWidget(options_menu_button)
         toolbar.addWidget(new_chat_button)
+        toolbar.addWidget(new_group_chat_button)
         toolbar.addWidget(exit_button)
 
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
@@ -94,6 +102,12 @@ class ChatWindow(QMainWindow):
         self.chat_tabs.setCurrentWidget(_nt)
         _nt.setFocus()
         return _nt
+
+    def addNewGroupTab(self):
+        _nt = ChatTab(self)
+        self.chat_tabs.addTab(_nt, "Group chat")
+        self.chat_tabs.setCurrentWidget(_nt)
+        _nt.setFocus()
 
     def closeTab(self, index):
         tab = self.chat_tabs.widget(index)
