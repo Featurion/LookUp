@@ -8,7 +8,7 @@ from src.base import utils
 from src.base.globals import URL_REGEX
 
 
-class ChatWidget(QWidget):
+class GroupChatWidget(QWidget):
 
     class _MessageLog(list):
 
@@ -37,7 +37,7 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.cleared = False
         self.url_regex = re.compile(URL_REGEX)
-        self.log = ChatWidget._MessageLog(self)
+        self.log = GroupChatWidget._MessageLog(self)
 
         self.chat_log = QTextBrowser()
         self.chat_log.setOpenExternalLinks(True)
@@ -76,8 +76,7 @@ class ChatWidget(QWidget):
         return self.tab
 
     def showNowChattingMessage(self):
-        self.log.addMessage("You are now securely chatting!", utils.getTimestamp())
-        self.log.addMessage("Your messages are end-to-end encrypted, and no one can eavesdrop on you!", utils.getTimestamp())
+        self.log.addMessage("This is a blank group chat. Click the 'Add' button to add someone to the conversation.", utils.getTimestamp())
 
     def send(self):
         if self.disabled:

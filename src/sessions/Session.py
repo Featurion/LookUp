@@ -127,7 +127,7 @@ class Session(Notifier):
                                   message.to_id)
             elif message.command == COMMAND_SYNC:
                 self.notify.debug(DEBUG_SYNC, self.getId())
-                
+
                 members, pending = json.loads(message.data)
                 _m = set(Session._Member(i, n) for i, n in members)
                 self.setMembers(_m)

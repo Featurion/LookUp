@@ -6,7 +6,6 @@ from src.base import utils
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 
-
 class ChatWindow(QMainWindow):
 
     new_client_signal = pyqtSignal(str, list, list)
@@ -104,10 +103,11 @@ class ChatWindow(QMainWindow):
         return _nt
 
     def addNewGroupTab(self):
-        _nt = ChatTab(self)
+        _nt = ChatTab(self, True)
         self.chat_tabs.addTab(_nt, "Group chat")
         self.chat_tabs.setCurrentWidget(_nt)
         _nt.setFocus()
+        _nt.showNowChattingMessage()
 
     def closeTab(self, index):
         tab = self.chat_tabs.widget(index)
@@ -142,7 +142,7 @@ class ChatWindow(QMainWindow):
             tab = self.client.ui.window.addNewTab(titled_names)
             tab.widget_stack.widget(1).setConnectingToName(titled_names)
             tab.widget_stack.setCurrentIndex(1)
-            # tab.showNowChattingMessage() - TODO: Zach
+            # tab.showNowChattingMessage() - TODO Zach: Threading error
             _sm.joinSession(tab, session_id, set(members[0]), titled_names)
         else:
             self.client.sendRejectMessage(session_id)

@@ -10,16 +10,17 @@ from src.base.globals import NAME_LENGTH
 from src.gui.MultipleInputWidget import MultipleInputWidget
 from src.gui.ConnectingWidget import ConnectingWidget
 from src.gui.ChatWidget import ChatWidget
-
+from src.gui.GroupChatWidget import GroupChatWidget
 
 class ChatTab(QWidget):
 
     new_message_signal = pyqtSignal(str, float)
 
-    def __init__(self, window):
+    def __init__(self, window, group=False):
         QWidget.__init__(self)
         self.window = window
         self.client = window.client
+        self.group = group
         self.__session = None
         self.unread = 0
 
@@ -28,9 +29,12 @@ class ChatTab(QWidget):
                                                 'images/new_chat.png', 150,
                                                 'Usernames:', 'LookUp',
                                                 self.connect, self.addInput)
-        self.chat_widget = ChatWidget(self)
-        self.widget_stack.addWidget(self.input_widget)
-        self.widget_stack.addWidget(ConnectingWidget(self))
+        if self.group:
+            self.chat_widget = GroupChatWidget(self)
+        else:
+            self.chat_widget = ChatWidget(self)
+            self.widget_stack.addWidget(self.input_widget)
+            self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(self.chat_widget)
         self.widget_stack.setCurrentIndex(0)
 
@@ -42,6 +46,9 @@ class ChatTab(QWidget):
         _layout = QHBoxLayout()
         _layout.addWidget(self.widget_stack)
         self.setLayout(_layout)
+
+    def showNowChattingMessage(self):
+        self.chat_widget.showNowChattingMessage()
 
     def getSession(self):
         return self.__session
