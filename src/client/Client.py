@@ -9,7 +9,7 @@ from src.base.globals import DEBUG_CLIENT_START, DEBUG_REJECT
 from src.base.globals import DEBUG_SYNC_WAIT, DEBUG_SYNC_DONE
 from src.base.globals import DEBUG_CLIENT_CONNECTED, DEBUG_CLIENT_DISCONNECTED
 from src.base.globals import ERR_SESSION_END, ERR_CLIENT_START
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
 from src.client.RequestManager import RequestManager
@@ -88,25 +88,35 @@ class Client(Notifier):
         self._resp = None
         return resp
 
-    def sendMessage(self, message):
-        self.request_manager.sendMessage(message)
+    def sendDatagram(self, datagram):
+        self.request_manager.sendDatagram(datagram)
 
-    def sendRejectMessage(self, id_):
+    def sendRejectDatagram(self, id_):
         self.notify.debug(DEBUG_REJECT, id_)
-        self.sendMessage(Message(COMMAND_REJECT,
-                                 self.getId(), id_,
-                                 self.getName()))
+
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_REJECT)
+        datagram.setFromId(self.getId())
+        datagram.setToId(id_)
+        datagram.addData(self.getName())
+        self.sendDatagram(datagram)
 
     def getClientIdByName(self, name):
-        self.sendMessage(Message(COMMAND_REQ_ID,
-                                 self.getId(), SERVER_ID,
-                                 name))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_REQ_ID)
+        datagram.setFromId(self.getId())
+        datagram.setToId(SERVER_ID)
+        datagram.addData(name)
+        self.sendDatagram(datagram)
         return self._waitForResp()
 
     def getClientNameById(self, id_):
-        self.sendMessage(Message(COMMAND_REQ_NAME,
-                                 self.getId(), SERVER_ID,
-                                 id_))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_REQ_NAME)
+        datagram.setFromId(self.getId())
+        datagram.setToId(SERVER_ID)
+        datagram.addData(id_)
+        self.sendDatagram(datagram)
         return self._waitForResp()
 
     def resp(self, data):

@@ -4,7 +4,7 @@ from src.base.globals import SERVER_ID, COMMAND_REQ_SESSION
 from src.base.globals import DEBUG_END, DEBUG_SESSION_START, DEBUG_SESSION_JOIN
 from src.base.globals import DEBUG_UNAVAILABLE
 from src.base.globals import DEBUG_CONNECTED_PRIVATE, DEBUG_CONNECTED_GROUP
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 from src.sessions.Session import Session
 
@@ -31,10 +31,14 @@ class SessionManager(Notifier):
         pass # TODO
 
     def _startSession(self, tab, members):
-        self.client.sendMessage(Message(COMMAND_REQ_SESSION,
-                                        self.client.getId(), SERVER_ID,
-                                        json.dumps(list(members),
-                                                   ensure_ascii=True)))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_REQ_SESSION)
+        datagram.setFromId(self.client.getId())
+        datagram.setToId(SERVER_ID)
+        datagram.addData(json.dumps(list(members),
+                                    ensure_ascii=True))
+        self.client.sendDatagram(datagram)
+
         id_ = self.client._waitForResp()
         session = Session(tab, id_, self.client, members)
         self.__sessions[id_] = session

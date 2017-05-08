@@ -145,7 +145,7 @@ class ChatWindow(QMainWindow):
             # tab.showNowChattingMessage() - TODO Zach: Threading error
             _sm.joinSession(tab, session_id, set(members[0]), titled_names)
         else:
-            self.client.sendRejectMessage(session_id)
+            self.client.sendRejectDatagram(session_id)
 
     def exit(self):
         self.close()

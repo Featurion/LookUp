@@ -8,7 +8,7 @@ from src.base.globals import COMMAND_REJECT, COMMAND_END, COMMAND_MSG, SERVER_ID
 from src.base.globals import MSG_TEMPLATE
 from src.base.globals import ERR_INVALID_HMAC, ERR_MESSAGE_REPLAY
 from src.base.globals import ERR_MESSAGE_DELETION, ERR_DECRYPT_FAILURE
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 from src.crypto.KeyHandler import KeyHandler
 
@@ -47,7 +47,7 @@ class SessionAI(Notifier):
         self.__members = set()
         self.__pending = set(members)
 
-        self.message_queue = queue.Queue()
+        self.datagram_queue = queue.Queue()
 
         self.receiver = Thread(target=self.__receiveMessages, daemon=True)
         self.receiver.start()
@@ -78,34 +78,38 @@ class SessionAI(Notifier):
 
     def __receiveMessages(self):
         while True:
-            message = self.message_queue.get()
-            if message.command == COMMAND_END:
-                self.emitMessage(message)
+            datagram = self.datagram_queue.get()
+            command = datagram.getCommand()
+            from_id = datagram.getFromId()
+            to_id = datagram.getToId()
+            data = datagram.getData()
+            if command == COMMAND_END:
+                self.emitDatagram(datagram)
                 return
-            elif message.command == COMMAND_HELO:
-                self.__memberJoined(message.from_id, json.loads(message.data))
+            elif command == COMMAND_HELO:
+                self.__memberJoined(from_id, json.loads(data))
 
                 _cm = self.server.client_manager
-                message.data = json.dumps([
-                    message.to_id,
-                    [
-                        message.from_id,
-                        _cm.getClientNameById(message.from_id)
-                    ],
-                    [
-                        list(self.getPendingMembers()),
-                        [_cm.getClientNameById(i) for i in self.getPendingMembers()]
-                    ]
-                ])
+                datagram.addData(json.dumps([
+                        to_id,
+                        [
+                            from_id,
+                            _cm.getClientNameById(from_id)
+                        ],
+                        [
+                            list(self.getPendingMembers()),
+                            [_cm.getClientNameById(i) for i in self.getPendingMembers()]
+                        ]
+                    ]))
                 for id_ in self.getPendingMembers():
-                    message.to_id = id_
-                    self.server.sendMessage(message)
-            elif message.command == COMMAND_REDY:
-                self.clientAccepted(message.from_id, message.data)
-            elif message.command == COMMAND_REJECT:
-                self.clientRejected(message.from_id)
-            elif message.command == COMMAND_MSG:
-                self.__transferEncryptedData(message)
+                    datagram.setToId(id_)
+                    self.server.sendDatagram(datagram)
+            elif command == COMMAND_REDY:
+                self.clientAccepted(from_id, data)
+            elif command == COMMAND_REJECT:
+                self.clientRejected(from_id)
+            elif command == COMMAND_MSG:
+                self.__transferEncryptedData(datagram)
             else:
                 pass # unexpected command
 
@@ -113,44 +117,51 @@ class SessionAI(Notifier):
         generated_hmac = self.key_handler.generateHmac(data)
         return utils.secureStrCmp(generated_hmac, hmac)
 
-    def __transferEncryptedData(self, message):
+    def __transferEncryptedData(self, datagram):
         _kh = self.key_handler
-        _kh.computeDHSecret(self.getMemberPubKey(message.from_id))
+        _kh.computeDHSecret(self.getMemberPubKey(datagram.getFromId()))
 
-        enc_data = message.getEncryptedDataAsBinaryString()
-        hmac = message.getHmacAsBinaryString()
+        enc_data = datagram.getData(True)
+        hmac = datagram.getHmac(True)
 
         if self.__verifyHmac(hmac, enc_data):
             try:
-                message.data = _kh.aesDecrypt(enc_data).decode()
-                self.emitMessage(message, self.__encryptForMember)
+                datagram.addData(_kh.aesDecrypt(enc_data).decode())
+                self.emitDatagram(datagram, self.__encryptForMember)
             except:
                 self.notify.error(ERR_DECRYPT_FAILURE)
         else:
             self.notify.error(ERR_INVALID_HMAC)
 
-    def __encryptForMember(self, id_, message):
+    def __encryptForMember(self, id_, datagram):
+        time = datagram.getTime()
+        data = datagram.getData()
+        from_id = datagram.getFromId()
+
         _cm = self.server.client_manager
         _kh = self.key_handler
         _kh.computeDHSecret(self.getMemberPubKey(id_))
 
-        if id_ == message.from_id:
+        if id_ == from_id:
             src_color = '#0000CC'
         else:
             src_color = '#CC0000'
 
         msg = MSG_TEMPLATE.format(src_color,
-                                  message.time,
-                                  _cm.getClientNameById(message.from_id),
-                                  message.data)
+                                  time,
+                                  _cm.getClientNameById(from_id),
+                                  data)
 
         enc_data = _kh.aesEncrypt(msg)
         hmac = _kh.generateHmac(enc_data)
 
-        message = Message(COMMAND_MSG, self.getId(), id_)
-        message.setEncryptedData(enc_data)
-        message.setBinaryHmac(hmac)
-        return message
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_MSG)
+        datagram.setFromId(self.getId())
+        datagram.setToId(id_)
+        datagram.addData(enc_data, True)
+        datagram.addHmac(hmac, True)
+        return datagram
 
     def __memberJoined(self, id_, key):
         _cm = self.server.client_manager
@@ -171,39 +182,42 @@ class SessionAI(Notifier):
         self.__pending.remove(id_)
         self.sync()
 
-    def emitMessage(self, message, modFunc=None, exclude=[]):
+    def emitDatagram(self, datagram, modFunc=None, exclude=[]):
         for id_ in self.getMemberIds():
             if id_ in exclude:
                 continue
             elif modFunc is not None:
-                self.server.sendMessage(modFunc(id_, message))
+                self.server.sendDatagram(modFunc(id_, datagram))
             else:
-                message.from_id = self.getId()
-                message.to_id = id_
-                self.server.sendMessage(message)
+                datagram.setFromId(self.getId())
+                datagram.setToId(id_)
+                self.server.sendDatagram(datagram)
 
     def sessionReady(self):
-        self.emitMessage(Message(COMMAND_REDY,
-                                 None,
-                                 None,
-                                 self.getPubKey()))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_REDY)
+        datagram.addData(self.getPubKey())
+        self.emitDatagram(datagram)
 
     def sync(self):
         _cm = self.server.client_manager
-        self.emitMessage(Message(COMMAND_SYNC,
-                                 None,
-                                 None,
-                                 json.dumps([list(zip(self.getMemberIds(),
-                                                      self.getMemberNames())),
-                                             list(self.getPendingMembers())])))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_SYNC)
+        datagram.addData(json.dumps([list(zip(self.getMemberIds(),
+                                              self.getMemberNames())),
+                                     list(self.getPendingMembers())]))
+        self.emitDatagram(datagram)
 
         if (len(self.getMembers()) > 1) and not self.getPendingMembers():
             self.sessionReady()
         elif self.getPendingMembers():
             pass # still pending
         else:
-            self.postMessage(Message(COMMAND_END, self.getId(), None))
+            datagram = Datagram()
+            datagram.setCommand(COMMAND_END)
+            datagram.setFromId(self.getId())
+            self.postDatagram(datagram)
             self.server.session_manager.removeSession(self)
 
-    def postMessage(self, message):
-        self.message_queue.put(message)
+    def postDatagram(self, datagram):
+        self.datagram_queue.put(datagram)

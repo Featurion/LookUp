@@ -11,7 +11,7 @@ from src.base.globals import DEBUG_DISCONNECT_WAIT, DEBUG_SERVER_CONN_CLOSED
 from src.base.globals import DEBUG_SEND_STOP, DEBUG_RECV_STOP, DEBUG_HELO
 from src.base.globals import ERR_INVALID_SEND, ERR_INVALID_RECV, ERR_SEND
 from src.base.globals import NetworkError
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 
 
@@ -61,14 +61,20 @@ class RequestManager(Notifier):
         self.recv_handler = None
         self.notify.debug(DEBUG_RECV_STOP)
 
-    def sendMessage(self, message):
-        assert isinstance(message, Message)
-        self.outbox.put(message)
+    def sendDatagram(self, datagram):
+        assert isinstance(datagram, Datagram)
+        self.outbox.put(datagram)
 
     def __sendServerCommand(self, command, data=None):
         self.notify.debug(DEBUG_SERVER_COMMAND, command)
-        message = Message(command, self.client.getId(), SERVER_ID, data)
-        self.sendMessage(message)
+
+        datagram = Datagram()
+        datagram.setCommand(command)
+        datagram.setFromId(self.client.getId())
+        datagram.setToId(SERVER_ID)
+        datagram.addData(data)
+
+        self.sendDatagram(datagram)
 
     def sendProtocolVersion(self):
         self.__sendServerCommand(COMMAND_VERSION, PROTOCOL_VERSION)
@@ -79,25 +85,28 @@ class RequestManager(Notifier):
     def _send(self):
         while self.socket and self.socket.connected:
             try:
-                message = self.outbox.get(timeout=1)
+                datagram = self.outbox.get(timeout=1)
+                command = datagram.getCommand()
+                from_id = datagram.getFromId()
+                to_id = datagram.getToId()
             except:
-                continue # no messages pending
+                continue # no datagrams pending
             try:
-                if message.command == COMMAND_END:
-                    if message.to_id == SERVER_ID:
-                        self.socket.send(message.toJson())
+                if command == COMMAND_END:
+                    if to_id == SERVER_ID:
+                        self.socket.send(datagram.toJson())
                         self.__stop()
                         break
                     else:
-                        self.client.closeSession(message.to_id)
-                    self.notify.debug(DEBUG_END, message.to_id)
-                elif message.command in RELAY_COMMANDS + REQ_COMMANDS + SESSION_COMMANDS:
-                    self.socket.send(message.toJson())
+                        self.client.closeSession(to_id)
+                    self.notify.debug(DEBUG_END, to_id)
+                elif command in RELAY_COMMANDS + REQ_COMMANDS + SESSION_COMMANDS:
+                    self.socket.send(datagram.toJson())
                 else:
-                    self.notify.warning(ERR_INVALID_SEND, message.to_id)
+                    self.notify.warning(ERR_INVALID_SEND, to_id)
             except NetworkError as e:
                 if e.err != CONN_CLOSED:
-                    self.notify.error(ERR_SEND, message.to_id, message.from_id)
+                    self.notify.error(ERR_SEND, to_id, from_id)
                 self.__stop()
                 break
             finally:
@@ -108,19 +117,23 @@ class RequestManager(Notifier):
         while self.socket and self.socket.connected:
             data = self.socket.recv()
             if data:
-                message = Message.fromJson(data)
-                if message.command == COMMAND_RELAY:
-                    self.client.resp(message.data)
-                elif message.command == COMMAND_END:
-                    if message.from_id == SERVER_ID:
+                datagram = Datagram.fromJson(data)
+                command = datagram.getCommand()
+                data = datagram.getData()
+                from_id = datagram.getFromId()
+                to_id = datagram.getToId()
+                if command == COMMAND_RELAY:
+                    self.client.resp(data)
+                elif command == COMMAND_END:
+                    if from_id == SERVER_ID:
                         self.__stop()
                         break
                     else:
-                        self.notify.debug(DEBUG_END_REQ, message.from_id)
-                        self.client.closeSession(message.from_id)
-                elif message.command in SESSION_COMMANDS:
-                    if message.command == COMMAND_HELO:
-                        id_, owner, members = json.loads(message.data)
+                        self.notify.debug(DEBUG_END_REQ, from_id)
+                        self.client.closeSession(from_id)
+                elif command in SESSION_COMMANDS:
+                    if command == COMMAND_HELO:
+                        id_, owner, members = json.loads(data)
                         self.notify.debug(DEBUG_HELO, owner[1])
                         members[0].remove(self.client.getId())
                         members[1].remove(self.client.getName())
@@ -128,10 +141,10 @@ class RequestManager(Notifier):
                         window.new_client_signal.emit(id_, owner, members)
                     else:
                         _sm = self.client.session_manager
-                        session = _sm.getSessionById(message.from_id)
-                        session.postMessage(message)
+                        session = _sm.getSessionById(from_id)
+                        session.postDatagram(datagram)
                 else:
-                    self.notify.error(ERR_INVALID_RECV, message.from_id)
+                    self.notify.error(ERR_INVALID_RECV, from_id)
                     break
             else: # The server closed the connection unexpectedly (this shouldn't happen)
                 # TODO Zach: UI error callback here

@@ -11,7 +11,7 @@ from src.base.globals import DEBUG_CLIENT_CONN
 from src.base.globals import ERR_BAD_HANDSHAKE, ERR_MESSAGE_REPLAY
 from src.base.globals import ERR_MESSAGE_DELETION, ERR_DECRYPT_FAILURE
 from src.base.globals import ERR_INVALID_HMAC
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 from src.crypto.KeyHandler import KeyHandler
 
@@ -47,7 +47,7 @@ class Session(Notifier):
                                           self.client.getName())}
         self.__pending = set(members)
 
-        self.message_queue = queue.Queue()
+        self.datagram_queue = queue.Queue()
         self.encrypted = False
 
         self.receiver = Thread(target=self.__receiveMessages, daemon=True)
@@ -99,11 +99,11 @@ class Session(Notifier):
         self.encrypted = encrypted
 
     def start(self):
-        self.sendMessage(COMMAND_HELO, str(self.getPubKey()))
+        self.sendDatagram(COMMAND_HELO, str(self.getPubKey()))
         self.receiver.start()
 
     def join(self):
-        self.sendMessage(COMMAND_REDY, str(self.getPubKey()))
+        self.sendDatagram(COMMAND_REDY, str(self.getPubKey()))
         self.receiver.start()
 
     def stop(self): # TODO
@@ -111,24 +111,28 @@ class Session(Notifier):
 
     def __receiveMessages(self):
         while True:
-            message = self.message_queue.get()
-            if message.command == COMMAND_END:
-                self.message_queue.task_done()
+            datagram = self.datagram_queue.get()
+            data = datagram.getData()
+            command = datagram.getCommand()
+            from_id = datagram.getFromId()
+            to_id = datagram.getToId()
+            if command == COMMAND_END:
+                self.datagram_queue.task_done()
                 return # TODO
-            elif message.command == COMMAND_REDY:
-                self.notify.debug(DEBUG_REDY, message.from_id)
-                self.setAltPubKey(int(message.data))
+            elif command == COMMAND_REDY:
+                self.notify.debug(DEBUG_REDY, from_id)
+                self.setAltPubKey(int(data))
                 self.setEncrypted(True)
                 self.getTab().widget_stack.setCurrentIndex(2)
                 self.__notifyReady()
-            elif message.command == COMMAND_REJECT:
+            elif command == COMMAND_REJECT:
                 self.notify.debug(DEBUG_CLIENT_REJECT,
-                                  message.data,
-                                  message.to_id)
-            elif message.command == COMMAND_SYNC:
+                                  data,
+                                  to_id)
+            elif command == COMMAND_SYNC:
                 self.notify.debug(DEBUG_SYNC, self.getId())
 
-                members, pending = json.loads(message.data)
+                members, pending = json.loads(data)
                 _m = set(Session._Member(i, n) for i, n in members)
                 self.setMembers(_m)
 
@@ -145,25 +149,25 @@ class Session(Notifier):
                                           id_,
                                           self.getId())
                     else:
-                        self.notify.error(ERR_BAD_HANDSHAKE, message.data)
+                        self.notify.error(ERR_BAD_HANDSHAKE, data)
                         return
                 self.setPendingMembers(set(pending))
-            elif message.command == COMMAND_MSG:
+            elif command == COMMAND_MSG:
                 if self.getEncrypted():
-                    data = self.__getDecryptedData(message)
+                    new_data = self.__getDecryptedData(datagram)
                 else:
-                    data = message.data
+                    new_data = data
 
-                data, timestamp = utils.parseTimestampFromMessage(data)
-                data = data.format(utils.formatTimestamp(timestamp))
+                new_data, timestamp = utils.parseTimestampFromMessage(new_data)
+                new_data = new_data.format(utils.formatTimestamp(timestamp))
 
-                self.getTab().new_message_signal.emit(data, timestamp)
-            elif message.command == COMMAND_CLIENT_MSG:
-                data = MSG_TEMPLATE.format('#000000',
-                                           '',
-                                           'server',
-                                           message.data)
-                self.getTab().new_message_signal.emit(data,
+                self.getTab().new_message_signal.emit(new_data, timestamp)
+            elif command == COMMAND_CLIENT_MSG:
+                new_data = MSG_TEMPLATE.format('#000000',
+                                               '',
+                                               'server',
+                                               data)
+                self.getTab().new_message_signal.emit(new_data,
                                                       utils.getTimestamp())
             else:
                 pass # unexpected command
@@ -173,21 +177,23 @@ class Session(Notifier):
             if name == self.client.getName():
                 continue
             else:
-                self.message_queue.put(Message(COMMAND_CLIENT_MSG,
-                                               self.getId(),
-                                               self.client.getId(),
-                                               CLIENT_JOINED.format(name)))
+                datagram = Datagram()
+                datagram.setCommand(COMMAND_CLIENT_MSG)
+                datagram.setFromId(self.getId())
+                datagram.setToId(self.client.getId())
+                datagram.addData(CLIENT_JOINED.format(name))
+                self.datagram_queue.put(datagram)
 
     def __verifyHmac(self, hmac, data):
         generated_hmac = self.key_handler.generateHmac(data)
         return utils.secureStrCmp(generated_hmac, hmac)
 
-    def __getDecryptedData(self, message):
+    def __getDecryptedData(self, datagram):
         _kh = self.key_handler
         _kh.computeDHSecret(self.getAltPubKey())
 
-        enc_data = message.getEncryptedDataAsBinaryString()
-        hmac = message.getHmacAsBinaryString()
+        enc_data = datagram.getData(True)
+        hmac = datagram.getHmac(True)
 
         if self.__verifyHmac(hmac, enc_data):
             try:
@@ -197,8 +203,11 @@ class Session(Notifier):
         else:
             self.notify.error(ERR_INVALID_HMAC)
 
-    def sendMessage(self, command, data=None):
-        message = Message(command, self.client.getId(), self.getId())
+    def sendDatagram(self, command, data=None):
+        datagram = Datagram()
+        datagram.setCommand(command)
+        datagram.setFromId(self.client.getId())
+        datagram.setToId(self.getId())
 
         if (data is not None) and self.getEncrypted():
             _kh = self.key_handler
@@ -207,17 +216,17 @@ class Session(Notifier):
             enc_data = _kh.aesEncrypt(data)
             hmac = _kh.generateHmac(enc_data)
 
-            message.setEncryptedData(enc_data)
-            message.setBinaryHmac(hmac)
+            datagram.addData(enc_data, True)
+            datagram.addHmac(hmac, True)
         elif data is not None:
-            message.data = data
+            datagram.addData(data)
         else:
             return
 
-        self.client.sendMessage(message)
+        self.client.sendDatagram(datagram)
 
     def sendChatMessage(self, data):
-        self.sendMessage(COMMAND_MSG, data)
+        self.sendDatagram(COMMAND_MSG, data)
 
-    def postMessage(self, message):
-        self.message_queue.put(message)
+    def postDatagram(self, datagram):
+        self.datagram_queue.put(datagram)

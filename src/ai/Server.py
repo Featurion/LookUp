@@ -67,12 +67,12 @@ class Server(Notifier):
         except:
             self.notify.critical(ERR_SERVER_START)
 
-    def sendMessage(self, message):
-        client_ai = self.client_manager.getClientById(message.to_id)
+    def sendDatagram(self, datagram):
+        client_ai = self.client_manager.getClientById(datagram.getToId())
         if client_ai:
-            client_ai.sendMessage(message)
+            client_ai.sendDatagram(datagram)
         else:
-            self.notify.error(ERR_INVALID_CLIENT, message.to_id)
+            self.notify.error(ERR_INVALID_CLIENT, datagram.getToId())
 
     def stop(self):
         if self.client_manager:

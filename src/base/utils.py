@@ -5,10 +5,8 @@ from PyQt5.QtWidgets import QDesktopWidget
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
-
 def isLightTheme():
     return False
-
 
 def isNameInvalid(name):
     if not name:
@@ -20,10 +18,8 @@ def isNameInvalid(name):
     else:
         return VALID_NAME
 
-
 def getTimestamp():
     return datetime.datetime.now().timestamp()
-
 
 def parseTimestampFromMessage(msg):
     ts = re.search('\d+\.\d+', msg).group()
@@ -31,10 +27,8 @@ def parseTimestampFromMessage(msg):
     msg = re.sub(str(ts), '({0})', msg)
     return (msg, ts)
 
-
 def formatTimestamp(ts):
     return datetime.datetime.fromtimestamp(float(ts)).strftime('%H:%M:%S')
-
 
 def getResourcePath(relative_path):
     try:
@@ -55,7 +49,6 @@ def getResourcePath(relative_path):
     else:
         return path
 
-
 def secureStrCmp(left, right):
     equal = True
 
@@ -68,21 +61,17 @@ def secureStrCmp(left, right):
 
     return equal
 
-
 def centerWindow(window):
     centerPoint = QDesktopWidget().availableGeometry().center()
     geo = window.frameGeometry()
     geo.moveCenter(centerPoint)
     window.move(geo.topLeft())
 
-
 def resizeWindow(window, width, height):
     window.setGeometry(0, 0, width, height)
 
-
 def showDesktopNotification(tray_icon, title, message):
     tray_icon.showMessage(title, message)
-
 
 def oxford_comma(list_of_strings):
     len_ = len(list_of_strings)

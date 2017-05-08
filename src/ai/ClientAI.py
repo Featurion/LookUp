@@ -48,8 +48,8 @@ class ClientAI(Notifier):
         self.server.client_manager.addClient(self) # Track client
         self.monitored = True
 
-    def sendMessage(self, message):
-        self.request_manager.sendMessage(message)
+    def sendDatagram(self, message):
+        self.request_manager.sendDatagram(message)
 
     def getIdByName(self, name):
         return self.server.client_manager.getClientIdByName(name)

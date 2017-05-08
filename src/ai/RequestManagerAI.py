@@ -15,7 +15,7 @@ from src.base.globals import DEBUG_DISCONNECT_WAIT
 from src.base.globals import ERR_SEND, ERR_RECV, ERR_MISSING_FIELD, RECV_ERROR
 from src.base.globals import ERR_CLIENT_UNREGISTERED
 from src.base.globals import NetworkError
-from src.base.Message import Message
+from src.base.Datagram import Datagram
 from src.base.Notifier import Notifier
 from src.base.SocketHandler import SocketHandler
 
@@ -69,80 +69,95 @@ class RequestManagerAI(Notifier):
         self.recv_handler = None
         self.notify.debug(DEBUG_RECV_STOP)
 
-    def sendMessage(self, message):
-        self.outbox.put(message)
+    def sendDatagram(self, datagram):
+        self.outbox.put(datagram)
 
     def __receiveProtocolVersion(self):
         try:
             data = self.socket.recv()
             if data:
-                message = Message.fromJson(data)
+                datagram = Datagram.fromJson(data)
+                data = datagram.getData()
+                command = datagram.getCommand()
+                from_id = datagram.getFromId()
             else:
                 self.receiving = False
                 self.__stop()
                 return
         except KeyError:
-            self.__handleError(MALFORMED_MESSAGE, ERR_MISSING_FIELD)
+            self.__handleError(MALFORMED_DATAGRAM, ERR_MISSING_FIELD)
             return
-        if message.command != COMMAND_VERSION:
+        if command != COMMAND_VERSION:
             self.__handleError(INVALID_COMMAND,
                                ERR_EXPECTED_VERSION,
-                               message.command,
+                               command,
                                COMMAND_VERSION)
             return
-        elif message.data != PROTOCOL_VERSION:
+        elif data != PROTOCOL_VERSION:
             self.__handleError(PROTOCOL_VERSION_MISMATCH, ERR_PROTOCOL_MISMATCH)
             return
         else:
-            self.notify.debug(DEBUG_RECV_PROTOCOL_VERION, message.from_id)
+            self.notify.debug(DEBUG_RECV_PROTOCOL_VERION, from_id)
 
     def __receiveName(self):
         try:
             data = self.socket.recv()
             if data:
-                message = Message.fromJson(data)
+                datagram = Datagram.fromJson(data)
+                command = datagram.getCommand()
+                data = datagram.getData()
+                from_id = datagram.getFromId()
             else:
                 self.receiving = False
                 self.__stop()
                 return
         except KeyError:
-            self.__handleError(MALFORMED_MESSAGE, ERR_MISSING_FIELD)
+            self.__handleError(MALFORMED_DATAGRAM, ERR_MISSING_FIELD)
             return
-        if message.command != COMMAND_REGISTER:
+        if command != COMMAND_REGISTER:
             self.__handleError(INVALID_COMMAND,
                                ERR_CLIENT_UNREGISTERED,
-                               message.from_id)
+                               from_id)
             return
-        elif utils.isNameInvalid(message.data):
+        elif utils.isNameInvalid(data):
             self.__handleError(INVALID_NAME,
                                ERR_INVALID_NAME,
-                               message.from_id)
+                               from_id)
             return
         else:
             _cm = self.ai.server.client_manager
-            _msg = Message(COMMAND_RELAY, SERVER_ID, message.from_id)
-            if not _cm.getClientIdByName(message.data):
-                self.ai.register(message.from_id, message.data)
+
+            _dg = Datagram()
+            _dg.setCommand(COMMAND_RELAY)
+            _dg.setToId(datagram.getFromId())
+            _dg.setFromId(SERVER_ID)
+            if not _cm.getClientIdByName(data):
+                self.ai.register(from_id, data)
             else:
-                _msg.data = None
-            self.sendMessage(_msg)
+                _dg.setData(None)
+            self.sendDatagram(_dg)
 
     def __handleError(self, code, msg, *args):
-        self.sendMessage(Message(COMMAND_ERR, err=code))
+        datagram = Datagram()
+        datagram.setCommand(COMMAND_ERR)
+        datagram.setErr(code)
+        self.sendDatagram(datagram)
         self.notify.error(msg, *args)
         self.__stop()
 
     def _send(self):
         while self.socket and self.socket.connected:
             try:
-                message = self.outbox.get(timeout=1)
+                datagram = self.outbox.get(timeout=1)
+                from_id = datagram.getFromId()
+                to_id = datagram.getToId()
             except queue.Empty:
-                continue # no messages pending
+                continue # no datagrams pending
             try:
-                self.socket.send(message.toJson())
+                self.socket.send(datagram.toJson())
             except Exception as e:
-                if message.to_id != message.from_id:
-                    self.notify.error(ERR_SEND, message.to_id, message.from_id)
+                if to_id != from_id:
+                    self.notify.error(ERR_SEND, to_id, from_id)
                 break
             finally:
                 self.outbox.task_done()
@@ -156,47 +171,53 @@ class RequestManagerAI(Notifier):
                 data = self.socket.recv()
                 if data:
                     try:
-                        message = Message.fromJson(data)
+                        datagram = Datagram.fromJson(data)
+                        command = datagram.getCommand()
+                        data = datagram.getData()
+                        from_id = datagram.getFromId()
+                        to_id = datagram.getToId()
                     except KeyError:
-                        self.__handleError(MALFORMED_MESSAGE, ERR_MISSING_FIELD)
+                        self.__handleError(MALFORMED_DATAGRAM, ERR_MISSING_FIELD)
                         break
-                    if message.command == COMMAND_END:
-                        if message.to_id == SERVER_ID:
+                    if command == COMMAND_END:
+                        if to_id == SERVER_ID:
                             self.receiving = False
                             self.__stop()
                             return
                         else:
-                            self.ai.server.sendMessage(message)
-                            self.notify.debug(DEBUG_END, message.to_id)
-                    elif message.command in REQ_COMMANDS:
+                            self.ai.server.sendDatagram(datagram)
+                            self.notify.debug(DEBUG_END, to_id)
+                    elif command in REQ_COMMANDS:
                         try:
-                            if message.command == COMMAND_REQ_ID:
+                            if command == COMMAND_REQ_ID:
                                 _cm = self.ai.server.client_manager
-                                message.data = _cm.getClientIdByName(message.data)
-                            elif message.command == COMMAND_REQ_NAME:
+                                data = _cm.getClientIdByName(data)
+                            elif command == COMMAND_REQ_NAME:
                                 _cm = self.ai.server.client_manager
-                                message.data = _cm.getClientNameById(message.data)
-                            elif message.command == COMMAND_REQ_SESSION:
+                                data = _cm.getClientNameById(data)
+                            elif command == COMMAND_REQ_SESSION:
                                 _sm = self.ai.server.session_manager
-                                members = json.loads(message.data)
-                                message.data = _sm.generateSession(set(members))
+                                members = json.loads(data)
+                                data = _sm.generateSession(set(members))
                             else:
-                                message.data = ''
+                                data = ''
                         except:
-                            message.data = ''
+                            data = ''
                         finally:
-                            message.command = COMMAND_RELAY
-                            message.from_id = message.to_id
-                            message.to_id = self.ai.getName()
-                            self.sendMessage(message)
-                    elif message.command in SESSION_COMMANDS:
+                            _dg = Datagram()
+                            _dg.setCommand(COMMAND_RELAY)
+                            _dg.setFromId(to_id)
+                            _dg.setToId(self.ai.getName())
+                            _dg.addData(data)
+                            self.sendDatagram(_dg)
+                    elif command in SESSION_COMMANDS:
                         _sm = self.ai.server.session_manager
-                        session = _sm.getSessionById(message.to_id)
-                        session.postMessage(message)
+                        session = _sm.getSessionById(to_id)
+                        session.postDatagram(datagram)
                     else:
                         self.__handleError(INVALID_COMMAND,
                                            ERR_INVALID_COMMAND,
-                                           message.from_id)
+                                           from_id)
                         break
                 else: # client closed connection unexpectedly
                     self.notify.debug(DEBUG_CLIENT_CONN_CLOSED)
