@@ -35,9 +35,6 @@ DEF_P = int('0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67'
 
 class KeyHandler(Notifier):
 
-    def __init__(self):
-        Notifier.__init__(self)
-
     @staticmethod
     def _pad(bytes_, bs):
         return bytes_ + (bs - len(bytes_) % bs) * bytes([bs - len(bytes_) % bs])
@@ -66,6 +63,7 @@ class KeyHandler(Notifier):
         return num
 
     def __init__(self):
+        Notifier.__init__(self)
         self.aes_mode = AES.MODE_CBC
         self.aes_key = None
         self.aes_iv = None

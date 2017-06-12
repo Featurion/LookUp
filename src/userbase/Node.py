@@ -11,17 +11,16 @@ class Node(NodeBase):
         """Begin managing node requests"""
         NodeBase.start(self)
         self.doHandshake()
-        # log: 'secured connection to server'
+        self.notify.info('secured connection to server')
 
     def stop(self):
         if NodeBase.stop(self):
-            # log: DEBUG, 'done'
-            pass
+            self.notify.debug('stopped client')
         else:
             self.terminate()
 
     def terminate(self):
-        # log: INFO, 'force quitting'
+        self.notify.info('failed to quit, force quitting')
         os.kill(os.getpid(), 9)
 
     def _send(self):

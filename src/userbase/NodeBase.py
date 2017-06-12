@@ -9,7 +9,6 @@ from src.base.globals import CMD_INIT, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
 from src.base.Datagram import Datagram
 from src.base.KeyHandler import KeyHandler
 
-
 class NodeBase(KeyHandler):
 
     def __init__(self, address, port, socket_, id_=None):
@@ -27,7 +26,7 @@ class NodeBase(KeyHandler):
         self.__setId(id_)
         self.__setupThreads()
 
-    def __setupSocket(self, socket_):
+    def __setupSocket(self, socket_): # This should not be in the base class
         try:
             if socket_:
                 self.__socket = socket_
@@ -36,12 +35,11 @@ class NodeBase(KeyHandler):
                                               socket.SOCK_STREAM)
                 self.__socket.connect((self.__address, self.__port))
             self.__socket.settimeout(10)
-            # log: INFO, 'connected to server'
+            self.notify.info('connected to server')
         except ConnectionRefusedError:
-            # err: INFO, 'could not connect to server'
-            pass
+            self.notify.error('ConnectionError', 'could not connect to server')
         except Exception as e:
-            # err
+            self.notify.error('ConnectionError', str(e))
             self.stop()
 
     def __setupThreads(self):
@@ -70,8 +68,7 @@ class NodeBase(KeyHandler):
         if self.__id is None:
             self.__id = id_
         else:
-            # log: DEBUG, 'suspicious attempt to change ID'
-            pass
+            self.notify.critical('suspicious attempt to change ID')
 
     def getName(self):
         """Getter for name"""
@@ -81,8 +78,7 @@ class NodeBase(KeyHandler):
         if self.__name is None:
             self.__name = name
         else:
-            # log: DEBUG, 'suspicious attempt to change name'
-            pass
+            self.notify.critical('suspicious attempt to change name')
 
     def getMode(self):
         """Getter for mode"""
@@ -92,8 +88,7 @@ class NodeBase(KeyHandler):
         if self.__mode is None:
             self.__mode = mode
         else:
-            # log: DEBUG, 'suspicious attempt to change mode'
-            pass
+            self.notify.critical('suspicious attempt to change mode')
 
     def getSuccess(self):
         return (self.getSendingSuccess() and self.getReceivingSuccess())
@@ -125,8 +120,7 @@ class NodeBase(KeyHandler):
             self.__sender.start()
             self.__receiver.start()
         except Exception as e:
-            # err
-            pass
+            self.notify.error('ConnectionError', str(e))
 
     def stop(self):
         try:
@@ -134,17 +128,15 @@ class NodeBase(KeyHandler):
                 self.__socket.shutdown(socket.SHUT_RDWR)
                 self.__socket = None
             else:
-                # err: 'an error occured while exiting'
+                self.notify.error('ExitError', 'an error occurred while exiting')
                 self.__socket = None
                 return False
         except AttributeError:
-            # err: 'socket does not exist'
-            pass
+            self.notify.critical('socket already closed')
         except OSError:
-            # err: 'server closed the connection'
-            pass
+            self.notify.critical('ConnectionError', 'server closed the connection') # TODO: Go back to login, rather than terminating the client
         except Exception as e:
-            # err
+            self.notify.error('ExitError', str(e))
             return False
 
         return True
@@ -153,6 +145,7 @@ class NodeBase(KeyHandler):
         while self.__running:
             try:
                 data = self._send()
+                # TODO: Learn to remove your prints before pushing:
                 print()
                 print('SEND')
                 print(data)
@@ -163,11 +156,9 @@ class NodeBase(KeyHandler):
             except queue.Empty:
                 continue
             except ValueError:
-                # err: 'tried sending invalid message'
-                pass
+                self.notify.error('NetworkError', 'tried sending invalid datagram over socket')
             except Exception as e:
-                # err
-                pass
+                self.notify.error('NetworkError', str(e))
 
             self.setSendingSuccess(False)
             return
@@ -187,13 +178,13 @@ class NodeBase(KeyHandler):
             try:
                 size -= self.__socket.send(data[:size])
             except AttributeError:
-                # log: DEBUG, 'socket does not exist'
+                self.notify.error('NetworkError', 'socket does not exist')
                 return
             except OSError:
-                # log: DEBUG, 'error sending data'
+                self.notify.error('NetworkError', 'error sending data')
                 return
             except Exception as e:
-                # err
+                self.notify.error('NetworkError', str(e))
                 return
 
     def recv(self):
@@ -207,6 +198,7 @@ class NodeBase(KeyHandler):
                     secure = True
                 else:
                     data = self.decrypt(data)
+                    # TODO: Learn to remove your prints before pushing:
                     print()
                     print('RECV')
                     print(data)
@@ -214,16 +206,12 @@ class NodeBase(KeyHandler):
                     self._recv(data)
                 continue
             except InterruptedError:
-                # log: DEBUG, 'server disconnected the client'
                 # kill in main thread
-                pass
+                self.notify.error('ConnectionError', 'server disconnected the client')
             except ValueError as e:
-                # err
-                # log: DEBUG, 'received invalid message'
-                pass
+                self.notify.error('NetworkError', 'received invalid message')
             except Exception as e:
-                # err
-                pass
+                self.notify.error('NetworkError', str(e))
 
             self.setReceivingSuccess(False)
             return
@@ -239,12 +227,11 @@ class NodeBase(KeyHandler):
             size = socket.ntohl(struct.unpack('I', size_indicator)[0])
             data = self.__recvFromSocket(size)
             return data
-        except struct.error as e:
-            # log: DEBUG, 'connection was closed unexpectedly'
+        except struct.error as e: # TODO: Go back to login
+            self.notify.error('ConnectionError', 'connection was closed unexpectedly')
             self.stop()
         except Exception as e:
-            # err
-            pass
+            self.notify.error('NetworkError', str(e))
 
     def __recvFromSocket(self, size):
         data = b''
@@ -257,16 +244,16 @@ class NodeBase(KeyHandler):
                 else:
                     raise OSError()
             except AttributeError:
-                # log: DEBUG, 'socket does not exist'
+                self.notify.error('NetworkError', 'socket does not exist')
                 return b''
             except OSError as e:
                 if str(e) == 'timed out':
                     continue
                 else:
-                    # log: DEBUG, 'error receiving data'
+                    self.notify.error('NetworkError', 'error receiving data')
                     return b''
             except Exception as e:
-                # err
+                self.notify.error('NetworkError', str(e))
                 return b''
 
         return data
@@ -305,7 +292,8 @@ class NodeBase(KeyHandler):
         data = datagram.toJSON()
         data = base64.b85encode(str(data).encode())
         self.__send(data)
-        # log: DEBUG, 'sent key'
+
+        self.notify.debug('sent public key')
 
     def __receiveKey(self):
         data = self.getResp()
@@ -314,7 +302,8 @@ class NodeBase(KeyHandler):
         datagram = Datagram.fromJSON(data)
         key = datagram.getData()
         self.generateSecret(key)
-        # log: DEBUG, 'received key'
+
+        self.notify.debug('received public key')
 
         return datagram
 
@@ -333,16 +322,14 @@ class NodeBase(KeyHandler):
 
     def __waitForCleanDisconnect(self):
         self.__running = False
-        # log: INFO, 'disconnecting from server'
+        self.notify.info('disconnecting from the server')
 
         if not self.getSuccess():
             if self.getSendingSuccess() is not True:
-                # err: 'an error occured while halting message sending'
-                pass
+                self.notify.error('NetworkError', 'an error occurred while halting message sending')
 
             if self.getReceivingSuccess() is not True:
-                # err: 'an error occured while halting message receiving'
-                pass
+                self.notify.error('NetworkError', 'an error occurred while halting message receiving')
 
             return False
         else:

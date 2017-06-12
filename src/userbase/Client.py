@@ -4,7 +4,6 @@ from src.base.globals import CMD_LOGIN, CMD_REQ_ZONE
 from src.base.Datagram import Datagram
 from src.userbase.Node import Node
 
-
 class Client(Node):
 
     def __init__(self, interface, address, port):
@@ -21,7 +20,7 @@ class Client(Node):
         datagram.setRecipient(self.getId())
         datagram.setData(name)
 
-        # log: 'logging in as {name}'
+        self.notify.info('logging in as {0}'.format(name))
         self.sendMessage(datagram)
 
         if self.getResp():
@@ -36,17 +35,16 @@ class Client(Node):
         datagram.setRecipient(self.getId())
         datagram.setData(json.dumps([self.getName()] + members))
 
-        # log: 'requesting new zone'
+        self.notify.debug('requesting new zone')
         self.sendMessage(datagram)
 
         zone = self.getResp()
         if zone:
             tab.setZone(zone)
         else:
-            # log: 'new zone rejected'
-            pass
+            self.notify.info('new zone rejected')
 
     def __sendProtocolVersion(self):
-        # log: INFO, 'using protocol version: {}'
+        self.notify.info('using protocol version {0}'.format(self.getResp()))
         # send message
         return int(self.getResp()) # confirmation

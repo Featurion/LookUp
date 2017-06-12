@@ -1,7 +1,7 @@
 import logging
 import sys
 
-def formatter(func):
+def formatter(func='', funcc=''):
     def wrapper(self, string, *args):
         return func(self, ' ' + string.format(*args))
     return wrapper
@@ -37,14 +37,16 @@ class Notifier(object):
             self.__channel.warning(msg)
 
         @formatter
-        def error(self, err='ERROR', msg):
+        def error(self, err, msg):
             msg = upperfirst(msg)
             LookupException(self.parent, err, msg=msg, exit=0)
+            self.__channel.error(msg)
 
         @formatter
         def critical(self, msg):
             msg = upperfirst(msg)
             LookupException(self.parent, msg=msg, exit=1)
+            self.__channel.critical(msg) # This will never be reached but oh well
 
     @classmethod
     def generateLoggingChannel(cls, name, parent):

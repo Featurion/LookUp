@@ -69,11 +69,11 @@ class ClientUI(QApplication, Notifier):
     @pyqtSlot(str)
     def __loginDone(self, resp):
         if resp:
-            # log: INFO, 'failed to login; trying again'
+            self.notify.info('failed to login; trying again')
             self.__showError(resp)
             self.__window.widget_stack.setCurrentIndex(1)
         else:
-            # log: DEBUG, 'successfully logged in'
+            self.notify.info('successfully logged in')
             self.__nowChatting()
 
     def __nowChatting(self):
