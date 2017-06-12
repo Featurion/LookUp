@@ -6,13 +6,13 @@ import uuid
 class UniqueIDManager(object):
     """Base class for managers using unique identifiers"""
 
-    __SCOPES = {
+    SCOPES = {
         'default': uuid.UUID('a8c52ed81a0e4d8bbda2801a55553d12'),
-    } # overwrite in subclass
+    } # update in subclass
 
     def __init__(self):
         self.id2owner = {}
-        self.scope_map = {scope: {} for scope in self.__SCOPES.values()}
+        self.scope_map = {scope: {} for scope in self.SCOPES.values()}
 
     def allocateId(self, mode, name, id_=None, owner=None):
         """Register a new ID"""
@@ -22,11 +22,19 @@ class UniqueIDManager(object):
             self.id2owner[id_] = owner
             self.scope_map[mode][id_] = owner
 
+    def deallocateId(self, id_, mode):
+        if id_ in self.id2owner:
+            del self.id2owner[id_]
+            del self.scope_map[mode][id_]
+        else:
+            # log: '{id} not in use'
+            pass
+
     def generateId(self, scope=None, seed=None):
         """Return a random or seeded 128-bit integer"""
         if scope is None and seed is None:
             # log: 'generating random id'
-            scope = UniqueIDManager.__SCOPES['default']
+            scope = self.SCOPES['default']
             seed = base64.b64encode(os.urandom(32)).decode('utf-8')
             id_ = int(uuid.uuid5(scope, seed))
             return (scope, seed, id_)
@@ -39,7 +47,7 @@ class UniqueIDManager(object):
         elif not isinstance(scope, uuid.UUID):
             # err: ValueError('scope argument expects a UUID object')
             pass
-        elif scope not in self.__SCOPES.values():
+        elif scope not in self.SCOPES.values():
             # err: ValueError('received invalid scope')
             pass
         elif not isinstance(seed, str):

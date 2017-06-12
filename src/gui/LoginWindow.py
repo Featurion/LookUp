@@ -1,8 +1,10 @@
 import threading
+
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QDialog, QHBoxLayout, QMessageBox
 from PyQt5.QtWidgets import QStackedWidget
+
 from src.base import utils
 from src.base.globals import APP_TITLE
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
@@ -51,6 +53,10 @@ class LoginWindow(QDialog):
     def stop(self):
         self.close()
 
+    def __login(self, name):
+        threading.Thread(target=self.interface.getClient().connect,
+                         args=(name, self.interface.login_signal.emit)).start()
+
     def __connect(self, name: str):
         if name is None:
             self.notify.info('client closed login window')
@@ -60,8 +66,7 @@ class LoginWindow(QDialog):
 
         if status is True:
             self.widget_stack.setCurrentIndex(0)
-            self.interface.getClient().connect(name,
-                                               self.interface.login_signal.emit)
+            self.__login(name)
         elif status:
             self.interface.notify.info('invalid username; trying again')
             QMessageBox.warning(self, *status)

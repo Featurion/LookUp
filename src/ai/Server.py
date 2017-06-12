@@ -2,6 +2,7 @@ import socket
 import sys
 
 from src.ai.ClientManager import ClientManager
+from src.ai.ZoneManager import ZoneManager
 from src.base.Notifier import Notifier
 
 
@@ -32,6 +33,9 @@ class Server(Notifier):
         # log: 'server stopped'
         sys.exit(0)
 
+    def accept(self):
+        return self.__socket.accept()
+
     def __connect(self):
         try:
             # log: 'starting server'
@@ -45,13 +49,14 @@ class Server(Notifier):
             sys.exit(1)
 
     def startManagers(self):
-        self.client_manager = ClientManager(self.__socket)
+        self.client_manager = ClientManager(self)
+        self.zone_manager = ZoneManager(self.client_manager)
 
     def waitForClients(self):
         while True:
             try:
                 # log: 'waiting for client'
-                ai = self.client_manager.accept()
+                ai = self.client_manager.acceptClient()
                 ai.start()
                 # log: 'client joined'
             except KeyboardInterrupt:
@@ -59,4 +64,5 @@ class Server(Notifier):
                 break
             except Exception as e:
                 # log: 'unknown error'
+                raise e
                 break

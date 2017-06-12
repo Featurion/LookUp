@@ -140,7 +140,8 @@ class ChatWindow(QMainWindow):
 
     def closeTab(self, index):
         tab = self.chat_tabs.widget(index)
-        tab.stop()
+        tab.exit()
+
         self.chat_tabs.removeTab(index)
 
         if self.chat_tabs.count() == 0:

@@ -22,7 +22,7 @@ class ChatTab(QWidget):
         QWidget.__init__(self)
 
         self.interface = interface
-        self.__session = None
+        self.__zone = None
         self.__unread = 0
 
         self.widget_stack = QStackedWidget(self)
@@ -42,15 +42,18 @@ class ChatTab(QWidget):
         _layout.addWidget(self.widget_stack)
         self.setLayout(_layout)
 
+    def exit(self):
+        return NotImplemented
+
     def getClient(self):
         return self.interface.getClient()
 
-    def getSession(self):
-        return self.__session
+    def getZone(self):
+        return self.__zone
 
-    def setSession(self, session):
-        if self.getSession() is None:
-            self.__session = session
+    def setZone(self, zone):
+        if self.getZone() is None:
+            self.__zone = zone
 
     def addInput(self):
         _iw = MultipleInputWidget(*self.input_widget._data,
@@ -86,8 +89,8 @@ class ChatTab(QWidget):
         self.widget_stack.setCurrentIndex(1)
         self.interface.getWindow().setTabTitle(self, titled_names)
 
-        Thread(target=self.interface.getClient().enter,
-               args=(self, names,),
+        Thread(target=self.interface.getClient().requestNewZone,
+               args=(self, sorted(names)),
                daemon=True).start()
 
     @pyqtSlot(str, float)

@@ -1,4 +1,6 @@
-from src.base.globals import SERVER, CMD_LOGIN
+import json
+
+from src.base.globals import CMD_LOGIN, CMD_REQ_ZONE
 from src.base.Datagram import Datagram
 from src.userbase.Node import Node
 
@@ -13,18 +15,36 @@ class Client(Node):
         Node.start(self)
         self.interface.connected_signal.emit()
 
-    def stop(self):
-        Node.stop(self)
-        self.interface.stop()
+    def connect(self, name, callback):
+        datagram = Datagram()
+        datagram.setCommand(CMD_LOGIN)
+        datagram.setRecipient(self.getId())
+        datagram.setData(name)
 
-    def startManagers(self):
-        return NotImplemented
+        # log: 'logging in as {name}'
+        self.sendMessage(datagram)
 
-    def enter(self, tab, id_):
-        return NotImplemented
+        if self.getResp():
+            self.setName(name)
+            callback('')
+        else:
+            callback('placeholder rejection message') # replace
 
-    def exit(self, id_):
-        return NotImplemented
+    def requestNewZone(self, tab, members):
+        datagram = Datagram()
+        datagram.setCommand(CMD_REQ_ZONE)
+        datagram.setRecipient(self.getId())
+        datagram.setData(json.dumps([self.getName()] + members))
+
+        # log: 'requesting new zone'
+        self.sendMessage(datagram)
+
+        zone = self.getResp()
+        if zone:
+            tab.setZone(zone)
+        else:
+            # log: 'new zone rejected'
+            pass
 
     def __sendProtocolVersion(self):
         # log: INFO, 'using protocol version: {}'

@@ -1,7 +1,9 @@
 import sys
 import threading
+
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
+
 from src.base.Notifier import Notifier
 from src.gui.ChatWindow import ChatWindow
 from src.gui.LoginWindow import LoginWindow

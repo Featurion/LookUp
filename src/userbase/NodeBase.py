@@ -5,7 +5,7 @@ import struct
 import threading
 
 from src.base import utils
-from src.base.globals import SERVER, CMD_INIT, CMD_RESP_OK, CMD_RESP_NO
+from src.base.globals import CMD_INIT, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
 from src.base.Datagram import Datagram
 from src.base.KeyHandler import KeyHandler
 
@@ -77,7 +77,7 @@ class NodeBase(KeyHandler):
         """Getter for name"""
         return self.__name
 
-    def __setName(self, name):
+    def setName(self, name):
         if self.__name is None:
             self.__name = name
         else:
@@ -138,10 +138,10 @@ class NodeBase(KeyHandler):
                 self.__socket = None
                 return False
         except AttributeError:
-            # err: DEBUG, 'socket does not exist'
+            # err: 'socket does not exist'
             pass
         except OSError:
-            # err: INFO, 'server closed the connection'
+            # err: 'server closed the connection'
             pass
         except Exception as e:
             # err
@@ -153,13 +153,17 @@ class NodeBase(KeyHandler):
         while self.__running:
             try:
                 data = self._send()
+                print()
+                print('SEND')
+                print(data)
+                print()
                 data = self.encrypt(data)
                 self.__send(data)
                 continue
             except queue.Empty:
                 continue
             except ValueError:
-                # err: DEBUG, 'tried sending invalid message'
+                # err: 'tried sending invalid message'
                 pass
             except Exception as e:
                 # err
@@ -203,6 +207,10 @@ class NodeBase(KeyHandler):
                     secure = True
                 else:
                     data = self.decrypt(data)
+                    print()
+                    print('RECV')
+                    print(data)
+                    print()
                     self._recv(data)
                 continue
             except InterruptedError:
@@ -233,7 +241,7 @@ class NodeBase(KeyHandler):
             return data
         except struct.error as e:
             # log: DEBUG, 'connection was closed unexpectedly'
-            pass
+            self.stop()
         except Exception as e:
             # err
             pass
@@ -268,18 +276,23 @@ class NodeBase(KeyHandler):
         datagram.setTimestamp(utils.getTimestamp())
         self.__outbox.put(datagram)
 
+    def sendResp(self, data):
+        datagram = Datagram()
+        datagram.setCommand(CMD_RESP)
+        datagram.setRecipient(self.getId())
+        datagram.setData(data)
+        self.sendMessage(datagram)
+
     def sendOK(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_OK)
         datagram.setRecipient(self.getId())
-
         self.sendMessage(datagram)
 
     def sendNo(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_NO)
         datagram.setRecipient(self.getId())
-
         self.sendMessage(datagram)
 
     def __sendKey(self):

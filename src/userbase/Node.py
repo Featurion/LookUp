@@ -1,6 +1,6 @@
 import os
 
-from src.base.globals import SERVER, CMD_LOGIN, CMD_RESP_OK, CMD_RESP_NO
+from src.base.globals import CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
 from src.base.Datagram import Datagram
 from src.userbase.NodeBase import NodeBase
 
@@ -24,22 +24,6 @@ class Node(NodeBase):
         # log: INFO, 'force quitting'
         os.kill(os.getpid(), 9)
 
-    def connect(self, name, callback):
-        datagram = Datagram()
-        datagram.setCommand(CMD_LOGIN)
-        datagram.setRecipient(SERVER)
-        datagram.setData(name)
-
-        # log: 'logging in as {name}'
-        self.sendMessage(datagram)
-
-        success = self.getResp()
-        if success:
-            self._NodeBase__setName(name)
-            callback('')
-        else:
-            callback('placeholder rejection message') # replace
-
     def _send(self):
         datagram = self.getMessage()
         return datagram.toJSON()
@@ -47,7 +31,9 @@ class Node(NodeBase):
     def _recv(self, data):
         datagram = Datagram.fromJSON(data)
 
-        if datagram.getCommand() == CMD_RESP_OK:
+        if datagram.getCommand() == CMD_RESP:
+            self.setResp(datagram.getData())
+        elif datagram.getCommand() == CMD_RESP_OK:
             self.setResp(True)
         elif datagram.getCommand() == CMD_RESP_NO:
             self.setResp(False)
