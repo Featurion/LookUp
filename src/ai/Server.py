@@ -60,6 +60,5 @@ class Server(Notifier):
                 self.notify.error('server killed')
                 break
             except Exception as e:
-                self.notify.error('unknown error')
-                raise e
+                self.notify.error(str(e))
                 break

@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random.random import randint
 from Crypto.Util.number import long_to_bytes
-
+from src.base.Notifier import Notifier
 
 DEF_P = int('0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67'
             'CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF2'
@@ -33,8 +33,10 @@ DEF_P = int('0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67'
             'EB19CCB1A313D55CDA56C9EC2EF29632387FE8D76E3C0468043E8F663F4860'
             'EE12BF2D5B0B7474D6E694F91E6DCC4024FFFFFFFFFFFFFFFF', 0)
 
+class KeyHandler(Notifier):
 
-class KeyHandler(object):
+    def __init__(self):
+        Notifier.__init__(self)
 
     @staticmethod
     def _pad(bytes_, bs):
@@ -78,27 +80,27 @@ class KeyHandler(object):
 
     def generateKey(self):
         if self.__pub_key:
-            # err: 'suspicious attempt to generate key'
-            pass
+            self.notify.critical('suspicious attempt to generate public key')
+            return
         else:
             if not self.__priv_key:
                 self.__priv_key = randint(1, DEF_P - 1)
-                # log: DEBUG, 'generated private key'
+                self.notify.debug('generated private key')
             else:
-                # err: 'private key exists'
+                self.notify.critical('suspicious attempt to generate private key')
                 return
             self.__pub_key = pow(2, self.__priv_key, DEF_P)
-            # log: DEBUG, generated public key
+            self.notify.debug('generated keys')
 
     def generateSecret(self, key):
         if self.__priv_key:
-            # log: DEBUG, 'generating secret'
+            self.notify.debug('generating DH secret')
             self.dh_secret = long_to_bytes(pow(key, self.__priv_key, DEF_P))
             hash_ = self.generateHash(str(self.dh_secret).encode())
             self.aes_key = hash_[0:32]
             self.aes_iv = hash_[16:32]
         else:
-            # err: 'no private key exists'
+            self.notify.error('CryptoError', 'no private key exists')
             return
 
     def generateCipher(self):
@@ -117,8 +119,7 @@ class KeyHandler(object):
             data = self.generateCipher().encrypt(data)
             return data
         except:
-            # err: 'error encrypting data'
-            pass
+            self.notify.error('CryptoError', 'error encrypting data')
 
     def decrypt(self, data: bytes):
         try:
@@ -127,5 +128,4 @@ class KeyHandler(object):
             data = base64.b85decode(data).decode()
             return data
         except Exception as e:
-            # err: 'error decrypting data'
-            pass
+            self.notify.error('CryptoError', 'error decrypting data')
