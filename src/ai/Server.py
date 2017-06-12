@@ -20,15 +20,15 @@ class Server(Notifier):
     def stop(self):
         if self.__socket is not None:
             try:
-                self.notify.info('Stopping server...')
+                self.notify.info('stopping server...')
                 self.__socket.shutdown(socket.SHUT_RDWR)
             except OSError:
-                self.notify.critical('Failed to stop server, socket is already closed')
+                self.notify.critical('failed to stop server, socket is already closed')
                 pass
             finally:
                 self.__socket = None
 
-        self.notify.info('Server stopped!')
+        self.notify.info('server stopped!')
         sys.exit(0)
 
     def accept(self):
@@ -36,14 +36,14 @@ class Server(Notifier):
 
     def __connect(self):
         try:
-            self.notify.info('Starting server...')
+            self.notify.info('starting server...')
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.__socket.bind((self.__address, self.__port))
             self.__socket.listen(0) # refuse unaccepted connections
-            self.notify.info('Server online!')
+            self.notify.info('server online!')
         except:
-            self.notify.critical('Failed to start server')
+            self.notify.critical('failed to start server')
 
     def startManagers(self):
         self.client_manager = ClientManager(self)
@@ -52,14 +52,14 @@ class Server(Notifier):
     def waitForClients(self):
         while True:
             try:
-                self.notify.debug('Waiting for client...')
+                self.notify.debug('waiting for client...')
                 ai = self.client_manager.acceptClient()
                 ai.start()
-                self.notify.debug('Client joined!')
+                self.notify.debug('client joined!')
             except KeyboardInterrupt:
-                self.notify.error('Server killed')
+                self.notify.error('server killed')
                 break
             except Exception as e:
-                self.notify.error('Unknown error')
+                self.notify.error('unknown error')
                 raise e
                 break

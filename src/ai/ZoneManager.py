@@ -3,7 +3,6 @@ from uuid import UUID
 from src.base.UniqueIDManager import UniqueIDManager
 from src.zones.ZoneAI import ZoneAI
 
-
 class ZoneManager(UniqueIDManager):
     """Manage chat message zones"""
 
@@ -35,7 +34,7 @@ class ZoneManager(UniqueIDManager):
         if zone:
             return zone
         else:
-            self.notify.debug('Zone with id {0} does not exist!'.format(id_))
+            self.notify.debug('zone with id {0} does not exist!'.format(id_))
             return None
 
     def addZone(self, members):

@@ -28,36 +28,30 @@ class UniqueIDManager(Notifier):
             del self.id2owner[id_]
             del self.scope_map[mode][id_]
         else:
-            # log: '{id} not in use'
-            pass
+            self.notify.debug('ID {0} is not in use!'.format(id_))
 
     def generateId(self, scope=None, seed=None):
         """Return a random or seeded 128-bit integer"""
         if scope is None and seed is None:
-            # log: 'generating random id'
+            self.notify.debug('generating random ID...')
             scope = self.SCOPES['default']
             seed = base64.b64encode(os.urandom(32)).decode('utf-8')
             id_ = int(uuid.uuid5(scope, seed))
             return (scope, seed, id_)
         elif scope is None and seed is not None:
-            # err: ValueError('scope and seed are mutually exclusive args')
-            pass
+            self.notify.error('ValueError', 'scope and seed are mutually exclusive args')
         elif scope is not None and seed is None:
-            # err: ValueError('scope and seed are mutually exclusive args')
-            pass
+            self.notify.error('ValueError', 'scope and seed are mutually exclusive args')
         elif not isinstance(scope, uuid.UUID):
-            # err: ValueError('scope argument expects a UUID object')
-            pass
+            self.notify.error('ValueError', 'scope argument expects a UUID object')
         elif scope not in self.SCOPES.values():
-            # err: ValueError('received invalid scope')
-            pass
+            self.notify.error('ValueError', 'received invalid scope')
         elif not isinstance(seed, str):
-            # err: ValueError('seed argument expects a string')
-            pass
+            self.notify.error('ValueError', 'seed argument expects a string')
         else:
-            # log: 'generating seeded id'
+            self.notify.debug('generating seeded id')
             id_ = int(uuid.uuid5(scope, seed))
             return (scope, seed, id_)
 
-        # log: 'suspicious id generation attempt'
+        self.notify.critical('suspicious ID generation attempt')
         return None
