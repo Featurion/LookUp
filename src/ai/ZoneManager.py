@@ -35,7 +35,7 @@ class ZoneManager(UniqueIDManager):
         if zone:
             return zone
         else:
-            # log: 'zone {id_} does not exist'
+            self.notify.debug('Zone with id {0} does not exist!'.format(id_))
             return None
 
     def addZone(self, members):

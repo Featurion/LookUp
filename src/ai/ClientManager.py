@@ -3,7 +3,6 @@ from uuid import UUID
 from src.base.UniqueIDManager import UniqueIDManager
 from src.userbase.ClientAI import ClientAI
 
-
 class ClientManager(UniqueIDManager):
     """Manage connected clients"""
 
@@ -21,20 +20,20 @@ class ClientManager(UniqueIDManager):
 
     def acceptClient(self):
         """Accept a connecting client"""
-        # log: 'waiting for socket connection'
+        self.notify.debug('Waiting for socket connection...')
         socket_, (address, port) = self.__server.accept()
         scope, seed, id_ = self.generateId()
         ai = ClientAI(self,
                       self.__server.zone_manager,
                       address, port, socket_, id_)
         self.allocateId(scope, seed, id_, ai)
-        # log: 'client {id} connected'
+        self.notify.debug('Client with id {0} connected!'.format(id_))
         return ai
 
     def removeClient(self, ai):
         """Stop managing an existing client"""
         self.deallocateId(ai.getId(), ai.getMode())
-        # log: 'client {id} disconnected'
+        self.notify.debug('Client with id {0} disconnected!'.format(ai.getId()))
 
     def getClientById(self, id_):
         """Search for a client on the supplied channel"""
@@ -42,7 +41,7 @@ class ClientManager(UniqueIDManager):
         if client:
             return client
         else:
-            # log: 'client {id_} does not exist'
+            self.notify.debug('Client with id {0} does not exist!'.format(id_))
             return None
 
     def getClientByName(self, name):
@@ -51,7 +50,7 @@ class ClientManager(UniqueIDManager):
         if client:
             return client
         else:
-            # log: 'client {id_} does not exist'
+            self.notify.debug('Client with name {0} does not exist!'.format(name))
             return None
 
     def getClientsByMode(self, mode):

@@ -1,9 +1,9 @@
 import base64
 import os
 import uuid
+from src.base.Notifier import Notifier
 
-
-class UniqueIDManager(object):
+class UniqueIDManager(Notifier):
     """Base class for managers using unique identifiers"""
 
     SCOPES = {
@@ -11,6 +11,7 @@ class UniqueIDManager(object):
     } # update in subclass
 
     def __init__(self):
+        Notifier.__init__(self)
         self.id2owner = {}
         self.scope_map = {scope: {} for scope in self.SCOPES.values()}
 
