@@ -31,7 +31,7 @@ class NodeAI(NodeBase):
         self.client_manager.name2owner[name] = self
 
     def _send(self):
-        datagram = self.getMessage()
+        datagram = self.getDatagram()
         return datagram.toJSON()
 
     def _recv(self, data):

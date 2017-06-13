@@ -46,5 +46,5 @@ class Client(Node):
 
     def __sendProtocolVersion(self):
         self.notify.info('using protocol version {0}'.format(self.getResp()))
-        # send message
+        # send datagram
         return int(self.getResp()) # confirmation

@@ -24,7 +24,7 @@ class Node(NodeBase):
         os.kill(os.getpid(), 9)
 
     def _send(self):
-        datagram = self.getMessage()
+        datagram = self.getDatagram()
         return datagram.toJSON()
 
     def _recv(self, data):

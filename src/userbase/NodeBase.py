@@ -108,10 +108,10 @@ class NodeBase(KeyHandler):
     def getResp(self):
         return self.__waitForResponse()
 
-    def setResp(self, message):
-        self.__resp = message
+    def setResp(self, datagram):
+        self.__resp = datagram
 
-    def getMessage(self):
+    def getDatagram(self):
         return self.__outbox.get()
 
     def start(self):
@@ -209,7 +209,7 @@ class NodeBase(KeyHandler):
                 # kill in main thread
                 self.notify.error('ConnectionError', 'server disconnected the client')
             except ValueError as e:
-                self.notify.error('NetworkError', 'received invalid message')
+                self.notify.error('NetworkError', 'received invalid datagram')
             except Exception as e:
                 self.notify.error('NetworkError', str(e))
 
@@ -326,10 +326,10 @@ class NodeBase(KeyHandler):
 
         if not self.getSuccess():
             if self.getSendingSuccess() is not True:
-                self.notify.error('NetworkError', 'an error occurred while halting message sending')
+                self.notify.error('NetworkError', 'an error occurred while halting datagram sending')
 
             if self.getReceivingSuccess() is not True:
-                self.notify.error('NetworkError', 'an error occurred while halting message receiving')
+                self.notify.error('NetworkError', 'an error occurred while halting datagram receiving')
 
             return False
         else:
