@@ -10,6 +10,7 @@ from src.base.globals import CMD_INIT, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
 from src.base.Datagram import Datagram
 from src.base.KeyHandler import KeyHandler
 
+
 class NodeBase(KeyHandler):
 
     def __init__(self, address, port, socket_, id_=None):
@@ -23,9 +24,16 @@ class NodeBase(KeyHandler):
         self.__running = False
         self.__success = [None, None]
         self.__resp = None
+        self.__wantSSL = False
         self.__setupSocket(socket_)
         self.__setId(id_)
         self.__setupThreads()
+
+    def __supportSSL(self, socket_):
+        return ssl.wrap_socket(self.__socket,
+                               ssl_version=ssl.PROTOCOL_TLSv1_2,
+                               ciphers='ECDHE-RSA-AES256-GCM-SHA384')
+                               
 
     def __setupSocket(self, socket_): # This should not be in the base class
         try:
@@ -34,9 +42,10 @@ class NodeBase(KeyHandler):
             else:
                 self.__socket = socket.socket(socket.AF_INET,
                                               socket.SOCK_STREAM)
-                self.__socket = ssl.wrap_socket(self.__socket,
-                                                ssl_version=ssl.PROTOCOL_TLSv1_2,
-                                                ciphers='ECDHE-RSA-AES256-GCM-SHA384') # Wrap socket in a nice comfortable TLS blanket
+
+                if self.__wantSSL:
+                    self.__socket = self.__supportSSL(self.__socket)
+
                 self.__socket.connect((self.__address, self.__port))
             self.__socket.settimeout(10)
             self.notify.info('connected to server')

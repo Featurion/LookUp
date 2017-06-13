@@ -1,8 +1,10 @@
 import logging
 import sys
 
+
 def upperfirst(x):
     return x[0].upper() + x[1:]
+
 
 def formatter(func=''):
     def wrapper(self, string, *args):
@@ -10,14 +12,21 @@ def formatter(func=''):
         return func(self, ' ' + string.format(*args))
     return wrapper
 
-class LookupException(object):
-    def __init__(self, module, err='CRITICAL', type='', msg='', exit=0):
-        print('LookupException: ' + module + ': ' + err + ': ' + msg + '!')
-        if exit:
-            sys.exit(1)
+
+class LookUpException(object):
+
+    def __init__(self, module, err=None, type='', msg=''):
+        module = ' ' + module
+        if err:
+            logging.critical(module + ': ' + err + ': ' + msg)
+        else:
+            logging.critical(module + ': ' + msg)
+
 
 class Notifier(object):
+
     class _ChannelHandler(object):
+
         def __init__(self, channel, parent):
             self.parent = parent
             self.__channel = channel
@@ -36,11 +45,12 @@ class Notifier(object):
 
         def error(self, err, msg):
             msg = upperfirst(msg)
-            LookupException(self.parent, err, msg=msg, exit=0)
+            LookUpException(self.parent, err, msg=msg)
 
         def critical(self, msg):
             msg = upperfirst(msg)
-            LookupException(self.parent, msg=msg, exit=1)
+            LookUpException(self.parent, msg=msg)
+            sys.exit(1)
 
     @classmethod
     def generateLoggingChannel(cls, name, parent):
@@ -49,4 +59,5 @@ class Notifier(object):
 
     def __init__(self):
         self.__name = str(' ' + self.__class__.__name__)
-        self.notify = self.generateLoggingChannel(self.__name, self.__class__.__name__)
+        self.notify = self.generateLoggingChannel(self.__name,
+                                                  self.__class__.__name__)
