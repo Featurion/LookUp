@@ -21,7 +21,7 @@ class Client(Node):
         datagram.setData(name)
 
         self.notify.info('logging in as {0}'.format(name))
-        self.sendMessage(datagram)
+        self.sendDatagram(datagram)
 
         if self.getResp():
             self.setName(name)
@@ -36,7 +36,7 @@ class Client(Node):
         datagram.setData(json.dumps([self.getName()] + members))
 
         self.notify.debug('requesting new zone')
-        self.sendMessage(datagram)
+        self.sendDatagram(datagram)
 
         zone = self.getResp()
         if zone:
