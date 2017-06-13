@@ -1,6 +1,7 @@
 import base64
 import queue
 import socket
+import ssl
 import struct
 import threading
 
@@ -33,6 +34,9 @@ class NodeBase(KeyHandler):
             else:
                 self.__socket = socket.socket(socket.AF_INET,
                                               socket.SOCK_STREAM)
+                self.__socket = ssl.wrap_socket(self.__socket,
+                                                ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                                ciphers='ECDHE-RSA-AES256-GCM-SHA384') # Wrap socket in a nice comfortable TLS blanket
                 self.__socket.connect((self.__address, self.__port))
             self.__socket.settimeout(10)
             self.notify.info('connected to server')

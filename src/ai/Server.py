@@ -1,5 +1,6 @@
 import socket
 import sys
+import ssl
 
 from src.ai.ClientManagerAI import ClientManagerAI
 from src.ai.ZoneManagerAI import ZoneManagerAI
@@ -38,12 +39,15 @@ class Server(Notifier):
         try:
             self.notify.info('starting server...')
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket = ssl.wrap_socket(self.__socket, server_side=True, keyfile='certs/ca.key', certfile='certs/ca.crt',
+                                          cert_reqs=ssl.CERT_NONE, ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                          ciphers='ECDHE-RSA-AES256-GCM-SHA384', do_handshake_on_connect=True) # Wrap socket in a nice comfortable TLS blanket
             self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.__socket.bind((self.__address, self.__port))
             self.__socket.listen(0) # refuse unaccepted connections
             self.notify.info('server online!')
-        except:
-            self.notify.critical('failed to start server')
+        except Exception as e:
+            self.notify.critical(str(e))
 
     def startManagers(self):
         self.client_manager = ClientManagerAI(self)
