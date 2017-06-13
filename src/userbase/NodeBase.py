@@ -322,7 +322,7 @@ class NodeBase(KeyHandler):
 
     def __waitForCleanDisconnect(self):
         self.__running = False
-        self.notify.info('disconnecting from the server')
+        self.notify.info('disconnecting from the server...')
 
         if not self.getSuccess():
             if self.getSendingSuccess() is not True:

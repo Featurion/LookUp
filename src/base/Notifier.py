@@ -1,17 +1,18 @@
 import logging
 import sys
 
-def formatter(func='', funcc=''):
-    def wrapper(self, string, *args):
-        return func(self, ' ' + string.format(*args))
-    return wrapper
-
 def upperfirst(x):
     return x[0].upper() + x[1:]
 
+def formatter(func=''):
+    def wrapper(self, string, *args):
+        string = upperfirst(string)
+        return func(self, ' ' + string.format(*args))
+    return wrapper
+
 class LookupException(object):
     def __init__(self, module, err='CRITICAL', type='', msg='', exit=0):
-        print('LookupException: ' + module + ': ' + err + ':' + msg + '!')
+        print('LookupException: ' + module + ': ' + err + ': ' + msg + '!')
         if exit:
             sys.exit(1)
 
@@ -23,30 +24,23 @@ class Notifier(object):
 
         @formatter
         def debug(self, msg):
-            msg = upperfirst(msg)
             self.__channel.debug(msg)
 
         @formatter
         def info(self, msg):
-            msg = upperfirst(msg)
             self.__channel.info(msg)
 
         @formatter
         def warning(self, msg):
-            msg = upperfirst(msg)
             self.__channel.warning(msg)
 
-        @formatter
         def error(self, err, msg):
             msg = upperfirst(msg)
             LookupException(self.parent, err, msg=msg, exit=0)
-            self.__channel.error(msg)
 
-        @formatter
         def critical(self, msg):
             msg = upperfirst(msg)
             LookupException(self.parent, msg=msg, exit=1)
-            self.__channel.critical(msg) # This will never be reached but oh well
 
     @classmethod
     def generateLoggingChannel(cls, name, parent):

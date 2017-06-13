@@ -3,7 +3,7 @@ from uuid import UUID
 from src.base.UniqueIDManager import UniqueIDManager
 from src.zones.ZoneAI import ZoneAI
 
-class ZoneManager(UniqueIDManager):
+class ZoneManagerAI(UniqueIDManager):
     """Manage chat message zones"""
 
     SCOPES = {

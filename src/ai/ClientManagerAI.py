@@ -3,7 +3,7 @@ from uuid import UUID
 from src.base.UniqueIDManager import UniqueIDManager
 from src.userbase.ClientAI import ClientAI
 
-class ClientManager(UniqueIDManager):
+class ClientManagerAI(UniqueIDManager):
     """Manage connected clients"""
 
     SCOPES = {

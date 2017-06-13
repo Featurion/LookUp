@@ -1,8 +1,8 @@
 import socket
 import sys
 
-from src.ai.ClientManager import ClientManager
-from src.ai.ZoneManager import ZoneManager
+from src.ai.ClientManagerAI import ClientManagerAI
+from src.ai.ZoneManagerAI import ZoneManagerAI
 from src.base.Notifier import Notifier
 
 class Server(Notifier):
@@ -46,8 +46,8 @@ class Server(Notifier):
             self.notify.critical('failed to start server')
 
     def startManagers(self):
-        self.client_manager = ClientManager(self)
-        self.zone_manager = ZoneManager(self.client_manager)
+        self.client_manager = ClientManagerAI(self)
+        self.zone_manager = ZoneManagerAI(self.client_manager)
 
     def waitForClients(self):
         while True:
@@ -57,7 +57,7 @@ class Server(Notifier):
                 ai.start()
                 self.notify.debug('client joined!')
             except KeyboardInterrupt:
-                self.notify.error('server killed')
+                self.notify.error('server killed while waiting for clients')
                 break
             except Exception as e:
                 self.notify.error(str(e))
