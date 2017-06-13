@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from src.base.globals import CMD_HELO, CMD_REDY
+from src.base.Datagram import Datagram
 from src.base.UniqueIDManager import UniqueIDManager
 from src.zones.ZoneAI import ZoneAI
 
@@ -17,17 +19,27 @@ class ZoneManagerAI(UniqueIDManager):
         UniqueIDManager.__init__(self)
         self.client_manager = client_manager
 
-    def emitMessage(self, message):
+    def emitDatagram(self, datagram):
         """Send message to all clients"""
-        return NotImplemented
+        for id_, ai in self.client_manager.id2owner.items():
+            datagram.setRecipient(self.getId())
+            ai.sendDatagram(datagram)
 
-    def emitMessageInsideZone(self, message, zone):
+    def emitDatagramInsideZone(self, datagram, zone_id):
         """Send message to all clients with interest in zone"""
-        return NotImplemented
+        zone = self.id2owner.get(zone_id)
+        if zone:
+            for id_ in zone.getMembers():
+                ai = self.client_manager.id2owner.get(id_)
+                ai.sendDatagram(datagram)
 
-    def emitMessageOutsideZone(self, message, zone):
+    def emitDatagramOutsideZone(self, datagram, zone_id):
         """Send message to all clients without interest in zone"""
-        return NotImplemented
+        zone = self.id2owner.get(zone_id)
+        if zone:
+            for id_, ai in self.client_manager.id2owner.items():
+                if id_ not in zone.getMembers():
+                    ai.sendDatagram(datagram)
 
     def getZoneById(self, id_):
         zone = self.id2owner.get(id_)

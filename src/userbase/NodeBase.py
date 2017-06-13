@@ -158,7 +158,7 @@ class NodeBase(KeyHandler):
         while self.__running:
             try:
                 data = self._send()
-                # TODO: Learn to remove your prints before pushing:
+                # TODO: remove debugging
                 print()
                 print('SEND')
                 print(data)
