@@ -31,7 +31,9 @@ class ZoneManagerAI(UniqueIDManager):
         if zone:
             for id_ in zone.getMembers():
                 ai = self.client_manager.id2owner.get(id_)
-                ai.sendDatagram(datagram)
+                if ai:
+                    datagram.setRecipient(id_)
+                    ai.sendDatagram(datagram)
 
     def emitDatagramOutsideZone(self, datagram, zone_id):
         """Send message to all clients without interest in zone"""
@@ -39,6 +41,7 @@ class ZoneManagerAI(UniqueIDManager):
         if zone:
             for id_, ai in self.client_manager.id2owner.items():
                 if id_ not in zone.getMembers():
+                    datagram.setRecipient(id_)
                     ai.sendDatagram(datagram)
 
     def getZoneById(self, id_):

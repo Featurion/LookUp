@@ -272,13 +272,13 @@ class NodeBase(KeyHandler):
         return data
 
     def sendDatagram(self, datagram):
-        datagram.setSender(self.getId())
         datagram.setTimestamp(utils.getTimestamp())
         self.__outbox.put(datagram)
 
     def sendResp(self, data):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
         datagram.setData(data)
         self.sendDatagram(datagram)
@@ -286,12 +286,14 @@ class NodeBase(KeyHandler):
     def sendOK(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_OK)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
         self.sendDatagram(datagram)
 
     def sendNo(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_NO)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
         self.sendDatagram(datagram)
 

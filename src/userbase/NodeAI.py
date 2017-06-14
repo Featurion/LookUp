@@ -3,6 +3,7 @@ import json
 
 from src.base import utils
 from src.base.globals import CMD_LOGIN, CMD_RESP_OK, CMD_RESP_NO, CMD_REQ_ZONE
+from src.base.globals import CMD_HELO, CMD_REDY
 from src.base.Datagram import Datagram
 from src.userbase.NodeBase import NodeBase
 
@@ -52,6 +53,10 @@ class NodeAI(NodeBase):
             members = json.loads(datagram.getData())
             ai = self.zone_manager.addZone(members)
             self.sendResp(ai.getId())
+            ai.sendHelo()
+        elif datagram.getCommand() == CMD_REDY:
+            ai = self.zone_manager.getZoneById(datagram.getRecipient())
+            ai.redy(self.getId())
         else:
             pass
 
