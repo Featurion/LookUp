@@ -1,14 +1,27 @@
 from src.base.globals import CMD_HELO, CMD_REDY
 from src.base.Datagram import Datagram
-from src.zones.ZoneBase import ZoneBase
+from src.base.KeyHandler import KeyHandler
+from src.base.Notifier import Notifier
 
 
-class ZoneAI(ZoneBase):
+class ZoneAI(KeyHandler):
 
     def __init__(self, zone_manager, id_, member_ids):
-        ZoneBase.__init__(self, id_, member_ids)
+        KeyHandler.__init__(self)
+        self.__id = id_
+        self.__members = set(member_ids)
         self.zone_manager = zone_manager
-        self.id2redy = {id_: False for id_ in member_ids}
+        self.id2data = {id_: (False, None) for id_ in member_ids}
+
+    def getId(self):
+        return self.__id
+
+    def getMembers(self):
+        return self.__members
+
+    def remove(self, id_):
+        if id_ in self.getMembers():
+            self.__members.remove(id_)
 
     def emitDatagram(self, datagram):
         datagram.setSender(self.getId())
@@ -20,13 +33,14 @@ class ZoneAI(ZoneBase):
         self.emitDatagram(datagram)
 
     def sendRedy(self):
-        if all(self.id2redy.values()):
+        if all(data[0] for data in self.id2data.values()):
             datagram = Datagram()
             datagram.setCommand(CMD_REDY)
+            datagram.setData(self.getKey())
             self.emitDatagram(datagram)
 
-    def redy(self, id_):
-        if id_ in self.id2redy:
-            self.id2redy[id_] = True
+    def redy(self, id_, key):
+        if id_ in self.id2data:
+            self.id2data[id_] = (True, key)
 
         self.sendRedy()

@@ -29,6 +29,7 @@ class Node(NodeBase):
         datagram.setCommand(CMD_REDY)
         datagram.setSender(self.getId())
         datagram.setRecipient(zone_id)
+        datagram.setData(self.getKey())
 
         self.sendDatagram(datagram)
 
@@ -47,6 +48,9 @@ class Node(NodeBase):
             self.setResp(False)
         elif datagram.getCommand() == CMD_HELO:
             self.sendRedy(datagram.getSender())
+        elif datagram.getCommand() == CMD_REDY:
+            zone_id = datagram.getSender()
+            # hook to UI
         else:
             pass
 

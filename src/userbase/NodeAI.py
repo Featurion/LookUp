@@ -56,7 +56,7 @@ class NodeAI(NodeBase):
             ai.sendHelo()
         elif datagram.getCommand() == CMD_REDY:
             ai = self.zone_manager.getZoneById(datagram.getRecipient())
-            ai.redy(self.getId())
+            ai.redy(self.getId(), datagram.getData())
         else:
             pass
 

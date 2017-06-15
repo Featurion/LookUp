@@ -2,9 +2,9 @@ import socket
 import ssl
 import sys
 
-from src.ai.ClientManagerAI import ClientManagerAI
-from src.ai.ZoneManagerAI import ZoneManagerAI
 from src.base.Notifier import Notifier
+from src.userbase.ClientManagerAI import ClientManagerAI
+from src.zones.ZoneManagerAI import ZoneManagerAI
 
 
 class Server(Notifier):
