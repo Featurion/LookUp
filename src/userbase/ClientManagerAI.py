@@ -35,6 +35,9 @@ class ClientManagerAI(UniqueIDManager):
         self.deallocateId(ai.getId(), ai.getMode())
         self.notify.debug('client with id {0} disconnected!'.format(ai.getId()))
 
+    def getClients(self):
+        return self.id2owner.values()
+
     def getClientById(self, id_):
         """Search for a client on the supplied channel"""
         client = self.id2owner.get(id_)

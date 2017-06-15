@@ -52,11 +52,15 @@ class NodeAI(NodeBase):
         elif datagram.getCommand() == CMD_REQ_ZONE:
             members = json.loads(datagram.getData())
             ai = self.zone_manager.addZone(members)
-            self.sendResp(ai.getId())
+            resp = json.dumps([ai.getId(), ai.getMemberIds()])
+            self.sendResp(resp)
             ai.sendHelo()
         elif datagram.getCommand() == CMD_REDY:
-            ai = self.zone_manager.getZoneById(datagram.getRecipient())
-            ai.redy(self.getId(), datagram.getData())
+            zone_id = datagram.getRecipient()
+            self.notify.debug('client {0} is redy in zone {1}'.format(self.getId(), zone_id))
+            ai = self.zone_manager.getZoneById(zone_id)
+            if ai:
+                ai.redy(self.getId(), datagram.getData())
         else:
             pass
 

@@ -1,3 +1,4 @@
+import json
 import os
 
 from src.base.globals import CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
@@ -32,6 +33,7 @@ class Node(NodeBase):
         datagram.setData(self.getKey())
 
         self.sendDatagram(datagram)
+        self.notify.debug('redy in zone {0}'.format(zone_id))
 
     def _send(self):
         datagram = self.getDatagram()
@@ -40,6 +42,9 @@ class Node(NodeBase):
     def _recv(self, data):
         datagram = Datagram.fromJSON(data)
 
+        if datagram.getRecipient() != self.getId():
+            self.notify.critical('received suspicious datagram: {0}'.format(datagram.toJSON()))
+
         if datagram.getCommand() == CMD_RESP:
             self.setResp(datagram.getData())
         elif datagram.getCommand() == CMD_RESP_OK:
@@ -47,10 +52,22 @@ class Node(NodeBase):
         elif datagram.getCommand() == CMD_RESP_NO:
             self.setResp(False)
         elif datagram.getCommand() == CMD_HELO:
-            self.sendRedy(datagram.getSender())
-        elif datagram.getCommand() == CMD_REDY:
             zone_id = datagram.getSender()
-            # hook to UI
+            self.notify.debug('received helo from zone {0}'.format(zone_id))
+
+            member_ids, member_names = json.loads(datagram.getData())
+
+            if not self.zone_manager.getZoneById(zone_id):
+                self.interface.getWindow().new_client_signal.emit(str(zone_id),
+                                                                  member_ids,
+                                                                  member_names)
+            else:
+                self.sendRedy(zone_id)
+        elif datagram.getCommand() == CMD_REDY:
+            zone = self.zone_manager.getZoneById(datagram.getSender())
+            if zone:
+                id_, key = json.loads(datagram.getData())
+                zone.redy(id_, key)
         else:
             pass
 

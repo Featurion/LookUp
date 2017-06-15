@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from src.base.globals import CMD_HELO, CMD_REDY
 from src.base.Datagram import Datagram
 from src.base.UniqueIDManager import UniqueIDManager
 from src.zones.ZoneAI import ZoneAI
@@ -21,27 +20,25 @@ class ZoneManagerAI(UniqueIDManager):
 
     def emitDatagram(self, datagram):
         """Send message to all clients"""
-        for id_, ai in self.client_manager.id2owner.items():
-            datagram.setRecipient(self.getId())
+        for ai in self.client_manager.getClients():
+            datagram.setRecipient(ai.getId())
             ai.sendDatagram(datagram)
 
     def emitDatagramInsideZone(self, datagram, zone_id):
         """Send message to all clients with interest in zone"""
-        zone = self.id2owner.get(zone_id)
+        zone = self.getZoneById(zone_id)
         if zone:
-            for id_ in zone.getMembers():
-                ai = self.client_manager.id2owner.get(id_)
-                if ai:
-                    datagram.setRecipient(id_)
-                    ai.sendDatagram(datagram)
+            for ai in zone.getMembers():
+                datagram.setRecipient(id_)
+                ai.sendDatagram(datagram)
 
     def emitDatagramOutsideZone(self, datagram, zone_id):
         """Send message to all clients without interest in zone"""
-        zone = self.id2owner.get(zone_id)
+        zone = self.getZoneById(zone_id)
         if zone:
-            for id_, ai in self.client_manager.id2owner.items():
-                if id_ not in zone.getMembers():
-                    datagram.setRecipient(id_)
+            for ai in self.client_manager.getClients():
+                if ai.getId() not in zone.getMembers():
+                    datagram.setRecipient(ai.getId())
                     ai.sendDatagram(datagram)
 
     def getZoneById(self, id_):
@@ -58,12 +55,14 @@ class ZoneManagerAI(UniqueIDManager):
         else:
             mode = self.SCOPES['private']
 
-        clients = [self.client_manager.getClientByName(n) for n in members]
-        member_ids = [c.getId() for c in clients]
+        member_ais = [self.client_manager.getClientByName(n) for n in members]
 
         scope, seed, id_ = self.generateId(mode, ','.join(members))
-        ai = ZoneAI(self, id_, member_ids)
+        ai = ZoneAI(id_, member_ais)
         self.allocateId(scope, seed, id_, ai)
+
+        self.notify.debug('created zone {0}'.format(ai.getId()))
+
         return ai
 
     def removeZone(self, ai):

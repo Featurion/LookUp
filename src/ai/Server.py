@@ -72,7 +72,6 @@ class Server(Notifier):
             try:
                 ai = self.client_manager.acceptClient()
                 ai.start()
-                self.notify.debug('client {0} joined!'.format(ai.getId()))
             except KeyboardInterrupt:
                 self.notify.error('KeyboardInterrupt',
                                   'server killed while waiting for clients')

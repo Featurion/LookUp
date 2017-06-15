@@ -158,11 +158,6 @@ class NodeBase(KeyHandler):
         while self.__running:
             try:
                 data = self._send()
-                # TODO: remove debugging
-                print()
-                print('SEND')
-                print(data)
-                print()
                 data = self.encrypt(data)
                 self.__send(data)
                 continue
@@ -211,11 +206,6 @@ class NodeBase(KeyHandler):
                     secure = True
                 else:
                     data = self.decrypt(data)
-                    # TODO: Learn to remove your prints before pushing:
-                    print()
-                    print('RECV')
-                    print(data)
-                    print()
                     self._recv(data)
                 continue
             except InterruptedError:

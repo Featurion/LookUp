@@ -17,6 +17,7 @@ from src.gui.ChatWidget import ChatWidget
 class ChatTab(QWidget):
 
     new_message_signal = pyqtSignal(str, float)
+    zone_redy_signal = pyqtSignal()
 
     def __init__(self, interface):
         QWidget.__init__(self)
@@ -37,6 +38,7 @@ class ChatTab(QWidget):
         self.widget_stack.setCurrentIndex(0)
 
         self.new_message_signal.connect(self.newMessage)
+        self.zone_redy_signal.connect(self.redy)
 
         _layout = QHBoxLayout()
         _layout.addWidget(self.widget_stack)
@@ -54,6 +56,8 @@ class ChatTab(QWidget):
     def setZone(self, zone):
         if self.getZone() is None:
             self.__zone = zone
+        else:
+            self.notify.critical('suspicious attempt to change zone')
 
     def addInput(self):
         _iw = MultipleInputWidget(*self.input_widget._data,
@@ -100,3 +104,7 @@ class ChatTab(QWidget):
         scrollbar = self.chat_widget.chat_log.verticalScrollBar()
         if scrollbar.value() == scrollbar.maximum():
             scrollbar.setValue(scrollbar.maximum())
+
+    @pyqtSlot()
+    def redy(self):
+        self.widget_stack.setCurrentIndex(2)

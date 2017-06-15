@@ -1,46 +1,49 @@
+import json
+
 from src.base.globals import CMD_HELO, CMD_REDY
 from src.base.Datagram import Datagram
-from src.base.KeyHandler import KeyHandler
-from src.base.Notifier import Notifier
+from src.zones.ZoneBase import ZoneBase
 
 
-class ZoneAI(KeyHandler):
+class ZoneAI(ZoneBase):
 
-    def __init__(self, zone_manager, id_, member_ids):
-        KeyHandler.__init__(self)
-        self.__id = id_
-        self.__members = set(member_ids)
-        self.zone_manager = zone_manager
-        self.id2data = {id_: (False, None) for id_ in member_ids}
+    def __init__(self, id_, members):
+        ZoneBase.__init__(self, id_, members)
+        self.id2redy = {ai.getId(): False for ai in members}
 
-    def getId(self):
-        return self.__id
-
-    def getMembers(self):
-        return self.__members
-
-    def remove(self, id_):
-        if id_ in self.getMembers():
-            self.__members.remove(id_)
+    def getMemberIds(self):
+        return [ai.getId() for ai in self.getMembers()]
 
     def emitDatagram(self, datagram):
-        datagram.setSender(self.getId())
-        self.zone_manager.emitDatagramInsideZone(datagram, self.getId())
+        for ai in self.getMembers():
+            dg = Datagram()
+            dg.setCommand(datagram.getCommand())
+            dg.setSender(self.getId())
+            dg.setRecipient(ai.getId())
+            dg.setData(datagram.getData())
+            dg.setHMAC(datagram.getHMAC())
+            ai.sendDatagram(dg)
 
     def sendHelo(self):
         datagram = Datagram()
         datagram.setCommand(CMD_HELO)
+        datagram.setData(json.dumps([
+            [ai.getId() for ai in self.getMembers()],
+            [ai.getName() for ai in self.getMembers()],
+        ]))
         self.emitDatagram(datagram)
 
-    def sendRedy(self):
-        if all(data[0] for data in self.id2data.values()):
-            datagram = Datagram()
-            datagram.setCommand(CMD_REDY)
-            datagram.setData(self.getKey())
-            self.emitDatagram(datagram)
+    def relayRedy(self, id_, key):
+        datagram = Datagram()
+        datagram.setCommand(CMD_REDY)
+        datagram.setData(json.dumps([id_, key]))
+        self.emitDatagram(datagram)
 
     def redy(self, id_, key):
-        if id_ in self.id2data:
-            self.id2data[id_] = (True, key)
+        if id_ in self.id2redy:
+            self.id2redy[id_] = True
 
-        self.sendRedy()
+        self.relayRedy(id_, key)
+
+        if all(self.id2redy.values()):
+            self.notify.debug('zone {0} is redy'.format(self.getId()))

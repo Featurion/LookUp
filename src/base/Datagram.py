@@ -11,7 +11,6 @@ class Datagram(object):
         self.__recipient = int()
         self.__data = str()
         self.__hmac = str()
-        self.__errno = int()
         self.__ts = utils.getTimestamp()
 
     def getCommand(self):
@@ -44,12 +43,6 @@ class Datagram(object):
     def setHMAC(self, hmac):
         self.__hmac = hmac
 
-    def getErrno(self):
-        return self.__errno
-
-    def setErrno(self, errno):
-        self.__errno = errno
-
     def getTimestamp(self):
         return self.__ts
 
@@ -66,7 +59,6 @@ class Datagram(object):
         datagram.setRecipient(obj['recipient'])
         datagram.setData(obj['data'])
         datagram.setHMAC(obj['hmac'])
-        datagram.setErrno(obj['errno'])
         datagram.setTimestamp(obj['time'])
 
         return datagram
@@ -78,6 +70,5 @@ class Datagram(object):
             'recipient': self.getRecipient(),
             'data': self.getData(),
             'hmac': self.getHMAC(),
-            'errno': self.getErrno(),
             'time': self.getTimestamp(),
         })
