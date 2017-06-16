@@ -13,7 +13,7 @@ class UniqueIDManager(Notifier):
     def __init__(self):
         Notifier.__init__(self)
         self.id2owner = {}
-        self.scope_map = {scope: {} for scope in self.SCOPES.values()}
+        self.scope_map = {scope: {} for scope in self.SCOPES.keys()}
 
     def allocateId(self, mode, name, id_=None, owner=None):
         """Register a new ID"""
@@ -30,14 +30,16 @@ class UniqueIDManager(Notifier):
         else:
             self.notify.debug('ID {0} is not in use!'.format(id_))
 
-    def generateId(self, scope=None, seed=None):
+    def generateId(self, mode=None, seed=None):
         """Return a random or seeded 128-bit integer"""
+        scope = self.SCOPES.get(mode)
+
         if scope is None and seed is None:
             self.notify.debug('generating random ID...')
             scope = self.SCOPES['default']
             seed = base64.b64encode(os.urandom(32)).decode('utf-8')
             id_ = int(uuid.uuid5(scope, seed))
-            return (scope, seed, id_)
+            return id_
         elif scope is None and seed is not None:
             self.notify.error('ValueError', 'scope and seed are mutually exclusive args')
         elif scope is not None and seed is None:
@@ -51,7 +53,7 @@ class UniqueIDManager(Notifier):
         else:
             self.notify.debug('generating seeded id')
             id_ = int(uuid.uuid5(scope, seed))
-            return (scope, seed, id_)
+            return id_
 
         self.notify.critical('suspicious ID generation attempt')
         return None

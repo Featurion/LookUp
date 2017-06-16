@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from src.base.Notifier import Notifier
 from src.gui.ChatWindow import ChatWindow
 from src.gui.LoginWindow import LoginWindow
-from src.userbase.Client import Client
+from src.users.Client import Client
 
 
 class ClientUI(QApplication, Notifier):

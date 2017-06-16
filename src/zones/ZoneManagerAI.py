@@ -14,13 +14,13 @@ class ZoneManagerAI(UniqueIDManager):
     } # listed by precedence
     SCOPES.update(UniqueIDManager.SCOPES)
 
-    def __init__(self, client_manager):
+    def __init__(self, server):
         UniqueIDManager.__init__(self)
-        self.client_manager = client_manager
+        self.server = server
 
     def emitDatagram(self, datagram):
         """Send message to all clients"""
-        for ai in self.client_manager.getClients():
+        for ai in self.server.cm.getClients():
             datagram.setRecipient(ai.getId())
             ai.sendDatagram(datagram)
 
@@ -36,7 +36,7 @@ class ZoneManagerAI(UniqueIDManager):
         """Send message to all clients without interest in zone"""
         zone = self.getZoneById(zone_id)
         if zone:
-            for ai in self.client_manager.getClients():
+            for ai in self.server.cm.getClients():
                 if ai.getId() not in zone.getMembers():
                     datagram.setRecipient(ai.getId())
                     ai.sendDatagram(datagram)
@@ -49,17 +49,18 @@ class ZoneManagerAI(UniqueIDManager):
             self.notify.debug('zone with id {0} does not exist!'.format(id_))
             return None
 
-    def addZone(self, members):
+    def addZone(self, client, members):
         if len(members) > 1:
-            mode = self.SCOPES['group']
+            mode = 'group'
         else:
-            mode = self.SCOPES['private']
+            mode = 'private'
 
-        member_ais = [self.client_manager.getClientByName(n) for n in members]
+        member_ais = [self.server.cm.getClientByName(n) for n in members]
 
-        scope, seed, id_ = self.generateId(mode, ','.join(members))
-        ai = ZoneAI(id_, member_ais)
-        self.allocateId(scope, seed, id_, ai)
+        seed = ','.join(members)
+        zone_id = self.generateId(mode, seed)
+        ai = ZoneAI(client, zone_id, member_ais)
+        self.allocateId(mode, seed, zone_id, ai)
 
         self.notify.debug('created zone {0}'.format(ai.getId()))
 

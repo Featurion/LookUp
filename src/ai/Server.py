@@ -3,7 +3,7 @@ import ssl
 import sys
 
 from src.base.Notifier import Notifier
-from src.userbase.ClientManagerAI import ClientManagerAI
+from src.users.ClientManagerAI import ClientManagerAI
 from src.zones.ZoneManagerAI import ZoneManagerAI
 
 
@@ -64,18 +64,18 @@ class Server(Notifier):
             self.notify.critical(str(e))
 
     def startManagers(self):
-        self.client_manager = ClientManagerAI(self)
-        self.zone_manager = ZoneManagerAI(self.client_manager)
+        self.cm = ClientManagerAI(self)
+        self.zm = ZoneManagerAI(self)
 
     def waitForClients(self):
         while True:
             try:
-                ai = self.client_manager.acceptClient()
+                ai = self.cm.acceptClient()
                 ai.start()
             except KeyboardInterrupt:
                 self.notify.error('KeyboardInterrupt',
                                   'server killed while waiting for clients')
                 break
             except Exception as e:
-                self.notify.error(str(e))
+                self.notify.error('NetworkError', str(e))
                 break

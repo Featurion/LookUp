@@ -98,7 +98,8 @@ class KeyHandler(Notifier):
             data = KeyHandler._pad(data, AES.block_size)
             data = self.generateCipher().encrypt(data)
             return data
-        except:
+        except Exception as e:
+            print(e)
             self.notify.error('CryptoError', 'error encrypting data')
 
     def decrypt(self, data: bytes):
