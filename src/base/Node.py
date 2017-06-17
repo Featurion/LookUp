@@ -18,7 +18,7 @@ class Node(KeyHandler):
         self.is_running = False
         self.success = [None, None]
         self.__resp = None
-        self.__wantSSL = False
+        self.__wantSSL = True
 
     def __supportSSL(self, socket_):
         return ssl.wrap_socket(socket_,

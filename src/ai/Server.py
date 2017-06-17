@@ -14,7 +14,7 @@ class Server(Notifier):
         self.__socket = None
         self.__address = address
         self.__port = port
-        self.__wantSSL = False
+        self.__wantSSL = True
 
     def start(self):
         self.__connect()
