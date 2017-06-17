@@ -1,8 +1,9 @@
 import json
 import os
 import socket
+import srp
 
-from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK
+from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
 from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_ZONE_MSG
 from src.base.constants import HMAC_KEY
 from src.base.Datagram import Datagram
@@ -21,6 +22,7 @@ class Client(ClientBase):
         self.setupSocket(socket.socket(socket.AF_INET,
                                        socket.SOCK_STREAM), True)
         self.getSocket().connect((self.getAddress(), self.getPort()))
+        self.__challenge_complete = False
 
     def startManagers(self):
         """Start client managers"""
@@ -45,7 +47,12 @@ class Client(ClientBase):
         os.kill(os.getpid(), 9)
 
     def connect(self, name, callback):
+        # HMAC verification
         hmac = self.generateHmac(name.encode(), HMAC_KEY, True)
+
+        # Challenge verification
+        self.user = srp.User(name.encode(), HMAC_KEY)
+        uname, A = self.user.start_authentication()
 
         datagram = Datagram()
         datagram.setCommand(CMD_LOGIN)
@@ -58,6 +65,18 @@ class Client(ClientBase):
 
         if self.getResp() is True:
             self.setName(name)
+
+            # Request a challenge
+            datagram.setCommand(CMD_REQ_CHALLENGE)
+            datagram.setData((uname.decode('latin-1'), A.decode('latin-1')))
+            self.sendDatagram(datagram)
+
+            while self.__challenge_complete is False:
+                if self.__challenge_complete is True:
+                    break
+                else:
+                    continue
+
             callback('')
         else:
             callback('placeholder rejection message') # TODO: replace message
@@ -100,6 +119,27 @@ class Client(ClientBase):
                 zone.recvDatagram(datagram)
             else:
                 self.notify.warning('received suspicious zone datagram')
+        elif datagram.getCommand() == CMD_RESP_CHALLENGE:
+            s, B = datagram.getData()
+            M = self.user.process_challenge(s.encode('latin-1'), B.encode('latin-1'))
+
+            if M is None:
+                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+
+            datagram.setCommand(CMD_RESP_CHALLENGE)
+            datagram.setData(M.decode('latin-1'))
+            self.sendDatagram(datagram)
+        elif datagram.getCommand() == CMD_VERIFY_CHALLENGE:
+            HAMK = datagram.getData()
+            HAMK = HAMK.encode('latin-1')
+
+            # Finish the authentication process
+            self.user.verify_session(HAMK)
+
+            if self.user.authenticated():
+                self.__challenge_complete = True
+            else:
+                self.notify.critical('suspiciously failed to complete challenge')
         else:
             self.notify.warning('received suspicious datagram')
 

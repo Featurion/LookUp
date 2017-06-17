@@ -1,9 +1,11 @@
 import json
+import srp
 
 from src.base import utils
-from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
+from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
 from src.base.constants import CMD_REQ_ZONE, CMD_ZONE_MSG
 from src.base.constants import HMAC_KEY
+from src.base.constants import SYSTEM
 from src.base.Datagram import Datagram
 from src.users.ClientBase import ClientBase
 
@@ -71,6 +73,43 @@ class ClientAI(ClientBase):
                 self.sendOK()
             else:
                 self.sendNo()
+        elif datagram.getCommand() == CMD_REQ_CHALLENGE:
+            uname, A = datagram.getData()
+            uname = uname.encode('latin-1')
+            A = A.encode('latin-1')
+            salt, vkey = srp.create_salted_verification_key(self.getName().encode(), HMAC_KEY)
+            self.svr = srp.Verifier(uname, salt, vkey, A)
+            s, B = self.svr.get_challenge()
+
+            if s is None or B is None:
+                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.sendNo()
+                return
+
+            datagram.setCommand(CMD_RESP_CHALLENGE)
+            datagram.setData((s.decode('latin-1'), B.decode('latin-1')))
+            self.sendDatagram(datagram)
+        elif datagram.getCommand() == CMD_RESP_CHALLENGE:
+            M = datagram.getData()
+            M = M.encode('latin-1')
+
+            HAMK = self.svr.verify_session(M)
+
+            if HAMK is None:
+                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.sendNo()
+                return
+
+            if self.svr.authenticated():
+                pass # Authenticated!
+            else:
+                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.sendNo()
+                return
+
+            datagram.setCommand(CMD_VERIFY_CHALLENGE)
+            datagram.setData(HAMK.decode('latin-1'))
+            self.sendDatagram(datagram)
         elif datagram.getCommand() == CMD_REQ_ZONE:
             ai = self.server.zm.addZone(self, json.loads(datagram.getData()))
             ai.sendHelo()
