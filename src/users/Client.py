@@ -4,6 +4,7 @@ import socket
 
 from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK
 from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_ZONE_MSG
+from src.base.constants import HMAC_KEY
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 from src.users.ClientBase import ClientBase
@@ -44,7 +45,7 @@ class Client(ClientBase):
         os.kill(os.getpid(), 9)
 
     def connect(self, name, callback):
-        hmac = self.generateHmac(name.encode(), b'aKMsOxxZA1s0usx2tZEoZA', True) # TODO: Figure out a way to secure a key in production.
+        hmac = self.generateHmac(name.encode(), HMAC_KEY, True)
 
         datagram = Datagram()
         datagram.setCommand(CMD_LOGIN)

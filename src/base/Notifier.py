@@ -27,42 +27,33 @@ class Channel(object):
 
     def debug(self, msg):
         if self.__level <= DEBUG:
-            if self.__log_type == self.__filename:
-                self.__fileWrite(msg)
-            else:
-                msg += "\n"
-                self.__log_type.write(msg)
+            self.writeLog(msg)
 
     def info(self, msg):
         if self.__level <= INFO:
-            if self.__log_type == self.__filename:
-                self.__fileWrite(msg)
-            else:
-                msg += "\n"
-                self.__log_type.write(msg)
+            self.writeLog(msg)
 
     def warning(self, msg):
         if self.__level <= WARNING:
-            if self.__log_type == self.__filename:
-                self.__fileWrite(msg)
-            else:
-                msg += "\n"
-                self.__log_type.write(msg)
+            self.writeLog(msg)
 
     def exception(self, module, err='CRITICAL', type='', msg=''):
         if self.__level <= EXCEPTION:
             fullMessage = ('LookUpException: ' + module + ': ' + err + ': ' + msg + '!')
-            if self.__log_type == self.__filename:
-                self.__fileWrite(fullMessage)
-            else:
-                fullMessage += "\n"
-                self.__log_type.write(fullMessage)
+            self.writeLog(fullMessage)
 
     def __fileWrite(self, msg):
         with open(self.__filename, 'a') as f:
             with redirect_stdout(f):
                 print(msg)
                 f.flush()
+
+    def writeLog(self, message):
+        if self.__log_type == self.__filename:
+            self.__fileWrite(message)
+        else:
+            message += "\n"
+            self.__log_type.write(message)
 
 class Notifier(object):
 

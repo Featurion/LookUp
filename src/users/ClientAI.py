@@ -3,6 +3,7 @@ import json
 from src.base import utils
 from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
 from src.base.constants import CMD_REQ_ZONE, CMD_ZONE_MSG
+from src.base.constants import HMAC_KEY
 from src.base.Datagram import Datagram
 from src.users.ClientBase import ClientBase
 
@@ -56,7 +57,7 @@ class ClientAI(ClientBase):
         if datagram.getCommand() == CMD_LOGIN:
             name, mode = json.loads(datagram.getData())
             client_hmac = datagram.getHMAC()
-            server_hmac = self.generateHmac(name.encode(), self.server._key, True)
+            server_hmac = self.generateHmac(name.encode(), HMAC_KEY, True)
             if server_hmac == client_hmac: # valid hmac
                 pass
             else:

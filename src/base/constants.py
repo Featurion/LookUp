@@ -18,6 +18,11 @@ EXCEPTION = 40
 
 LOG_CONFIG = (None, None, INFO)
 
+# Crypto
+
+# TODO: Figure out a way to secure a key in production:
+HMAC_KEY = b'aKMsOxxZA1s0usx2tZEoZA' # Do NOT use this key in production
+
 # Commands
 
 CMD_ERR = 0
