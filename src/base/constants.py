@@ -1,13 +1,18 @@
 import os
+import yaml
 
+config = os.getcwd() + '/config/config.yml'
 
-APP_TITLE = 'LookUp'
+with open(config, "r") as f:
+    settings = yaml.load(f)
+
+APP_TITLE = settings['app-name']
 BASE_PATH = os.getcwd()
-LOG_PATH = BASE_PATH + '/logs'
-DEFAULT_ADDRESS = '127.0.0.1'
-DEFAULT_PORT = 1492
+LOG_PATH = BASE_PATH + settings['log-path']
+DEFAULT_ADDRESS = settings['default-address']
+DEFAULT_PORT = settings['default-port']
 MAX_PORT_SIZE = 16 # no port larger than 2 bytes (0 <= n <= 65535)
-PROTOCOL_VERSION = 'PROTOTYPE'
+PROTOCOL_VERSION = settings['version']
 MAX_NAME_LENGTH = 32
 
 # Logging
@@ -20,8 +25,7 @@ LOG_CONFIG = (None, None, INFO)
 
 # Crypto
 
-# TODO: Figure out a way to secure a key in production:
-HMAC_KEY = b'aKMsOxxZA1s0usx2tZEoZA' # Do NOT use this key in production
+HMAC_KEY = settings['hmac-key'].encode()
 
 # Commands
 
