@@ -21,7 +21,7 @@ class Client(ClientBase):
         self.__pending_tabs = []
         self.setupSocket(socket.socket(socket.AF_INET,
                                        socket.SOCK_STREAM), True)
-        self.getSocket().connect((self.getAddress(), self.getPort()))
+        self.socketConnect(self.getAddress(), self.getPort())
         self.__challenge_complete = False
 
     def startManagers(self):

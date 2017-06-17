@@ -41,9 +41,8 @@ class Server(Notifier):
     def __supportSSL(self, socket_):
         return ssl.wrap_socket(socket_,
                                server_side=True,
-                               keyfile='certs/ca.key',
-                               certfile='certs/ca.crt',
-                               cert_reqs=ssl.CERT_NONE,
+                               certfile='certs/pem.crt',
+                               keyfile='certs/pem.key',
                                ssl_version=ssl.PROTOCOL_TLSv1_2,
                                ciphers='ECDHE-RSA-AES256-GCM-SHA384',
                                do_handshake_on_connect=True)
@@ -76,6 +75,8 @@ class Server(Notifier):
                 self.notify.error('KeyboardInterrupt',
                                   'server killed while waiting for clients')
                 break
+            except ssl.SSLError as e:
+                self.notify.error('SSLError', str(e))
             except Exception as e:
                 self.notify.error('NetworkError', str(e))
                 break

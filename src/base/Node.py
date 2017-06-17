@@ -22,6 +22,8 @@ class Node(KeyHandler):
 
     def __supportSSL(self, socket_):
         return ssl.wrap_socket(socket_,
+                               ca_certs="certs/pem.crt",
+                               cert_reqs=ssl.CERT_REQUIRED,
                                ssl_version=ssl.PROTOCOL_TLSv1_2,
                                ciphers='ECDHE-RSA-AES256-GCM-SHA384')
 
@@ -36,6 +38,8 @@ class Node(KeyHandler):
             self.notify.info('connected to server')
         except ConnectionRefusedError:
             self.notify.error('ConnectionError', 'could not connect to server')
+        except ssl.SSLError as e:
+            self.notify.error('SSLError', str(e))
         except Exception as e:
             self.notify.error('ConnectionError', str(e))
             self.stop()
@@ -46,6 +50,12 @@ class Node(KeyHandler):
         self.__outbox = queue.Queue()
         self.__sender = threading.Thread(target=self.send, daemon=True)
         self.__receiver = threading.Thread(target=self.recv, daemon=True)
+
+    def socketConnect(self, address, port):
+        try:
+            self.getSocket().connect((address, port))
+        except ssl.SSLError as e:
+            self.notify.critical(str(e))
 
     def getSocket(self):
         """Getter for socket"""
