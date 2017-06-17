@@ -86,8 +86,11 @@ class KeyHandler(Notifier):
     def generateCipher(self):
         return AES.new(self.aes_key, self.aes_mode, self.aes_iv)
 
-    def generateHmac(self, message):
-        return hmac.new(self.aes_key, msg=message, digestmod=hashlib.sha256).digest()
+    def generateHmac(self, message, key, hex_digest=False):
+        if not hex_digest:
+            return hmac.new(key, msg=message, digestmod=hashlib.sha512).digest()
+        else:
+            return hmac.new(key, msg=message, digestmod=hashlib.sha512).hexdigest()
 
     def generateHash(self, data):
         return SHA256.new(data).digest()

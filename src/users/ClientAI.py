@@ -45,7 +45,7 @@ class ClientAI(ClientBase):
 
     def sendNo(self):
         datagram = Datagram()
-        datagram.setCommand(CMD_RESP_OK)
+        datagram.setCommand(CMD_RESP_NO)
         datagram.setRecipient(self.getId())
 
         self.sendDatagram(datagram)
@@ -55,6 +55,14 @@ class ClientAI(ClientBase):
 
         if datagram.getCommand() == CMD_LOGIN:
             name, mode = json.loads(datagram.getData())
+            client_hmac = datagram.getHMAC()
+            server_hmac = self.generateHmac(name.encode(), self.server._key, True)
+            if server_hmac == client_hmac: # valid hmac
+                pass
+            else:
+                self.notify.warning('received suspicious improper hmac')
+                self.sendNo()
+                return
             if not utils.isNameInvalid(name): # valid name
                 self.setName(name)
                 self.setMode(mode)

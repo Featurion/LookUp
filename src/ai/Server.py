@@ -15,6 +15,7 @@ class Server(Notifier):
         self.__address = address
         self.__port = port
         self.__wantSSL = True
+        self._key = b'aKMsOxxZA1s0usx2tZEoZA' # Do NOT use this key in production
 
     def start(self):
         self.__connect()

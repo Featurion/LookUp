@@ -44,10 +44,13 @@ class Client(ClientBase):
         os.kill(os.getpid(), 9)
 
     def connect(self, name, callback):
+        hmac = self.generateHmac(name.encode(), b'aKMsOxxZA1s0usx2tZEoZA', True) # TODO: Figure out a way to secure a key in production.
+
         datagram = Datagram()
         datagram.setCommand(CMD_LOGIN)
         datagram.setRecipient(self.getId())
         datagram.setData(json.dumps([name, 'temp'])) # TODO: implement modes properly
+        datagram.setHMAC(hmac)
 
         self.notify.info('logging in as {0}'.format(name))
         self.sendDatagram(datagram)
