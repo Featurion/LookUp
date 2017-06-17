@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QLabel
 from PyQt5.QtGui import QMovie
-from src.base.globals import getAbsoluteImagePath
+from src.base.constants import getAbsoluteImagePath
 
 
 class WaitingDialog(QDialog):

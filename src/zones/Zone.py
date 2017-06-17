@@ -1,7 +1,7 @@
 import base64
 import json
 
-from src.base.globals import CMD_REDY, CMD_ZONE_MSG
+from src.base.constants import CMD_REDY, CMD_ZONE_MSG
 from src.base.Datagram import Datagram
 from src.zones.ZoneBase import ZoneBase
 

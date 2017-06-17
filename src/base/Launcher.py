@@ -1,27 +1,30 @@
 import argparse
 import datetime
-import logging
 import os
 import sys
-from src.base.globals import DEFAULT_ADDRESS, DEFAULT_PORT, LOG_PATH
+from src.base import constants
 
+from src.base.constants import DEFAULT_ADDRESS, DEFAULT_PORT, APP_TITLE, LOG_PATH, DEBUG, INFO
 
 class Launcher(object):
 
     def __init__(self):
-        self.__startLogging()
-
         info = self.getLaunchInfo()
         if info.server:
             self.type = 'ai'
-            self.__launchAIServer(info.address, info.port)
         else:
             self.type = 'client'
+
+        self.__startLogging()
+
+        if info.server:
+            self.__launchAIServer(info.address, info.port)
+        else:
             self.__launchClient(info.address, info.port)
 
     def getLogFilePath(self):
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        path = '{0}/{1}.{2}.log'.format(LOG_PATH, now, self.type)
+        path = '{0}/{1} {2}.{3}.log'.format(LOG_PATH, APP_TITLE, now, self.type)
         return path
 
     def getLaunchInfo(self):
@@ -47,15 +50,14 @@ class Launcher(object):
         return args
 
     def __startLogging(self):
-        if not os.path.exists(LOG_PATH):
-            os.mkdir(LOG_PATH)
-
         if __debug__:
-            logging.basicConfig(stream=sys.stdout,
-                                level=logging.DEBUG)
+            self.setConfig(stream=sys.stdout,
+                           level=DEBUG)
         else:
-            logging.basicConfig(filename=self.getLogFilePath(),
-                                level=logging.ERROR)
+            if not os.path.exists(LOG_PATH):
+                os.mkdir(LOG_PATH)
+            self.setConfig(filename=self.getLogFilePath(),
+                           level=INFO)
 
     def __launchAIServer(self, address, port):
         from src.ai.Server import Server
@@ -65,6 +67,8 @@ class Launcher(object):
         from src.gui.ClientUI import ClientUI
         ClientUI(address, port).start()
 
+    def setConfig(self, stream=None, filename=None, level=INFO):
+        constants.LOG_CONFIG = (stream, filename, level)
 
 if __name__ == '__main__':
     Launcher()

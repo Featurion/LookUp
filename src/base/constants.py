@@ -10,6 +10,14 @@ MAX_PORT_SIZE = 16 # no port larger than 2 bytes (0 <= n <= 65535)
 PROTOCOL_VERSION = 'PROTOTYPE'
 MAX_NAME_LENGTH = 32
 
+# Logging
+DEBUG = 10
+INFO = 20
+WARNING = 30
+EXCEPTION = 40
+
+LOG_CONFIG = (None, None, INFO)
+
 # Commands
 
 CMD_ERR = 0

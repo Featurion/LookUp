@@ -1,63 +1,108 @@
-import logging
 import sys
+import time
 
+from contextlib import redirect_stdout
+
+from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG, LOG_PATH
 
 def upperfirst(x):
     return x[0].upper() + x[1:]
 
+class Channel(object):
 
-def formatter(func=''):
-    def wrapper(self, string, *args):
-        string = upperfirst(string)
-        return func(self, ' ' + string.format(*args))
-    return wrapper
+    def __init__(self, stream=None, filename=None, level=INFO):
+        self.__stream = stream
+        self.__filename = filename
+        self.__level = level
 
-
-class LookUpException(object):
-
-    def __init__(self, module, err=None, type='', msg=''):
-        module = ' ' + module
-        if err:
-            logging.critical(module + ': ' + err + ': ' + msg)
+        if self.__stream == None:
+            self.__log_type = self.__filename
+        elif self.__filename == None:
+            self.__log_type = self.__stream
         else:
-            logging.critical(module + ': ' + msg)
+            self.__log_type = sys.stdout
 
+        if self.__log_type == None:
+            self.__log_type = sys.stdout
+
+    def debug(self, msg):
+        if self.__level <= DEBUG:
+            if self.__log_type == self.__filename:
+                self.__fileWrite(msg)
+            else:
+                msg += "\n"
+                self.__log_type.write(msg)
+
+    def info(self, msg):
+        if self.__level <= INFO:
+            if self.__log_type == self.__filename:
+                self.__fileWrite(msg)
+            else:
+                msg += "\n"
+                self.__log_type.write(msg)
+
+    def warning(self, msg):
+        if self.__level <= WARNING:
+            if self.__log_type == self.__filename:
+                self.__fileWrite(msg)
+            else:
+                msg += "\n"
+                self.__log_type.write(msg)
+
+    def exception(self, module, err='CRITICAL', type='', msg=''):
+        if self.__level <= EXCEPTION:
+            fullMessage = ('LookUpException: ' + module + ': ' + err + ': ' + msg + '!')
+            if self.__log_type == self.__filename:
+                self.__fileWrite(fullMessage)
+            else:
+                fullMessage += "\n"
+                self.__log_type.write(fullMessage)
+
+    def __fileWrite(self, msg):
+        with open(self.__filename, 'a') as f:
+            with redirect_stdout(f):
+                print(msg)
+                f.flush()
 
 class Notifier(object):
 
-    class _ChannelHandler(object):
+    class _Logger(object):
 
         def __init__(self, channel, parent):
-            self.parent = parent
+            self.__parent = parent
             self.__channel = channel
 
-        @formatter
         def debug(self, msg):
+            msg = upperfirst(msg)
+            msg = ("[" + self.debug.__name__.upper() + "] " + self.__parent + ": " + msg)
             self.__channel.debug(msg)
 
-        @formatter
         def info(self, msg):
+            msg = upperfirst(msg)
+            msg = ("[" + self.info.__name__.upper() + "] " + self.__parent + ": " + msg)
             self.__channel.info(msg)
 
-        @formatter
         def warning(self, msg):
+            msg = upperfirst(msg)
+            msg = ("[" + self.warning.__name__.upper() + "] " + self.__parent + ": " + msg)
             self.__channel.warning(msg)
 
         def error(self, err, msg):
             msg = upperfirst(msg)
-            LookUpException(self.parent, err, msg=msg)
+            self.__channel.exception(self.__parent, err, msg=msg)
 
         def critical(self, msg):
             msg = upperfirst(msg)
-            LookUpException(self.parent, msg=msg)
+            self.__channel.exception(self.__parent, msg=msg)
             sys.exit(1)
 
     @classmethod
-    def generateLoggingChannel(cls, name, parent):
-        channel = logging.getLogger(name)
-        return cls._ChannelHandler(channel, parent)
+    def generateLogger(cls, name, parent):
+        stream, filename, level = LOG_CONFIG
+        channel = Channel(stream, filename, level)
+        return cls._Logger(channel, parent)
 
     def __init__(self):
         self.__name = str(' ' + self.__class__.__name__)
-        self.notify = self.generateLoggingChannel(self.__name,
+        self.notify = self.generateLogger(self.__name,
                                                   self.__class__.__name__)

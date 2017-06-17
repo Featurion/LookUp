@@ -2,8 +2,8 @@ import datetime
 import os
 import re
 
-from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
-from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
+from src.base.constants import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
+from src.base.constants import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
 
 def isLightTheme():

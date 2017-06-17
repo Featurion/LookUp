@@ -1,8 +1,8 @@
 import json
 
 from src.base import utils
-from src.base.globals import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
-from src.base.globals import CMD_REQ_ZONE, CMD_ZONE_MSG
+from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
+from src.base.constants import CMD_REQ_ZONE, CMD_ZONE_MSG
 from src.base.Datagram import Datagram
 from src.users.ClientBase import ClientBase
 

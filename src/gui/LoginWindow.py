@@ -6,11 +6,11 @@ from PyQt5.QtWidgets import QWidget, QDialog, QHBoxLayout, QMessageBox
 from PyQt5.QtWidgets import QStackedWidget
 
 from src.base import utils
-from src.base.globals import APP_TITLE
-from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
-from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
-from src.base.globals import TITLE_INVALID_NAME, TITLE_EMPTY_NAME
-from src.base.globals import NAME_CONTENT, NAME_LENGTH, EMPTY_NAME
+from src.base.constants import APP_TITLE
+from src.base.constants import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
+from src.base.constants import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
+from src.base.constants import TITLE_INVALID_NAME, TITLE_EMPTY_NAME
+from src.base.constants import NAME_CONTENT, NAME_LENGTH, EMPTY_NAME
 from src.gui.ConnectingWidget import ConnectingWidget
 from src.gui.InputWidget import InputWidget
 

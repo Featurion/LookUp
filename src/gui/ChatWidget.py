@@ -5,7 +5,7 @@ from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QSplitter
 from src.base import utils
-from src.base.globals import URL_REGEX
+from src.base.constants import URL_REGEX
 
 
 class ChatWidget(QWidget):

@@ -2,8 +2,8 @@ import json
 import os
 import socket
 
-from src.base.globals import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK
-from src.base.globals import CMD_RESP_NO, CMD_HELO, CMD_ZONE_MSG
+from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK
+from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_ZONE_MSG
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 from src.users.ClientBase import ClientBase

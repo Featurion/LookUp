@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
 from src.base import utils
-from src.base.globals import APP_TITLE, BLANK_TAB_TITLE
+from src.base.constants import APP_TITLE, BLANK_TAB_TITLE
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
