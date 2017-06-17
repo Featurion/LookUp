@@ -1,6 +1,7 @@
 import base64
 import queue
 import socket
+import ssl
 import struct
 import threading
 
@@ -24,10 +25,10 @@ class Node(KeyHandler):
                                ssl_version=ssl.PROTOCOL_TLSv1_2,
                                ciphers='ECDHE-RSA-AES256-GCM-SHA384')
 
-    def setupSocket(self, socket_):
+    def setupSocket(self, socket_, client=False):
         """Setup socket"""
         try:
-            if self.__wantSSL:
+            if self.__wantSSL and client:
                 self.__socket = self.__supportSSL(socket_)
             else:
                 self.__socket = socket_

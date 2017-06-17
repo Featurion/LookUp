@@ -2,8 +2,6 @@ import datetime
 import os
 import re
 
-from PyQt5.QtWidgets import QDesktopWidget
-
 from src.base.globals import INVALID_EMPTY_NAME, INVALID_NAME_CONTENT
 from src.base.globals import INVALID_NAME_LENGTH, VALID_NAME, MAX_NAME_LENGTH
 
@@ -72,6 +70,7 @@ def secureStrCmp(left, right):
 
 
 def centerWindow(window):
+    from PyQt5.QtWidgets import QDesktopWidget
     centerPoint = QDesktopWidget().availableGeometry().center()
     geo = window.frameGeometry()
     geo.moveCenter(centerPoint)

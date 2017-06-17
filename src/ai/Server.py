@@ -39,7 +39,7 @@ class Server(Notifier):
         return self.__socket.accept()
 
     def __supportSSL(self, socket_):
-        return ssl.wrap_socket(self.__socket,
+        return ssl.wrap_socket(socket_,
                                server_side=True,
                                keyfile='certs/ca.key',
                                certfile='certs/ca.crt',

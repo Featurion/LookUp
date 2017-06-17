@@ -17,7 +17,8 @@ class Client(ClientBase):
         ClientBase.__init__(self, address, port)
         self.interface = interface
         self.__pending_tabs = []
-        self.setupSocket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+        self.setupSocket(socket.socket(socket.AF_INET,
+                                       socket.SOCK_STREAM), True)
         self.getSocket().connect((self.getAddress(), self.getPort()))
 
     def startManagers(self):
