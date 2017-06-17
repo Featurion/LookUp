@@ -9,11 +9,12 @@ from src.base.globals import APP_TITLE, BLANK_TAB_TITLE
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
+from src.zones.Zone import Zone
 
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, list, list)
+    new_client_signal = pyqtSignal(str, str, list, list)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -153,8 +154,8 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, list, list)
-    def newClient(self, zone_id, member_ids, member_names):
+    @pyqtSlot(str, str, list, list)
+    def newClient(self, zone_id, key, member_ids, member_names):
         zone_id = int(zone_id)
 
         if not self.isActiveWindow():
@@ -166,5 +167,7 @@ class ChatWindow(QMainWindow):
 
         if ConnectionDialog.getAnswer(self, member_names):
             tab = self.openTab(utils.oxfordComma(member_names))
-            self.interface.getClient().enteredZone(tab, zone_id, member_ids)
-            self.interface.getClient().sendRedy(zone_id)
+
+            zone = Zone(tab, int(zone_id), int(key), member_ids)
+            self.interface.getClient().enter(tab, zone)
+            zone.sendRedy()

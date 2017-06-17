@@ -2,7 +2,7 @@ import json
 
 from src.base import utils
 from src.base.globals import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO
-from src.base.globals import CMD_REQ_ZONE
+from src.base.globals import CMD_REQ_ZONE, CMD_ZONE_MSG
 from src.base.Datagram import Datagram
 from src.users.ClientBase import ClientBase
 
@@ -64,9 +64,8 @@ class ClientAI(ClientBase):
                 self.sendNo()
         elif datagram.getCommand() == CMD_REQ_ZONE:
             ai = self.server.zm.addZone(self, json.loads(datagram.getData()))
-            self.sendResp(json.dumps([ai.getId(), ai.getMemberIds()]))
             ai.sendHelo()
-        elif datagram.getCommand() in ZONE_CMDS:
+        elif datagram.getCommand() == CMD_ZONE_MSG:
             # send to zone inbox
             pass
         else:

@@ -24,23 +24,33 @@ class ZoneAI(ZoneBase):
             dg.setData(data)
 
             self.generateSecret(self.getKey())
-            enc_data = base64.b85encode(self.encrypt(dg.toJSON())).decode()
+            data = base64.b85encode(self.encrypt(dg.toJSON())).decode()
 
             dg2 = Datagram()
             dg2.setCommand(CMD_ZONE_MSG)
             dg2.setSender(self.getId())
             dg2.setRecipient(ai.getId())
-            dg2.setData(enc_data)
+            dg2.setData(data)
 
             ai.sendDatagram(dg2)
 
+        self.notify.debug('sent helo in zone {0}'.format(self.getId()))
+
     def sendHelo(self):
         data = json.dumps([
-            self.getKey(),
+            str(self.getId()),
+            str(self.getKey()),
             [ai.getId() for ai in self.getMembers()],
             [ai.getName() for ai in self.getMembers()],
         ])
-        self.emitDatagram(CMD_HELO, data)
+
+        for ai in self.getMembers():
+            datagram = Datagram()
+            datagram.setCommand(CMD_HELO)
+            datagram.setRecipient(ai.getId())
+            datagram.setData(data)
+
+            ai.sendDatagram(datagram)
 
     def redy(self, id_, key):
         if id_ in self.id2redy:
@@ -55,8 +65,7 @@ class ZoneAI(ZoneBase):
         datagram = self.getDatagram()
 
         if datagram.getCommand() == CMD_REDY:
-            id_, key = json.loads(datagram.getData())
-            self.redy(id_, key)
+            self.redy(datagram.getData())
         else:
             self.notify.warning('received suspicious datagram')
 

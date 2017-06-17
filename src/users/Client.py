@@ -3,7 +3,7 @@ import os
 import socket
 
 from src.base.globals import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK
-from src.base.globals import CMD_RESP_NO, CMD_ZONE_MSG
+from src.base.globals import CMD_RESP_NO, CMD_HELO, CMD_ZONE_MSG
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 from src.users.ClientBase import ClientBase
@@ -16,6 +16,7 @@ class Client(ClientBase):
     def __init__(self, interface, address, port):
         ClientBase.__init__(self, address, port)
         self.interface = interface
+        self.__pending_tabs = []
         self.setupSocket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         self.getSocket().connect((self.getAddress(), self.getPort()))
 
@@ -70,9 +71,30 @@ class Client(ClientBase):
             self.setResp(True)
         elif datagram.getCommand() == CMD_RESP_NO:
             self.setResp(False)
+        elif datagram.getCommand() == CMD_HELO:
+            zone_id, key, member_ids, member_names = json.loads(datagram.getData())
+            zone = self.zm.getZoneById(zone_id)
+            if not zone:
+                if member_names[0] != self.getName():
+                    window = self.interface.getWindow()
+                    window.new_client_signal.emit(zone_id, key, member_ids, member_names)
+                else:
+                    flag = False
+                    for names, tab in self.__pending_tabs:
+                        if names == member_names:
+                            zone = Zone(tab, zone_id, key, member_ids)
+                            self.enter(tab, zone)
+                            zone.sendRedy()
+                            flag = True
+
+                    if not flag:
+                        self.notify.error('ZoneError', 'could not find tab')
         elif datagram.getCommand() == CMD_ZONE_MSG:
             zone = self.zm.getZoneById(datagram.getSender())
-            zone.recvDatagram(datagram)
+            if zone:
+                zone.recvDatagram(datagram)
+            else:
+                self.notify.warning('received suspicious zone datagram')
         else:
             self.notify.warning('received suspicious datagram')
 
@@ -92,7 +114,4 @@ class Client(ClientBase):
         self.notify.debug('requesting new zone')
         self.sendDatagram(datagram)
 
-        zone_id, member_ids = json.loads(self.getResp())
-        zone = Zone(tab, zone_id, member_ids)
-
-        self.enter(tab, zone)
+        self.__pending_tabs.append((tuple(member_names), tab))

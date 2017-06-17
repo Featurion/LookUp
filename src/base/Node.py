@@ -187,7 +187,7 @@ class Node(KeyHandler):
                 else:
                     break
             except InterruptedError:
-                self.notify.error('ConnectionError', 'server disconnected the client')
+                self.notify.error('ConnectionError', 'disconnected')
             except ValueError as e:
                 self.notify.error('NetworkError', 'received invalid datagram')
             except Exception as e:
