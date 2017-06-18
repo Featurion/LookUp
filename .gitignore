@@ -1,8 +1,10 @@
 # LookUp logs
 logs/
 
-# Crypto
-certs
+# TLS
+*.key
+*.csr
+*.srl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
