@@ -5,8 +5,6 @@ from contextlib import redirect_stdout
 
 from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG, LOG_PATH
 
-def upperfirst(x):
-    return x[0].upper() + x[1:]
 
 class Channel(object):
 
@@ -55,45 +53,36 @@ class Channel(object):
             message += "\n"
             self.__log_type.write(message)
 
+
 class Notifier(object):
 
     class _Logger(object):
 
-        def __init__(self, channel, parent):
-            self.__parent = parent
+        def __init__(self, channel, name):
+            self.__name = name
             self.__channel = channel
 
+        def format(self, msg_type, msg):
+            return '[{0}] {1}: {2}'.format(msg_type.upper().ljust(8),
+                                           self.__name,
+                                           msg[:1].upper() + msg[1:])
+
         def debug(self, msg):
-            msg = upperfirst(msg)
-            msg = ("[" + self.debug.__name__.upper() + "] " + self.__parent + ": " + msg)
-            self.__channel.debug(msg)
+            self.__channel.debug(self.format('debug', msg))
 
         def info(self, msg):
-            msg = upperfirst(msg)
-            msg = ("[" + self.info.__name__.upper() + "] " + self.__parent + ": " + msg)
-            self.__channel.info(msg)
+            self.__channel.info(self.format('info', msg))
 
         def warning(self, msg):
-            msg = upperfirst(msg)
-            msg = ("[" + self.warning.__name__.upper() + "] " + self.__parent + ": " + msg)
-            self.__channel.warning(msg)
+            self.__channel.warning(self.format('warning', msg))
 
         def error(self, err, msg):
-            msg = upperfirst(msg)
-            self.__channel.exception(self.__parent, err, msg=msg)
+            self.__channel.exception(self.__name, err, msg=msg.capitalize())
 
         def critical(self, msg):
-            msg = upperfirst(msg)
-            self.__channel.exception(self.__parent, msg=msg)
+            self.__channel.exception(self.__name, msg=msg.capitalize())
             sys.exit(1)
 
-    @classmethod
-    def generateLogger(cls, name, parent):
-        stream, filename, level = LOG_CONFIG
-        channel = Channel(stream, filename, level)
-        return cls._Logger(channel, parent)
-
     def __init__(self):
-        self.__name = str(' ' + self.__class__.__name__)
-        self.notify = self.generateLogger(self.__name,
-                                                  self.__class__.__name__)
+        self.notify = self._Logger(Channel(*LOG_CONFIG),
+                                   self.__class__.__name__)
