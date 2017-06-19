@@ -6,6 +6,7 @@ version: 'PROTOTYPE'
 # Connection settings
 default-address: '127.0.0.1'
 default-port: 1492
+tls-enabled: true
 
 # Security settings
 

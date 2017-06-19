@@ -6,6 +6,7 @@ import struct
 import threading
 
 from src.base import utils
+from src.base.constants import TLS_ENABLED
 from src.base.KeyHandler import KeyHandler
 
 
@@ -18,7 +19,6 @@ class Node(KeyHandler):
         self.is_running = False
         self.success = [None, None]
         self.__resp = None
-        self.__wantSSL = True
 
     def __supportSSL(self, socket_):
         return ssl.wrap_socket(socket_,
@@ -30,9 +30,11 @@ class Node(KeyHandler):
     def setupSocket(self, socket_, client=False):
         """Setup socket"""
         try:
-            if self.__wantSSL and client:
+            if TLS_ENABLED and client:
+                self.notify.info('connecting with SSL!')
                 self.__socket = self.__supportSSL(socket_)
             else:
+                self.notify.info('connecting without SSL!')
                 self.__socket = socket_
             self.__socket.settimeout(10)
             self.notify.info('connected to server')

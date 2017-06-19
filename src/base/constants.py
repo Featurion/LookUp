@@ -14,6 +14,7 @@ DEFAULT_PORT = settings['default-port']
 MAX_PORT_SIZE = 16 # no port larger than 2 bytes (0 <= n <= 65535)
 PROTOCOL_VERSION = settings['version']
 MAX_NAME_LENGTH = 32
+TLS_ENABLED = settings['tls-enabled']
 
 # Logging
 DEBUG = 10
