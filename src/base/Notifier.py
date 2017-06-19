@@ -63,7 +63,7 @@ class Notifier(object):
             self.__channel = channel
 
         def format(self, msg_type, msg):
-            return '[{0}] {1}: {2}'.format(msg_type.upper().ljust(8),
+            return '[{0}] {1}: {2}'.format(msg_type.upper(),
                                            self.__name,
                                            msg[:1].upper() + msg[1:])
 
