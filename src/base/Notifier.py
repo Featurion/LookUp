@@ -1,10 +1,6 @@
 import sys
-import time
 
-from contextlib import redirect_stdout
-
-from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG, LOG_PATH
-
+from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG
 
 class Channel(object):
 
