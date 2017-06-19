@@ -51,7 +51,7 @@ class Launcher(object):
 
     def __startLogging(self):
         if __debug__:
-            self.setConfig(stream=sys.stdout,
+            self.setConfig(stream=print,
                            level=DEBUG)
         else:
             if not os.path.exists(LOG_PATH):

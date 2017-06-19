@@ -18,10 +18,10 @@ class Channel(object):
         elif self.__filename == None:
             self.__log_type = self.__stream
         else:
-            self.__log_type = sys.stdout
+            self.__log_type = print
 
         if self.__log_type == None:
-            self.__log_type = sys.stdout
+            self.__log_type = print
 
     def debug(self, msg):
         if self.__level <= DEBUG:
@@ -42,16 +42,14 @@ class Channel(object):
 
     def __fileWrite(self, msg):
         with open(self.__filename, 'a') as f:
-            with redirect_stdout(f):
-                print(msg)
-                f.flush()
+            f.write(msg + "\n")
+            f.flush()
 
     def writeLog(self, message):
         if self.__log_type == self.__filename:
             self.__fileWrite(message)
         else:
-            message += "\n"
-            self.__log_type.write(message)
+            self.__log_type(message)
 
 
 class Notifier(object):
