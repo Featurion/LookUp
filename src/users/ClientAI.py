@@ -82,7 +82,7 @@ class ClientAI(ClientBase):
             s, B = self.svr.get_challenge()
 
             if s is None or B is None:
-                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.notify.warning('suspicious challenge failure')
                 self.sendNo()
                 return
 
@@ -96,14 +96,14 @@ class ClientAI(ClientBase):
             HAMK = self.svr.verify_session(M)
 
             if HAMK is None:
-                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.notify.warning('suspicious challenge failure')
                 self.sendNo()
                 return
 
             if self.svr.authenticated():
                 pass # Authenticated!
             else:
-                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.notify.warning('suspicious challenge failure')
                 self.sendNo()
                 return
 

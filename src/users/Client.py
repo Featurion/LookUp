@@ -124,7 +124,7 @@ class Client(ClientBase):
             M = self.user.process_challenge(s.encode('latin-1'), B.encode('latin-1'))
 
             if M is None:
-                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+                self.notify.warning('suspicious challenge failure')
 
             datagram.setCommand(CMD_RESP_CHALLENGE)
             datagram.setData(M.decode('latin-1'))
@@ -139,7 +139,7 @@ class Client(ClientBase):
             if self.user.authenticated():
                 self.__challenge_complete = True
             else:
-                self.notify.critical('suspiciously failed to complete challenge')
+                self.notify.warning('suspiciously failed to complete challenge')
         else:
             self.notify.warning('received suspicious datagram')
 

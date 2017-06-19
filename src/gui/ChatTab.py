@@ -57,7 +57,7 @@ class ChatTab(QWidget):
         if self.getZone() is None:
             self.__zone = zone
         else:
-            self.notify.critical('suspicious attempt to change zone')
+            self.notify.error('GUIError', 'attempted to change zone')
 
     def addInput(self):
         _iw = MultipleInputWidget(*self.input_widget._data,
