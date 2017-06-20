@@ -1,4 +1,4 @@
 @echo off
 cd ..
-C:\Python35\python.exe -m src.base.Launcher --server
+C:\Python361\python.exe -m src.base.Launcher --server
 pause

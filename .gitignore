@@ -1,6 +1,11 @@
 # LookUp logs
 logs/
 
+# TLS
+*.key
+*.csr
+*.srl
+
 # Crypto
 certs
 

@@ -1,20 +1,23 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
+
 from src.base import utils
 
 
 class ConnectionDialog(QMessageBox):
 
-    def __init__(self, parent, name, members):
+    def __init__(self, parent, member_names):
         QMessageBox.__init__(self, parent)
         self.accepted = False
+
         self.setWindowTitle('Incoming Connection')
-        if members:
+        if len(member_names) > 1: # client name not included
             self.setText('Received group request from '
-                         + utils.oxford_comma([name] + members))
+                         + utils.oxfordComma(member_names))
         else:
-            self.setText('Received connection request from ' + name)
+            self.setText('Received connection request from ' + member_names[0])
+
         self.setIcon(QMessageBox.Question)
         self.acceptButton = QPushButton(QIcon.fromTheme('dialog-ok'),
                                         'Accept')
@@ -32,7 +35,7 @@ class ConnectionDialog(QMessageBox):
         self.close()
 
     @staticmethod
-    def getAnswer(parent, name, members):
-        acceptDialog = ConnectionDialog(parent, name, members)
+    def getAnswer(parent, member_names):
+        acceptDialog = ConnectionDialog(parent, member_names)
         acceptDialog.exec_()
         return acceptDialog.accepted

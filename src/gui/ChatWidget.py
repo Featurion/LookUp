@@ -5,7 +5,7 @@ from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QSplitter
 from src.base import utils
-from src.base.globals import URL_REGEX
+from src.base.constants import URL_REGEX
 
 
 class ChatWidget(QWidget):
@@ -29,10 +29,10 @@ class ChatWidget(QWidget):
             full_text = '<br>'.join(msg for ts, msg in self)
             self.widget.chat_log.setText(full_text)
 
-    def __init__(self, parent):
-        QWidget.__init__(self, parent)
-        self.tab = parent
-        self.client = self.tab.client
+    def __init__(self, tab):
+        QWidget.__init__(self, tab)
+
+        self.tab = tab
 
         self.disabled = False
         self.cleared = False
@@ -48,9 +48,6 @@ class ChatWidget(QWidget):
         self.send_button = QPushButton("Send")
         self.send_button.clicked.connect(self.send)
 
-        self.build()
-
-    def build(self):
         font_metrics = QFontMetrics(self.input.font())
         self.input.setMinimumHeight(font_metrics.lineSpacing() * 3)
         self.send_button.setFixedHeight(font_metrics.lineSpacing() * 3)
@@ -72,12 +69,11 @@ class ChatWidget(QWidget):
         hbox.addWidget(splitter)
         self.setLayout(hbox)
 
-    def getTab(self):
-        return self.tab
+    def getClient(self):
+        return self.__tab.getClient()
 
-    def showNowChattingMessage(self):
-        self.log.addMessage("You are now securely chatting!", utils.getTimestamp())
-        self.log.addMessage("Your messages are end-to-end encrypted, and no one can eavesdrop on you!", utils.getTimestamp())
+    def getTab(self):
+        return self.__tab
 
     def send(self):
         if self.disabled:

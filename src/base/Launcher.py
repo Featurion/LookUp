@@ -1,10 +1,10 @@
 import argparse
 import datetime
-import logging
 import os
 import sys
-from src.base.globals import DEFAULT_ADDR, DEFAULT_PORT
-from src.base.globals import LOG_PATH
+from src.base import constants
+
+from src.base.constants import DEFAULT_ADDRESS, DEFAULT_PORT, APP_TITLE, LOG_PATH, DEBUG, INFO
 
 
 class Launcher(object):
@@ -13,16 +13,20 @@ class Launcher(object):
         info = self.getLaunchInfo()
         if info.server:
             self.type = 'ai'
-            service = self.__launchAIServer(info.addr, info.port)
         else:
             self.type = 'client'
-            service = self.__launchClient(info.addr, info.port, info.name)
+
         self.__startLogging()
-        service.start()
+
+        if info.server:
+            self.__launchAIServer(info.address, info.port)
+        else:
+            self.__launchClient(info.address, info.port)
 
     def getLogFilePath(self):
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        return '{0}/{1}.{2}.log'.format(LOG_PATH, now, self.type)
+        path = '{0}/{1} {2}.{3}.log'.format(LOG_PATH, APP_TITLE, now, self.type)
+        return path
 
     def getLaunchInfo(self):
         parser = argparse.ArgumentParser()
@@ -31,11 +35,11 @@ class Launcher(object):
                             action='store_true',
                             default=False,
                             help='launch server')
-        parser.add_argument('-a', '--addr',
-                            dest='addr',
+        parser.add_argument('-a', '--address',
+                            dest='address',
                             type=str,
                             nargs='?',
-                            default=DEFAULT_ADDR,
+                            default=DEFAULT_ADDRESS,
                             help='server address')
         parser.add_argument('-p', '--port',
                             dest='port',
@@ -43,35 +47,29 @@ class Launcher(object):
                             nargs='?',
                             default=DEFAULT_PORT,
                             help='server port')
-        parser.add_argument('-n', '--name',
-                            dest='name',
-                            type=str,
-                            nargs='?',
-                            default='',
-                            help='client username')
         args = parser.parse_args()
         return args
 
     def __startLogging(self):
-        if not os.path.exists(LOG_PATH):
-            os.mkdir(LOG_PATH)
         if __debug__:
-            logging.basicConfig(stream=sys.stdout,
-                                level=logging.DEBUG)
+            self.setConfig(stream=print,
+                           level=DEBUG)
         else:
-            logging.basicConfig(filename=self.getLogFilePath(),
-                                level=logging.ERROR)
+            if not os.path.exists(LOG_PATH):
+                os.mkdir(LOG_PATH)
+            self.setConfig(filename=self.getLogFilePath(),
+                           level=INFO)
 
-    def __launchAIServer(self, addr, port):
+    def __launchAIServer(self, address, port):
         from src.ai.Server import Server
-        return Server(addr, port)
+        Server(address, port).start()
 
-    def __launchClient(self, addr, port, name):
-        from src.client.Client import Client
-        if name == '':
-            return Client(addr, port, name)
-        else:
-            return Client(addr, port)
+    def __launchClient(self, address, port):
+        from src.gui.ClientUI import ClientUI
+        ClientUI(address, port).start()
+
+    def setConfig(self, stream=None, filename=None, level=INFO):
+        constants.LOG_CONFIG = (stream, filename, level)
 
 
 if __name__ == '__main__':

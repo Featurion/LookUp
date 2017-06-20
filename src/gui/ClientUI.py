@@ -1,52 +1,85 @@
-from PyQt5.QtGui import QPalette
+import sys
+import threading
+
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
-from src.base.globals import TITLE_NAME_IN_USE, NAME_IN_USE
+
+from src.base.Notifier import Notifier
 from src.gui.ChatWindow import ChatWindow
 from src.gui.LoginWindow import LoginWindow
+from src.users.Client import Client
 
 
-class ClientUI(QApplication):
+class ClientUI(QApplication, Notifier):
 
-    def __init__(self, client):
+    error_signal = pyqtSignal(str)
+    stall_signal = pyqtSignal()
+    connected_signal = pyqtSignal()
+    login_signal = pyqtSignal(str)
+
+    def __init__(self, address: str, port: int):
         QApplication.__init__(self, [])
-        self.client = client
+        Notifier.__init__(self)
+
+        self.__client = Client(self, address, port)
+        self.__window = None
         self.running = False
-        self.theme = self.palette().color(QPalette.Window)
-        self.window = None
-        self.waiting_dialog = None
-        self.aboutToQuit.connect(self.__stop)
 
+        self.error_signal.connect(self.__showError)
+        self.stall_signal.connect(self.__showConnecting)
+        self.connected_signal.connect(self.__connectingDone)
+        self.login_signal.connect(self.__loginDone)
+
+        self.aboutToQuit.connect(self.stop)
+
+    @pyqtSlot()
     def start(self):
-        while True:
-            lw = self.__login()
-            if not lw.restart:
-                del self._lw_widget
-                break
-        if lw.getName() and not self.running:
-            try:
-                self.client.register(lw.getName())
-            except LookupError:
-                QMessageBox.warning(QWidget(),
-                                    TITLE_NAME_IN_USE,
-                                    NAME_IN_USE)
-                return
-            self.window = ChatWindow(self.client)
-            self.window.show()
-            self.running = True
-            self.exec_()
-
-    def __login(self):
-        if not hasattr(self, '_lw_widget'):
-            self._lw_widget = QWidget()
-        lw = LoginWindow(self._lw_widget, self.client.getName())
-        lw.exec_()
-        return lw
-
-    def __stop(self):
-        if self.client:
-            self.client.stop()
+        self.__window = LoginWindow(self)
+        self.__window.start()
+        self.exec_()
 
     def stop(self):
-        if self.window:
-            self.window.close()
-            self.window = None
+        if self.getClient():
+            self.getClient().stop()
+            del self.__client
+            self.__client = None
+        if self.getWindow():
+            self.getWindow().stop()
+            del self.__window
+            self.__window = None
+        sys.exit(0)
+
+    def getClient(self):
+        return self.__client
+
+    def getWindow(self):
+        return self.__window
+
+    def __showError(self, msg: str):
+        QMessageBox.warning(QWidget(), '', msg)
+
+    @pyqtSlot()
+    def __showConnecting(self):
+        self.getWindow().widget_stack.setCurrentIndex(0)
+
+    @pyqtSlot()
+    def __connectingDone(self):
+        self.getWindow().widget_stack.setCurrentIndex(1)
+
+    @pyqtSlot(str)
+    def __loginDone(self, resp):
+        if resp:
+            self.notify.info('failed to login; trying again')
+            self.__showError(resp)
+            self.__window.widget_stack.setCurrentIndex(1)
+        else:
+            self.notify.info('successfully logged in')
+            self.__nowChatting()
+
+    def __nowChatting(self):
+        self.__window.stop()
+        del self.__window
+
+        self.running = True
+        self.__window = ChatWindow(self)
+        self.__window.start()
