@@ -2,6 +2,7 @@ import sys
 
 from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG, LOG_FORMAT
 
+
 class Channel(object):
 
     def __init__(self, stream=None, filename=None, level=INFO):

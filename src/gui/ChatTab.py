@@ -38,7 +38,7 @@ class ChatTab(QWidget):
         self.widget_stack.setCurrentIndex(0)
 
         self.new_message_signal.connect(self.newMessage)
-        self.zone_redy_signal.connect(self.redy)
+        self.zone_redy_signal.connect(self.zoneRedy)
 
         _layout = QHBoxLayout()
         _layout.addWidget(self.widget_stack)
@@ -106,5 +106,5 @@ class ChatTab(QWidget):
             scrollbar.setValue(scrollbar.maximum())
 
     @pyqtSlot()
-    def redy(self):
+    def zoneRedy(self):
         self.widget_stack.setCurrentIndex(2)

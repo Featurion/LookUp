@@ -6,6 +6,7 @@ from src.base import constants
 
 from src.base.constants import DEFAULT_ADDRESS, DEFAULT_PORT, APP_TITLE, LOG_PATH, DEBUG, INFO
 
+
 class Launcher(object):
 
     def __init__(self):
@@ -69,6 +70,7 @@ class Launcher(object):
 
     def setConfig(self, stream=None, filename=None, level=INFO):
         constants.LOG_CONFIG = (stream, filename, level)
+
 
 if __name__ == '__main__':
     Launcher()
