@@ -156,18 +156,22 @@ class ChatWindow(QMainWindow):
 
     @pyqtSlot(str, str, list, list)
     def newClient(self, zone_id, key, member_ids, member_names):
-        zone_id = int(zone_id)
+        zone_id, key = int(zone_id), int(key)
 
-        if not self.isActiveWindow():
-            utils.showDesktopNotification(self.tray_icon,
-                                          'Chat request from {0}'.format(member_names[0]),
-                                          '')
+        if len(member_ids) > 2:
+            accepted = True
+        else:
+            if not self.isActiveWindow():
+                utils.showDesktopNotification(self.tray_icon,
+                                              'Chat request from {0}'.format(member_names[0]),
+                                              '')
 
-        member_names.remove(self.interface.getClient().getName())
+            member_names.remove(self.interface.getClient().getName())
+            accepted = ConnectionDialog.getAnswer(self, member_names)
 
-        if ConnectionDialog.getAnswer(self, member_names):
+        if accepted:
             tab = self.openTab(utils.oxfordComma(member_names))
 
-            zone = Zone(tab, int(zone_id), int(key), member_ids)
+            zone = Zone(tab, zone_id, key, member_ids)
             self.interface.getClient().enter(tab, zone)
             zone.sendRedy()

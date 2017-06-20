@@ -12,11 +12,7 @@ class ConnectionDialog(QMessageBox):
         self.accepted = False
 
         self.setWindowTitle('Incoming Connection')
-        if len(member_names) > 1: # client name not included
-            self.setText('Received group request from '
-                         + utils.oxfordComma(member_names))
-        else:
-            self.setText('Received connection request from ' + member_names[0])
+        self.setText('Received connection request from ' + member_names[0])
 
         self.setIcon(QMessageBox.Question)
         self.acceptButton = QPushButton(QIcon.fromTheme('dialog-ok'),
