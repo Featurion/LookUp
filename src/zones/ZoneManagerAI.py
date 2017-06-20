@@ -41,7 +41,7 @@ class ZoneManagerAI(UniqueIDManager):
                     datagram.setRecipient(ai.getId())
                     ai.sendDatagram(datagram)
 
-    def getZoneById(self, id_):
+    def getZoneById(self, id_: int):
         zone = self.id2owner.get(id_)
         if zone:
             return zone
@@ -50,7 +50,7 @@ class ZoneManagerAI(UniqueIDManager):
             return None
 
     def addZone(self, client, members):
-        if len(members) > 1:
+        if len(members) > 2:
             mode = 'group'
         else:
             mode = 'private'

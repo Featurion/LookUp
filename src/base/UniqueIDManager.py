@@ -17,16 +17,18 @@ class UniqueIDManager(Notifier):
 
     def allocateId(self, mode, name, id_=None, owner=None):
         """Register a new ID"""
-        if id_ in self.id2owner:
+        if self.id2owner.get(id_):
             return self.generateId(mode, name)
+        elif mode in self.scope_map:
+            self.id2owner.setdefault(id_, owner)
+            self.scope_map.get(mode).setdefault(id_, owner)
         else:
-            self.id2owner[id_] = owner
-            self.scope_map[mode][id_] = owner
+            self.notify.error('IDError', 'id not allocated')
 
     def deallocateId(self, id_, mode):
-        if id_ in self.id2owner:
-            del self.id2owner[id_]
-            del self.scope_map[mode][id_]
+        if self.id2owner.get(id_) and self.scope_map.get(mode):
+            self.id2owner.pop(id_)
+            self.scope_map.get(mode).pop(id_)
         else:
             self.notify.debug('ID {0} is not in use!'.format(id_))
 

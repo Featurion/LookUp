@@ -14,6 +14,12 @@ class ZoneBase(KeyHandler):
         self.is_running = False
         self.success = [None, None]
         self.setupThreads()
+        self.start()
+
+    def start(self):
+        self.is_running = True
+        self.__sender.start()
+        self.__receiver.start()
 
     def setupThreads(self):
         """Setup messaging threads"""
@@ -29,14 +35,6 @@ class ZoneBase(KeyHandler):
     def getMembers(self):
         """Getter for zone members"""
         return self.__members
-
-    def getDatagramIn(self):
-        """Getter for next datagram pending"""
-        return self.__inbox.get()
-
-    def getDatagramOut(self):
-        """Getter for next datagram pending"""
-        return self.__outbox.get()
 
     def getRunning(self):
         """Getter for Node status"""
@@ -71,7 +69,7 @@ class ZoneBase(KeyHandler):
     def send(self):
         while self.getRunning():
             try:
-                datagram = self.getDatagramOut()
+                datagram = self.__outbox.get()
                 Node.sendDatagram(self.client, datagram)
             except Exception as e:
                 self.notify.error('ZoneError', str(e))
@@ -84,7 +82,7 @@ class ZoneBase(KeyHandler):
     def recv(self):
         while self.getRunning():
             try:
-                datagram = self.getDatagramIn()
+                datagram = self.__inbox.get()
                 self._recv(datagram)
                 continue
             except Exception as e:

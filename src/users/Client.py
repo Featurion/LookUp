@@ -63,7 +63,9 @@ class Client(ClientBase):
         self.notify.info('logging in as {0}'.format(name))
         self.sendDatagram(datagram)
 
-        if self.getResp() is True:
+        resp = self.getResp()
+        if resp is not False:
+            self.setId(resp.getSender())
             self.setName(name)
 
             # Request a challenge
@@ -90,28 +92,24 @@ class Client(ClientBase):
         datagram = Datagram.fromJSON(data)
 
         if datagram.getCommand() == CMD_RESP:
-            self.setResp(datagram.getData())
+            self.setResp(datagram)
         elif datagram.getCommand() == CMD_RESP_OK:
             self.setResp(True)
         elif datagram.getCommand() == CMD_RESP_NO:
             self.setResp(False)
         elif datagram.getCommand() == CMD_HELO:
             zone_id, key, member_ids, member_names = json.loads(datagram.getData())
-            zone = self.zm.getZoneById(zone_id)
-            if not zone:
+            if not self.zm.getZoneById(zone_id, search=True):
                 if member_names[0] != self.getName():
                     window = self.interface.getWindow()
                     window.new_client_signal.emit(zone_id, key, member_ids, member_names)
                 else:
-                    flag = False
-                    for names, tab in self.__pending_tabs:
-                        if names == member_names:
-                            zone = Zone(tab, zone_id, key, member_ids)
-                            self.enter(tab, zone)
-                            zone.sendRedy()
-                            flag = True
-
-                    if not flag:
+                    tab = self.zm.getTabByMembers(tuple(member_names))
+                    if tab:
+                        zone = Zone(tab, int(zone_id), key, member_ids)
+                        self.enter(tab, zone)
+                        zone.sendRedy()
+                    else:
                         self.notify.error('ZoneError', 'could not find tab')
         elif datagram.getCommand() == CMD_ZONE_MSG:
             zone = self.zm.getZoneById(datagram.getSender())
@@ -124,7 +122,7 @@ class Client(ClientBase):
             M = self.user.process_challenge(s.encode('latin-1'), B.encode('latin-1'))
 
             if M is None:
-                self.notify.warning('suspicious challenge failure')
+                self.notify.error('AuthenticationError', 'suspicious challenge failure')
 
             datagram.setCommand(CMD_RESP_CHALLENGE)
             datagram.setData(M.decode('latin-1'))
@@ -139,7 +137,7 @@ class Client(ClientBase):
             if self.user.authenticated():
                 self.__challenge_complete = True
             else:
-                self.notify.warning('suspiciously failed to complete challenge')
+                self.notify.critical('suspiciously failed to complete challenge')
         else:
             self.notify.warning('received suspicious datagram')
 
@@ -151,12 +149,14 @@ class Client(ClientBase):
         self.notify.debug('entered zone {0}'.format(zone.getId()))
 
     def requestNewZone(self, tab, member_names):
+        member_names = [self.getName()] + member_names
+
         datagram = Datagram()
         datagram.setCommand(CMD_REQ_ZONE)
         datagram.setRecipient(self.getId())
-        datagram.setData(json.dumps([self.getName()] + member_names))
+        datagram.setData(json.dumps(member_names))
 
         self.notify.debug('requesting new zone')
         self.sendDatagram(datagram)
 
-        self.__pending_tabs.append((tuple(member_names), tab))
+        self.zm.addTab(tab, tuple(member_names))

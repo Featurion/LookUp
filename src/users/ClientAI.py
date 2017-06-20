@@ -70,7 +70,7 @@ class ClientAI(ClientBase):
                 self.setName(name)
                 self.setMode(mode)
                 self.server.cm.addClient(self)
-                self.sendOK()
+                self.sendResp('')
             else:
                 self.sendNo()
         elif datagram.getCommand() == CMD_REQ_CHALLENGE:
@@ -101,7 +101,7 @@ class ClientAI(ClientBase):
                 return
 
             if self.svr.authenticated():
-                pass # Authenticated!
+                pass # authenticated
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()
@@ -114,8 +114,8 @@ class ClientAI(ClientBase):
             ai = self.server.zm.addZone(self, json.loads(datagram.getData()))
             ai.sendHelo()
         elif datagram.getCommand() == CMD_ZONE_MSG:
-            # send to zone inbox
-            pass
+            ai = self.server.zm.getZoneById(datagram.getRecipient())
+            ai.recvDatagram(datagram)
         else:
             self.notify.warning('received suspicious datagram')
 

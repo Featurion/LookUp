@@ -102,7 +102,6 @@ class KeyHandler(Notifier):
             data = self.generateCipher().encrypt(data)
             return data
         except Exception as e:
-            print(e)
             self.notify.error('CryptoError', 'error encrypting data')
 
     def decrypt(self, data: bytes):
