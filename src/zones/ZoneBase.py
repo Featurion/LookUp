@@ -1,94 +1,86 @@
+import base64
 import queue
 import threading
 
+from src.base import constants
+from src.base.Datagram import Datagram
 from src.base.KeyHandler import KeyHandler
+from src.base.Node import Node
 
 
-class ZoneBase(KeyHandler):
+class ZoneBase(Node):
 
     def __init__(self, client, zone_id, members):
-        KeyHandler.__init__(self)
-        self.client = client
-        self.__id = zone_id
+        Node.__init__(self)
+        self.__client = client
         self.__members = members
-        self.is_running = False
-        self.success = [None, None]
-        self.setupThreads()
-        self.start()
+        self.id2key = {} # overwrite in subclass
+        self.is_secure = False
 
-    def start(self):
-        self.is_running = True
-        self.__sender.start()
-        self.__receiver.start()
+        self.setId(zone_id)
+        self.start() # zones start on creation
 
-    def setupThreads(self):
-        """Setup messaging threads"""
-        self.__inbox = queue.Queue()
-        self.__outbox = queue.Queue()
-        self.__sender = threading.Thread(target=self.send, daemon=True)
-        self.__receiver = threading.Thread(target=self.recv, daemon=True)
-
-    def getId(self):
-        """Getter for Node ID"""
-        return self.__id
+    def getClient(self):
+        """Getter for client"""
+        return self.__client
 
     def getMembers(self):
         """Getter for zone members"""
         return self.__members
 
-    def getRunning(self):
-        """Getter for Node status"""
-        return self.is_running
+    def encrypt(self, datagram):
+        key = self.getWorkingKey(datagram.getRecipient())
+        if key and self.is_secure:
+            self.generateSecret(key)
 
-    def setRunning(self, running):
-        """Setter for Node status"""
-        self.is_running = running
+            data = Node.encrypt(self, datagram.toJSON())
+            data = base64.b85encode(data).decode()
 
-    def getSendingSuccess(self):
-        """Getter for sending-thread's status"""
-        return bool(self.success[0])
+            datagram = Datagram()
+            datagram.setCommand(constants.CMD_ZONE_MSG)
+            datagram.setSender(self.getId())
+            datagram.setRecipient(self.getId())
+            datagram.setData(data)
 
-    def __setSendingSuccess(self, success: bool):
-        """Setter for sending-thread's status"""
-        self.success[0] = success
+        return datagram
 
-    def getReceivingSuccess(self):
-        """Getter for receiving-thread's status"""
-        return bool(self.success[1])
+    def decrypt(self, datagram):
+        key = self.getWorkingKey(datagram.getSender())
+        if key:
+            self.generateSecret(key)
 
-    def __setReceivingSuccess(self, success: bool):
-        """Setter for receiving-thread's status"""
-        self.success[1] = success
+            data = base64.b85decode(datagram.getData())
+            data = Node.decrypt(self, data)
+            return Datagram.fromJSON(data)
 
-    def recvDatagram(self, datagram):
-        self.__inbox.put(datagram)
+        return datagram
+
+    def buildZoneDatagram(self, command, id_, data=None):
+        datagram = Datagram()
+        datagram.setCommand(command)
+        datagram.setSender(self.getClient().getId())
+        datagram.setRecipient(id_)
+        datagram.setData(data)
+
+        return self.encrypt(datagram)
+
+    def _send(self):
+        try:
+            datagram = self.getDatagramFromOutbox()
+            Node.sendDatagram(self.client, datagram)
+            return None
+        except Exception as e:
+            self.notify.error('ZoneError', str(e))
+            return False
+
+    def _recv(self):
+        try:
+            datagram = self.getDatagramFromInbox()
+            self.handleReceivedDatagram(datagram)
+            return None
+        except Exception as e:
+            self.notify.error('ZoneError', str(e))
+            return False
 
     def sendDatagram(self, datagram):
-        self.__outbox.put(datagram)
-
-    def send(self):
-        while self.getRunning():
-            try:
-                datagram = self.__outbox.get()
-                Node.sendDatagram(self.client, datagram)
-            except Exception as e:
-                self.notify.error('ZoneError', str(e))
-
-            self.__setSendingSuccess(False)
-            return
-
-        self.__setSendingSuccess(True)
-
-    def recv(self):
-        while self.getRunning():
-            try:
-                datagram = self.__inbox.get()
-                self._recv(datagram)
-                continue
-            except Exception as e:
-                self.notify.error('ZoneError', str(e))
-
-            self.__setReceivingSuccess(False)
-            return
-
-        self.__setReceivingSuccess(True)
+        self.getClient().sendDatagram(datagram)

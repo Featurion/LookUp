@@ -1,7 +1,7 @@
 import base64
 import json
 
-from src.base.constants import CMD_HELO, CMD_REDY, CMD_ZONE_MSG
+from src.base import constants
 from src.base.Datagram import Datagram
 from src.zones.ZoneBase import ZoneBase
 
@@ -10,72 +10,56 @@ class ZoneAI(ZoneBase):
 
     def __init__(self, client, zone_id, members):
         ZoneBase.__init__(self, client, zone_id, members)
-        self.id2redy = {ai.getId(): False for ai in members}
+        self.id2key = {ai.getId(): None for ai in members}
 
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
 
-    def emitDatagram(self, command, data):
+    def getWorkingKey(self, id_):
+        return self.id2key.get(id_)
+
+    def emitDatagram(self, datagram):
         for ai in self.getMembers():
-            dg = Datagram()
-            dg.setCommand(command)
-            dg.setSender(self.getId())
-            dg.setRecipient(ai.getId())
-            dg.setData(data)
-
-            self.generateSecret(self.getKey())
-            data = base64.b85encode(self.encrypt(dg.toJSON())).decode()
-
-            dg2 = Datagram()
-            dg2.setCommand(CMD_ZONE_MSG)
-            dg2.setRecipient(ai.getId())
-            dg2.setData(data)
-
-            ai.sendDatagram(dg2)
-
-        self.notify.debug('sent helo in zone {0}'.format(self.getId()))
-
-    def decryptDatagram(self, datagram):
-        self.generateSecret(self.getKey())
-        data = self.decrypt(base64.b85decode(datagram.getData())) # TODO: fix!
-        return data
-
-    def sendHelo(self):
-        data = json.dumps([
-            str(self.getId()),
-            str(self.getKey()),
-            [ai.getId() for ai in self.getMembers()],
-            [ai.getName() for ai in self.getMembers()],
-        ])
-
-        for ai in self.getMembers():
-            datagram = Datagram()
-            datagram.setCommand(CMD_HELO)
-            datagram.setRecipient(ai.getId())
-            datagram.setData(data)
-
             ai.sendDatagram(datagram)
 
-        self.notify.debug('sent helo in zone {0}'.format(self.getId()))
+    def emitMessage(self, command, data=None):
+        for ai in self.getMembers():
+            datagram = self.buildZoneDatagram(command, ai.getId(), data)
+            ai.sendDatagram(datagram)
 
-    def redy(self, id_, key):
-        if id_ in self.id2redy:
-            self.id2redy.setdefault(id_, True)
-            self.notify.debug('client {0} redy in zone {1}'.format(id_, self.getId()))
-        else:
-            self.notify.error('ZoneError', 'id not in zone')
+    def handleReceivedDatagram(self, datagram):
+        datagram = self.decrypt(datagram)
 
-        self.emitDatagram(CMD_REDY, json.dumps([id_, key]))
-
-        if all(self.id2redy.values()):
-            self.notify.debug('zone {0} is redy'.format(self.getId()))
-
-    def _recv(self, datagram):
-        datagram = self.decryptDatagram(datagram)
-
-        if datagram.getCommand() == CMD_REDY:
-            self.redy(datagram.getData())
+        if datagram.getCommand() == constants.CMD_REDY:
+            self.clientRedy(datagram)
         else:
             self.notify.warning('received suspicious datagram')
 
-        return datagram
+    def sendHelo(self):
+        data = json.dumps([
+            self.getId(),
+            self.getKey(),
+            [ai.getId() for ai in self.getMembers()],
+            [ai.getName() for ai in self.getMembers()],
+        ])
+        self.emitMessage(constants.CMD_HELO, data)
+
+        self.notify.debug('sent helo in zone {0}'.format(self.getId()))
+
+    def sendRedy(self):
+        self.emitMessage(constants.CMD_REDY, json.dumps(self.id2key))
+        self.id2key.clear()
+
+    def clientRedy(self, datagram):
+        id_, key = datagram.getSender(), datagram.getData()
+
+        if id_ in self.id2key:
+            self.id2key[id_] = key
+            self.notify.debug('client {0} redy in zone {1}'.format(id_, self.getId()))
+        else:
+            self.notify.error('ZoneError', '{0} not in zone'.format(id_))
+
+        if all(self.id2key.values()):
+            self.is_secure = True
+            self.sendRedy()
+            self.notify.debug('zone {0} is redy'.format(self.getId()))

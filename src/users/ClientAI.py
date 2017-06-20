@@ -3,7 +3,7 @@ import srp
 
 from src.base import utils
 from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
-from src.base.constants import CMD_REQ_ZONE, CMD_ZONE_MSG
+from src.base.constants import CMD_REQ_ZONE, CMD_REDY, CMD_ZONE_MSG
 from src.base.constants import HMAC_KEY
 from src.base.constants import SYSTEM
 from src.base.Datagram import Datagram
@@ -30,10 +30,12 @@ class ClientAI(ClientBase):
     def initiateHandshake(self):
         self.sendKey()
         self.receiveKey()
+        self.is_secure = True
 
     def sendResp(self, data):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
         datagram.setData(data)
 
@@ -42,6 +44,7 @@ class ClientAI(ClientBase):
     def sendOK(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_OK)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
 
         self.sendDatagram(datagram)
@@ -49,13 +52,12 @@ class ClientAI(ClientBase):
     def sendNo(self):
         datagram = Datagram()
         datagram.setCommand(CMD_RESP_NO)
+        datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
 
         self.sendDatagram(datagram)
 
-    def _recv(self, data):
-        datagram = Datagram.fromJSON(data)
-
+    def handleReceivedDatagram(self, datagram):
         if datagram.getCommand() == CMD_LOGIN:
             name, mode = json.loads(datagram.getData())
             client_hmac = datagram.getHMAC()
@@ -86,7 +88,10 @@ class ClientAI(ClientBase):
                 self.sendNo()
                 return
 
+            datagram = Datagram()
             datagram.setCommand(CMD_RESP_CHALLENGE)
+            datagram.setSender(self.getId())
+            datagram.setRecipient(self.getId())
             datagram.setData((s.decode('latin-1'), B.decode('latin-1')))
             self.sendDatagram(datagram)
         elif datagram.getCommand() == CMD_RESP_CHALLENGE:
@@ -107,16 +112,20 @@ class ClientAI(ClientBase):
                 self.sendNo()
                 return
 
+            datagram = Datagram()
             datagram.setCommand(CMD_VERIFY_CHALLENGE)
+            datagram.setSender(self.getId())
+            datagram.setRecipient(self.getId())
             datagram.setData(HAMK.decode('latin-1'))
             self.sendDatagram(datagram)
         elif datagram.getCommand() == CMD_REQ_ZONE:
             ai = self.server.zm.addZone(self, json.loads(datagram.getData()))
             ai.sendHelo()
-        elif datagram.getCommand() == CMD_ZONE_MSG:
+        elif datagram.getCommand() in [CMD_REDY, CMD_ZONE_MSG]:
             ai = self.server.zm.getZoneById(datagram.getRecipient())
-            ai.recvDatagram(datagram)
+            if ai:
+                ai.receiveDatagram(datagram)
+            else:
+                self.notify.warning('received suspicious zone datagram')
         else:
             self.notify.warning('received suspicious datagram')
-
-        return datagram

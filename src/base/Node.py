@@ -1,12 +1,7 @@
-import base64
 import queue
-import socket
-import ssl
-import struct
 import threading
 
 from src.base import utils
-from src.base.constants import TLS_ENABLED
 from src.base.KeyHandler import KeyHandler
 
 
@@ -14,61 +9,22 @@ class Node(KeyHandler):
 
     def __init__(self):
         KeyHandler.__init__(self)
-        self.__socket = None
         self.__id = None
         self.is_running = False
         self.success = [None, None]
         self.__resp = None
 
-    def __supportSSL(self, socket_):
-        return ssl.wrap_socket(socket_,
-                               ca_certs="certs/pem.crt",
-                               cert_reqs=ssl.CERT_REQUIRED,
-                               ssl_version=ssl.PROTOCOL_TLSv1_2,
-                               ciphers='ECDHE-RSA-AES256-GCM-SHA384')
-
-    def setupSocket(self, socket_, client=False):
-        """Setup socket"""
-        try:
-            if TLS_ENABLED and client:
-                self.notify.info('connecting with SSL!')
-                self.__socket = self.__supportSSL(socket_)
-            else:
-                self.notify.info('connecting without SSL!')
-                self.__socket = socket_
-            self.__socket.settimeout(10)
-            self.notify.info('connected to server')
-        except ConnectionRefusedError:
-            self.notify.error('ConnectionError', 'could not connect to server')
-        except ssl.SSLError as e:
-            self.notify.error('SSLError', str(e))
-        except Exception as e:
-            self.notify.error('ConnectionError', str(e))
-            self.stop()
-
     def setupThreads(self):
         """Setup messaging threads"""
         self.__inbox = queue.Queue()
         self.__outbox = queue.Queue()
+
         self.__sender = threading.Thread(target=self.send, daemon=True)
         self.__receiver = threading.Thread(target=self.recv, daemon=True)
 
-    def socketConnect(self, address, port):
-        try:
-            self.getSocket().connect((address, port))
-        except ssl.SSLError as e:
-            self.notify.critical(str(e))
-
-    def getSocket(self):
-        """Getter for socket"""
-        return self.__socket
-
-    def setSocket(self, socket_):
-        """Setter for socket"""
-        if self.__socket is None:
-            self.__socket = socket_
-        else:
-            self.notify.critical('suspicious attempt to change socket')
+        self.is_running = True
+        self.__sender.start()
+        self.__receiver.start()
 
     def getId(self):
         """Getter for Node ID"""
@@ -121,143 +77,52 @@ class Node(KeyHandler):
         self.__resp = None
         return resp
 
-    def getDatagram(self):
+    def getDatagramFromInbox(self):
+        """Getter for next datagram pending"""
+        return self.__inbox.get()
+
+    def getDatagramFromOutbox(self):
         """Getter for next datagram pending"""
         return self.__outbox.get()
 
     def sendDatagram(self, datagram):
-        datagram.setTimestamp(utils.getTimestamp())
         self.__outbox.put(datagram)
+
+    def receiveDatagram(self, datagram):
+        self.__inbox.put(datagram)
 
     def start(self):
         """Handle startup of the Node"""
         try:
+            self.setupThreads()
             self.is_running = True
-            self.__sender.start()
-            self.__receiver.start()
         except Exception as e:
-            self.notify.error('ConnectionError', str(e))
+            self.notify.error('MessagingError', str(e))
 
-    def stop(self):
+    def stop(self): # overwrite in subclass
         """Handle stopping of the Node"""
-        self.getSocket().shutdown(socket.SHUT_RDWR)
+        pass
 
     def send(self):
         """Threaded function for message sending"""
         while self.getRunning():
-            try:
-                data = self.getDatagram().toJSON()
-                data = self.encrypt(data)
-                self.__send(data)
-                continue
-            except queue.Empty:
-                continue
-            except ValueError:
-                self.notify.error('NetworkError', 'tried sending invalid datagram')
-            except Exception as e:
-                self.notify.error('NetworkError', str(e))
-                raise e
-
-            self.__setSendingSuccess(False)
-            return
+            if self._send() is False:
+                self.__setSendingSuccess(False)
+                return
 
         self.__setSendingSuccess(True)
         self.notify.warning('done sending')
 
-    def __send(self, data):
-        """Send data length and data"""
-        size = len(data)
-        self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
-        self.__sendToSocket(data, size)
-
-    def __sendToSocket(self, data, size):
-        """Send data through socket transfer"""
-        while size > 0:
-            try:
-                size -= self.__socket.send(data[:size])
-            except OSError:
-                self.notify.error('SocketError', 'error sending data')
-                return
-            except Exception as e:
-                self.notify.error('SocketError', str(e))
-                return
-
     def recv(self):
         """Threaded function for message receiving"""
-        secure = False
-
         while self.getRunning():
-            try:
-                data = self.__recv()
-                if not secure:
-                    self.setResp(data)
-                    secure = True
-                    continue
-                elif data:
-                    data = self.decrypt(data)
-                    self._recv(data)
-                    continue
-                else:
-                    break
-            except InterruptedError:
-                self.notify.error('ConnectionError', 'disconnected')
-            except ValueError as e:
-                self.notify.error('NetworkError', 'received invalid datagram')
-            except Exception as e:
-                self.notify.error('NetworkError', str(e))
-                raise e
-
-            self.__setReceivingSuccess(False)
-            return
+            if self._recv() is False:
+                self.__setReceivingSuccess(False)
+                return
 
         self.__setReceivingSuccess(True)
+        self.notify.warning('done receiving')
 
-    def _recv(self, data): # overwrite in superclass
+    def handleReceivedData(self, data): # overwrite in subclass
         """In-between function for Node reaction to messages received"""
-        return data
-
-    def __recv(self):
-        """Receive data length and data"""
-        try:
-            size_indicator = self.__recvFromSocket(4)
-            size = socket.ntohl(struct.unpack('I', size_indicator)[0])
-            data = self.__recvFromSocket(size)
-            return data
-        except struct.error as e:
-            self.notify.error('ConnectionError', 'connection was closed unexpectedly')
-            self.stop()
-        except Exception as e:
-            self.notify.error('NetworkError', str(e))
-            raise e
-
-    def __recvFromSocket(self, size):
-        """Receive data through socket transfer"""
-        data = b''
-        while size > 0:
-            try:
-                _data = self.__socket.recv(size)
-                if _data:
-                    size -= len(_data)
-                    data += _data
-                else:
-                    raise OSError()
-            except OSError as e:
-                if str(e) == 'timed out':
-                    continue
-                else:
-                    return b''
-            except Exception as e:
-                self.notify.error('NetworkError', str(e))
-                return b''
-
-        return data
-
-    def sendKey(self):
-        data = base64.b85encode(str(self.getKey()).encode())
-        self.__send(data)
-        self.notify.debug('sent public key')
-
-    def receiveKey(self):
-        key = int(base64.b85decode(self.getResp()).decode())
-        self.generateSecret(key)
-        self.notify.debug('received public key')
+        return NotImplemented
