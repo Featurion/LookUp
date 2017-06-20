@@ -23,6 +23,7 @@ WARNING = 30
 EXCEPTION = 40
 
 LOG_CONFIG = (None, None, INFO)
+LOG_FORMAT = settings['log-format']
 
 # Crypto
 

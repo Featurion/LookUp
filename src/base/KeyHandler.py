@@ -43,9 +43,9 @@ class KeyHandler(Notifier):
 
     def __init__(self):
         Notifier.__init__(self)
-        self.aes_mode = AES.MODE_CBC
-        self.aes_key = None
-        self.aes_iv = None
+        self.__aes_mode = AES.MODE_CBC
+        self.__aes_key = None
+        self.__aes_iv = None
         self.__pub_key = None
         self.__priv_key = None
         self.generateKey()
@@ -75,16 +75,16 @@ class KeyHandler(Notifier):
     def generateSecret(self, key):
         if self.__priv_key:
             self.notify.debug('generating DH secret')
-            self.dh_secret = long_to_bytes(pow(key, self.__priv_key, DEF_P))
-            hash_ = self.generateHash(str(self.dh_secret).encode())
-            self.aes_key = hash_[0:32]
-            self.aes_iv = hash_[16:32]
+            self.__dh_secret = long_to_bytes(pow(key, self.__priv_key, DEF_P))
+            hash_ = self.generateHash(str(self.__dh_secret).encode())
+            self.__aes_key = hash_[0:32]
+            self.__aes_iv = hash_[16:32]
         else:
             self.notify.error('CryptoError', 'no private key exists')
             return
 
-    def generateCipher(self):
-        return AES.new(self.aes_key, self.aes_mode, self.aes_iv)
+    def __generateCipher(self):
+        return AES.new(self.__aes_key, self.__aes_mode, self.__aes_iv)
 
     def generateHmac(self, message, key, hex_digest=False):
         if not hex_digest:
@@ -99,14 +99,14 @@ class KeyHandler(Notifier):
         try:
             data = base64.b85encode(data.encode())
             data = KeyHandler._pad(data, AES.block_size)
-            data = self.generateCipher().encrypt(data)
+            data = self.__generateCipher().encrypt(data)
             return data
         except Exception as e:
             self.notify.error('CryptoError', 'error encrypting data')
 
     def decrypt(self, data: bytes):
         try:
-            data = self.generateCipher().decrypt(data)
+            data = self.__generateCipher().decrypt(data)
             data = KeyHandler._unpad(data)
             data = base64.b85decode(data).decode()
             return data

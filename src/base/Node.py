@@ -111,7 +111,6 @@ class Node(KeyHandler):
                 return
 
         self.__setSendingSuccess(True)
-        self.notify.warning('done sending')
 
     def recv(self):
         """Threaded function for message receiving"""
