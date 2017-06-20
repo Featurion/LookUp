@@ -36,7 +36,7 @@ class ZoneAI(ZoneBase):
         self.notify.debug('sent helo in zone {0}'.format(self.getId()))
 
     def decryptDatagram(self, datagram):
-        self.generateSecret(self.getKey())
+        self.generateSecret(self.getKey()) # This needs to be the member's public key, not its own public key
         data = self.decrypt(base64.b85decode(datagram.getData())) # TODO: fix!
         return data
 

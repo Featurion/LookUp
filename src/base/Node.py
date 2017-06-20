@@ -162,7 +162,6 @@ class Node(KeyHandler):
             return
 
         self.__setSendingSuccess(True)
-        self.notify.warning('done sending')
 
     def __send(self, data):
         """Send data length and data"""

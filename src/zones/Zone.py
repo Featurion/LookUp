@@ -15,7 +15,7 @@ class Zone(ZoneBase):
         self.id2redy = {id_: False for id_ in member_ids}
         self.id2key = {id_: None for id_ in member_ids}
 
-    def getKey(self):
+    def getAltKey(self):
         return self.__zone_key
 
     def sendDatagram(self, command, data):
@@ -25,7 +25,7 @@ class Zone(ZoneBase):
         dg.setRecipient(self.getId())
         dg.setData(data)
 
-        self.generateSecret(self.getKey())
+        self.generateSecret(self.getAltKey())
         data = base64.b85encode(self.encrypt(dg.toJSON())).decode()
 
         dg2 = Datagram()
