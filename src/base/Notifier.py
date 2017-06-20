@@ -1,6 +1,6 @@
 import sys
 
-from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG
+from src.base.constants import DEBUG, INFO, WARNING, EXCEPTION, LOG_CONFIG, LOG_FORMAT
 
 class Channel(object):
 
@@ -57,9 +57,22 @@ class Notifier(object):
             self.__channel = channel
 
         def format(self, msg_type, msg):
-            return '[{0}] {1}: {2}'.format(msg_type.upper(),
-                                           self.__name,
-                                           msg[:1].upper() + msg[1:])
+            log_format = LOG_FORMAT
+            if log_format == 'inbracket':
+                return '[{0}] {1}: {2}'.format(msg_type.upper().ljust(7),
+                                               self.__name,
+                                               msg[:1].upper() + msg[1:])
+            elif log_format == 'outbracket':
+                width = 7
+                padding = width - len(msg_type)
+                return '[{0}] {1} {2}: {3}'.format(msg_type.upper(),
+                                               ''.ljust(padding),
+                                               self.__name,
+                                               msg[:1].upper() + msg[1:])
+            else:
+                return '[{0}] {1}: {2}'.format(msg_type.upper(),
+                                               self.__name,
+                                               msg[:1].upper() + msg[1:])
 
         def debug(self, msg):
             self.__channel.debug(self.format('debug', msg))

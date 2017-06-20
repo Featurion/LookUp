@@ -1,7 +1,10 @@
 # Basic settings
 app-name: LookUp
-log-path: /logs
 version: 'PROTOTYPE-DEV'
+
+# Logging
+log-path: /logs
+log-format: 'none'
 
 # Connection settings
 default-address: '127.0.0.1'
