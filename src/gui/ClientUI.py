@@ -12,7 +12,7 @@ from src.users.Client import Client
 
 class ClientUI(QApplication, Notifier):
 
-    error_signal = pyqtSignal(str)
+    error_signal = pyqtSignal(str, str)
     stall_signal = pyqtSignal()
     connected_signal = pyqtSignal()
     login_signal = pyqtSignal(str)
@@ -55,10 +55,7 @@ class ClientUI(QApplication, Notifier):
     def getWindow(self):
         return self.__window
 
-    def __showError(self, msg: str):
-        QMessageBox.warning(QWidget(), '', msg)
-
-    def reportError(self, title, err):
+    def __showError(self, title, err):
         QMessageBox.warning(QWidget(), title, err)
 
     @pyqtSlot()

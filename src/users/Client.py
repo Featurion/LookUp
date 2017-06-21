@@ -151,7 +151,7 @@ class Client(ClientBase):
                 self.notify.warning('received suspicious zone datagram')
         elif datagram.getCommand() == CMD_ERR:
             title, err = datagram.getData()
-            self.interface.reportError(title, err)
+            self.interface.error_signal.emit(str(title), str(err))
         else:
             self.notify.warning('received suspicious datagram')
 

@@ -177,14 +177,12 @@ class ChatWindow(QMainWindow):
         pass
 
     @pyqtSlot(str, str, list, list)
-    def newClient(self, zone_id, key, member_ids, member_names):
+    def newClient(self, zone_id, key, member_ids, member_names, group):
         zone_id, key = int(zone_id), int(key)
 
-        if len(member_ids) > 2:
-            group = True
+        if group:
             accepted = True
         else:
-            group = False
             if not self.isActiveWindow():
                 utils.showDesktopNotification(self.tray_icon,
                                               'Chat request from {0}'.format(member_names[0]),

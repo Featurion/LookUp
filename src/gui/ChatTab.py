@@ -39,7 +39,7 @@ class ChatTab(QWidget):
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(self.chat_widget)
         if self.group:
-            self.widget_stack.setCurrentIndex(1)
+            self.connect(self.getClient().getName())
         else:
             self.widget_stack.setCurrentIndex(0)
 

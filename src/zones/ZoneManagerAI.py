@@ -49,11 +49,15 @@ class ZoneManagerAI(UniqueIDManager):
             self.notify.debug('zone with id {0} does not exist!'.format(id_))
             return None
 
-    def addZone(self, client, members):
-        if len(members) > 2:
+    def addZone(self, client, members, group):
+        if group:
             mode = 'group'
         else:
             mode = 'private'
+
+        if not group and members > 2:
+            self.notify.error('ZoneError', 'private chats cannot have over 2 members')
+            return
 
         member_ais = [self.server.cm.getClientByName(n) for n in members]
         for member in member_ais:
