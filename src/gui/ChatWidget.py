@@ -29,10 +29,11 @@ class ChatWidget(QWidget):
             full_text = '<br>'.join(msg for ts, msg in self)
             self.widget.chat_log.setText(full_text)
 
-    def __init__(self, tab):
+    def __init__(self, tab, group: bool):
         QWidget.__init__(self, tab)
 
         self.tab = tab
+        self.group = group
 
         self.disabled = False
         self.cleared = False

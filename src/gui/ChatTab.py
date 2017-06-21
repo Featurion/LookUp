@@ -10,6 +10,7 @@ from src.base.constants import TITLE_INVALID_NAME, TITLE_EMPTY_NAME, EMPTY_NAME
 from src.base.constants import TITLE_SELF_CONNECT, SELF_CONNECT, NAME_CONTENT
 from src.base.constants import NAME_LENGTH
 from src.gui.MultipleInputWidget import MultipleInputWidget
+from src.gui.InputWidget import InputWidget
 from src.gui.ConnectingWidget import ConnectingWidget
 from src.gui.ChatWidget import ChatWidget
 
@@ -19,23 +20,28 @@ class ChatTab(QWidget):
     new_message_signal = pyqtSignal(str, float)
     zone_redy_signal = pyqtSignal()
 
-    def __init__(self, interface):
+    def __init__(self, interface, group: bool):
         QWidget.__init__(self)
 
         self.interface = interface
+        self.group = group
         self.__zone = None
         self.__unread = 0
 
         self.widget_stack = QStackedWidget(self)
-        self.input_widget = MultipleInputWidget(self,
-                                                'images/new_chat.png', 150,
-                                                'Usernames:', 'LookUp',
-                                                self.connect, self.addInput)
-        self.chat_widget = ChatWidget(self)
-        self.widget_stack.addWidget(self.input_widget)
+        if not self.group:
+            self.input_widget = InputWidget(self,
+                                                    'images/new_chat.png', 150,
+                                                    'Username:', 'LookUp',
+                                                    32, self.connect)
+            self.widget_stack.addWidget(self.input_widget)
+        self.chat_widget = ChatWidget(self, self.group)
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(self.chat_widget)
-        self.widget_stack.setCurrentIndex(0)
+        if self.group:
+            self.widget_stack.setCurrentIndex(1)
+        else:
+            self.widget_stack.setCurrentIndex(0)
 
         self.new_message_signal.connect(self.newMessage)
         self.zone_redy_signal.connect(self.zoneRedy)
@@ -86,7 +92,8 @@ class ChatTab(QWidget):
 
             if msg:
                 QMessageBox.warning(self, *msg)
-                names.remove(name)
+                # names.remove(name) - what is this supposed to be? causes AttributeError
+                return
 
         titled_names = utils.oxfordComma(names)
         self.widget_stack.widget(1).setConnectingToName(titled_names)

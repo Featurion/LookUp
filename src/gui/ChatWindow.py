@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
 from src.base import utils
-from src.base.constants import APP_TITLE, BLANK_TAB_TITLE
+from src.base.constants import APP_TITLE, BLANK_TAB_TITLE, BLANK_GROUP_TAB_TITLE
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
@@ -132,15 +132,29 @@ class ChatWindow(QMainWindow):
         self.chat_tabs.setTabText(index, title)
 
     def openTab(self, title=None):
-        tab = ChatTab(self.interface)
+        tab = ChatTab(self.interface, False)
 
         if title:
             self.chat_tabs.addTab(tab, title)
             tab.widget_stack.widget(1).setConnectingToName(title)
             tab.widget_stack.setCurrentIndex(1)
-            # TODO: tab.showNowChattingMessage()
         else:
             self.chat_tabs.addTab(tab, BLANK_TAB_TITLE)
+
+        self.chat_tabs.setCurrentWidget(tab)
+        tab.setFocus()
+
+        return tab
+
+    def openGroupTab(self, title=None):
+        tab = ChatTab(self.interface, True)
+
+        if title:
+            self.chat_tabs.addTab(tab, title)
+            tab.widget_stack.widget(1).setConnectingToName(title)
+            tab.widget_stack.setCurrentIndex(1)
+        else:
+            self.chat_tabs.addTab(tab, BLANK_GROUP_TAB_TITLE)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -154,7 +168,7 @@ class ChatWindow(QMainWindow):
         self.chat_tabs.removeTab(index)
 
         if self.chat_tabs.count() == 0:
-            self.addNewTab()
+            self.openTab()
 
     def _tabChanged(self):
         pass
@@ -167,8 +181,10 @@ class ChatWindow(QMainWindow):
         zone_id, key = int(zone_id), int(key)
 
         if len(member_ids) > 2:
+            group = True
             accepted = True
         else:
+            group = False
             if not self.isActiveWindow():
                 utils.showDesktopNotification(self.tray_icon,
                                               'Chat request from {0}'.format(member_names[0]),
@@ -178,7 +194,10 @@ class ChatWindow(QMainWindow):
             accepted = ConnectionDialog.getAnswer(self, member_names)
 
         if accepted:
-            tab = self.openTab(utils.oxfordComma(member_names))
+            if group:
+                tab = self.openGroupTab(utils.oxfordComma(member_names))
+            else:
+                tab = self.openTab(utils.oxfordComma(member_names))
 
             zone = Zone(tab, zone_id, key, member_ids)
             self.interface.getClient().enter(tab, zone)

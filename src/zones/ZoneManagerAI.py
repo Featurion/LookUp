@@ -56,6 +56,9 @@ class ZoneManagerAI(UniqueIDManager):
             mode = 'private'
 
         member_ais = [self.server.cm.getClientByName(n) for n in members]
+        for member in member_ais:
+            if member == None:
+                return
 
         seed = ','.join(members)
         zone_id = self.generateId(mode, seed)

@@ -4,7 +4,7 @@ import socket
 import srp
 
 from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
-from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_REDY, CMD_ZONE_MSG
+from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_REDY, CMD_ZONE_MSG, CMD_ERR
 from src.base.constants import HMAC_KEY
 from src.base.Datagram import Datagram
 from src.base.Node import Node
@@ -65,7 +65,7 @@ class Client(ClientBase):
         self.sendDatagram(datagram)
 
         resp = self.getResp()
-        if resp is not False:
+        if resp.getData() is True:
             self.setId(resp.getSender())
             self.setName(name)
 
@@ -80,7 +80,11 @@ class Client(ClientBase):
                 else:
                     continue
 
-            callback('')
+            resp = self.getResp()
+            if resp.getData() is True:
+                callback('')
+            else:
+                callback('placeholder rejection message') # TODO: replace message
         else:
             callback('placeholder rejection message') # TODO: replace message
 
@@ -98,7 +102,7 @@ class Client(ClientBase):
         if datagram.getCommand() == CMD_RESP:
             self.setResp(datagram)
         elif datagram.getCommand() == CMD_RESP_OK:
-            self.setResp(True)
+            self.setResp(datagram)
         elif datagram.getCommand() == CMD_RESP_NO:
             self.setResp(False)
         elif datagram.getCommand() == CMD_RESP_CHALLENGE:
@@ -145,6 +149,9 @@ class Client(ClientBase):
                 zone.receiveDatagram(datagram)
             else:
                 self.notify.warning('received suspicious zone datagram')
+        elif datagram.getCommand() == CMD_ERR:
+            title, err = datagram.getData()
+            self.interface.reportError(title, err)
         else:
             self.notify.warning('received suspicious datagram')
 

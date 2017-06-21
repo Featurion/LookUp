@@ -58,6 +58,9 @@ class ClientUI(QApplication, Notifier):
     def __showError(self, msg: str):
         QMessageBox.warning(QWidget(), '', msg)
 
+    def reportError(self, title, err):
+        QMessageBox.warning(QWidget(), title, err)
+
     @pyqtSlot()
     def __showConnecting(self):
         self.getWindow().widget_stack.setCurrentIndex(0)

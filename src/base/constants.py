@@ -61,6 +61,7 @@ TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
 TITLE_SELF_CONNECT = 'Tried connecting to self'
 TITLE_NAME_IN_USE = 'Username is taken'
+TITLE_NAME_DOESNT_EXIST = "Username doesn't exist"
 
 CHOOSE = 'Please choose another'
 EMPTY_NAME = 'Please enter a username.'
@@ -68,6 +69,7 @@ NAME_LENGTH = 'That username is too long. {0}.'.format(CHOOSE)
 NAME_CONTENT = 'That username contains invalid characters. {0}.'.format(CHOOSE)
 SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
 NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
+NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
 
 # Chatting
@@ -75,3 +77,4 @@ CLIENT_JOINED = '{0} is ready to chat.'
 URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
 MSG_TEMPLATE = "<font color='{0}'>{1} <strong>{2}:</strong></font> {3}"
 BLANK_TAB_TITLE = 'New Chat'
+BLANK_GROUP_TAB_TITLE = 'New Group Chat'

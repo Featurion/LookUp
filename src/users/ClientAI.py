@@ -3,9 +3,10 @@ import srp
 
 from src.base import utils
 from src.base.constants import CMD_LOGIN, CMD_RESP, CMD_RESP_OK, CMD_RESP_NO, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
-from src.base.constants import CMD_REQ_ZONE, CMD_REDY, CMD_ZONE_MSG
+from src.base.constants import CMD_REQ_ZONE, CMD_REDY, CMD_ZONE_MSG, CMD_ERR
 from src.base.constants import HMAC_KEY
 from src.base.constants import SYSTEM
+from src.base.constants import TITLE_NAME_DOESNT_EXIST, NAME_DOESNT_EXIST
 from src.base.Datagram import Datagram
 from src.users.ClientBase import ClientBase
 
@@ -46,6 +47,7 @@ class ClientAI(ClientBase):
         datagram.setCommand(CMD_RESP_OK)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
+        datagram.setData(True)
 
         self.sendDatagram(datagram)
 
@@ -54,6 +56,15 @@ class ClientAI(ClientBase):
         datagram.setCommand(CMD_RESP_NO)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
+
+        self.sendDatagram(datagram)
+
+    def sendError(self, title, err):
+        datagram = Datagram()
+        datagram.setCommand(CMD_ERR)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData((title, err))
 
         self.sendDatagram(datagram)
 
@@ -71,8 +82,7 @@ class ClientAI(ClientBase):
             if not utils.isNameInvalid(name): # valid name
                 self.setName(name)
                 self.setMode(mode)
-                self.server.cm.addClient(self)
-                self.sendResp('')
+                self.sendOK()
             else:
                 self.sendNo()
         elif datagram.getCommand() == CMD_REQ_CHALLENGE:
@@ -105,8 +115,9 @@ class ClientAI(ClientBase):
                 self.sendNo()
                 return
 
-            if self.svr.authenticated():
-                pass # authenticated
+            if self.svr.authenticated(): # authenticated
+                self.server.cm.addClient(self)
+                self.sendOK()
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()
@@ -120,6 +131,9 @@ class ClientAI(ClientBase):
             self.sendDatagram(datagram)
         elif datagram.getCommand() == CMD_REQ_ZONE:
             ai = self.server.zm.addZone(self, json.loads(datagram.getData()))
+            if ai == None:
+                self.sendError(TITLE_NAME_DOESNT_EXIST, NAME_DOESNT_EXIST)
+                return
             ai.sendHelo()
         elif datagram.getCommand() in [CMD_REDY, CMD_ZONE_MSG]:
             ai = self.server.zm.getZoneById(datagram.getRecipient())
