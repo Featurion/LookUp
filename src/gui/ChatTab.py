@@ -20,16 +20,16 @@ class ChatTab(QWidget):
     new_message_signal = pyqtSignal(str, float)
     zone_redy_signal = pyqtSignal()
 
-    def __init__(self, interface, group: bool):
+    def __init__(self, interface, is_group: bool):
         QWidget.__init__(self)
 
         self.interface = interface
-        self.is_group = group
+        self.is_group = is_group
         self.__zone = None
         self.__unread = 0
 
         self.widget_stack = QStackedWidget(self)
-        if not self.group:
+        if not self.is_group:
             self.input_widget = InputWidget(self,
                                                     'images/new_chat.png', 150,
                                                     'Username:', 'LookUp',
