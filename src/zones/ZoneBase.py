@@ -18,10 +18,6 @@ class ZoneBase(Node):
         self.setId(zone_id)
         self.start() # zones start on creation
 
-        del client
-        del zone_id
-        del members
-
     def cleanup(self):
         Node.cleanup()
         if self.__client:
@@ -109,6 +105,8 @@ class ZoneBase(Node):
             return self.decrypt(datagram)
         else:
             return datagram
+
+        Node.handleReceivedDatagram(self, datagram)
 
     def sendDatagram(self, datagram):
         self.getClient().sendDatagram(datagram)

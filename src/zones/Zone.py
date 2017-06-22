@@ -13,11 +13,9 @@ class Zone(ZoneBase):
         self.id2key = {id_: None for id_ in member_ids}
         self.__alt_key = key
 
-        del id_
-        del tab
-        del zone_id
-        del key
-        del member_ids
+        self.COMMAND_MAP.update({
+            constants.CMD_REDY, self.zoneRedy,
+        })
 
     def cleanup(self):
         ZoneBase.cleanup(self)
@@ -34,19 +32,6 @@ class Zone(ZoneBase):
     def getWorkingKey(self, id_):
         del id_
         return self.__alt_key
-
-    def handleReceivedDatagram(self, datagram):
-        datagram = ZoneBase.handleReceivedDatagram(self, datagram)
-
-        if not datagram:
-            return
-
-        if datagram.getCommand() == constants.CMD_REDY:
-            self.zoneRedy(datagram)
-        else:
-            self.notify.warning('received suspicious datagram')
-
-        del datagram
 
     def sendRedy(self):
         datagram = self.buildZoneDatagram(constants.CMD_REDY,

@@ -12,6 +12,16 @@ class ClientAI(ClientBase):
         self.server = server
         self.svr = None
 
+        self.COMMAND_MAP.update({
+            constants.CMD_REQ_CONNECTION: self.doHandshake,
+            constants.CMD_REQ_LOGIN: self.doLogin,
+            constants.CMD_REQ_CHALLENGE: self.doChallenge,
+            constants.CMD_REQ_CHALLENGE_VERIFY: self.doChallengeVerification,
+            constants.CMD_HELO: self.doHelo,
+            constants.CMD_REDY: self.forwardZoneDatagram,
+            constants.CMD_ZONE_MSG: self.forwardZoneDatagram,
+        })
+
     def stop(self):
         """Handle stopping of the client"""
         self.server.cm.removeClient(self)
@@ -38,30 +48,6 @@ class ClientAI(ClientBase):
         datagram.setData((title, err))
 
         self.sendDatagram(datagram)
-        del datagram
-
-    def handleReceivedDatagram(self, datagram):
-        datagram = ClientBase.handleReceivedDatagram(self, datagram)
-
-        if not datagram:
-            return
-
-        if datagram.getCommand() == constants.CMD_REQ_CONNECTION:
-            self.doHandshake(datagram)
-        elif datagram.getCommand() == constants.CMD_REQ_LOGIN:
-            self.doLogin(datagram)
-        elif datagram.getCommand() == constants.CMD_REQ_CHALLENGE:
-            self.doChallenge(datagram)
-        elif datagram.getCommand() == constants.CMD_REQ_CHALLENGE_VERIFY:
-            self.doChallengeVerification(datagram)
-        elif datagram.getCommand() == constants.CMD_HELO:
-            self.doHelo(datagram)
-        elif datagram.getRecipient() in self.zm.getZoneIds():
-            self.forwardZoneMessage(datagram)
-        else:
-            self.notify.warning('received suspicious datagram')
-            return None
-
         del datagram
 
     def doHandshake(self, datagram):
@@ -166,8 +152,11 @@ class ClientAI(ClientBase):
         del datagram
 
     def forwardZoneDatagram(self, datagram):
-        ai = self.server.zm.getZoneById(datagram.getRecipient())
-        ai.receiveDatagram(datagram)
+        if datagram.getRecipient() in self.zm.getZoneIds():
+            ai = self.server.zm.getZoneById(datagram.getRecipient())
+            ai.receiveDatagram(datagram)
+            del ai
+        else:
+            self.notify.warning('received suspicious zone datagram')
 
-        del ai
         del datagram

@@ -20,6 +20,12 @@ class Client(ClientBase):
         self.zm = None
         self.__pending_tabs = []
 
+        self.COMMAND_MAP.update({
+            constants.CMD_ERR: self.doError,
+            constants.CMD_HELO: self.doHelo,
+            constants.CMD_ZONE_MSG: self.forwardZoneDatagram,
+        })
+
     def start(self):
         """Handle startup of the client"""
         ClientBase.start(self)
@@ -112,23 +118,6 @@ class Client(ClientBase):
     def sendDatagram(self, datagram):
         datagram.setSender(self.getId())
         ClientBase.sendDatagram(self, datagram)
-
-        del datagram
-
-    def handleReceivedDatagram(self, datagram):
-        datagram = ClientBase.handleReceivedDatagram(self, datagram)
-
-        if not datagram:
-            return
-
-        if datagram.getCommand() == constants.CMD_HELO:
-            self.doHelo(datagram)
-        elif datagram.getCommand() == constants.CMD_ZONE_MSG:
-            self.forwardZoneDatagram(datagram)
-        elif datagram.getCommand() == constants.CMD_ERR:
-            self.doError(datagram)
-        else:
-            self.notify.warning('received suspicious datagram')
 
         del datagram
 
@@ -261,6 +250,10 @@ class Client(ClientBase):
 
         self.zm.addTab(tab, tuple(member_names))
 
+        del tab
+        del member_names
+        del datagram
+
     def doHelo(self, datagram):
         zone_id, key, member_ids, member_names = datagram.getData()
         if not self.zm.getZoneById(zone_id, search=True):
@@ -286,13 +279,14 @@ class Client(ClientBase):
         del key
         del member_ids
         del member_names
+        del datagram
 
     def forwardZoneDatagram(self, datagram):
-        zone = self.zm.getZoneById(datagram.getSender())
-        if zone:
+        if datagram.getSender() in self.zm.getZoneIds():
+            zone = self.zm.getZoneById(datagram.getSender())
             zone.receiveDatagram(datagram)
+            del zone
         else:
             self.notify.warning('received suspicious zone datagram')
 
-        del zone
         del datagram

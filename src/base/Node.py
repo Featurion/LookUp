@@ -7,6 +7,8 @@ from src.base.KeyHandler import KeyHandler
 
 class Node(KeyHandler):
 
+    COMMAND_MAP = {} # update in subclass
+
     def __init__(self):
         KeyHandler.__init__(self)
         self.__id = None
@@ -168,7 +170,12 @@ class Node(KeyHandler):
         Node.stop(self)
         self.notify.warning('done handling messages')
 
-    def handleReceivedData(self, datagram): # overwrite in subclass
+    def handleReceivedDatagram(self, datagram): # overwrite in subclass
         """In-between function for Node reaction to messages received"""
+        if datagram.getCommand() in self.COMMAND_MAP:
+            func = self.COMMAND_MAP.get(datagram.getCommand())
+            func(datagram)
+        else:
+            self.notify.warning('received suspicious datagram')
+
         del datagram
-        return None

@@ -37,8 +37,8 @@ class ZoneManager(Notifier):
         del tab
         del members
 
-    def getZones(self):
-        return self.__zones
+    def getZonesIds(self):
+        return [z.getId() for z in self.__zones]
 
     def getZoneById(self, id_, search=False):
         for zone in self.getZones():

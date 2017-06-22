@@ -11,10 +11,9 @@ class ZoneAI(ZoneBase):
         ZoneBase.__init__(self, client, zone_id, members)
         self.__id2key = {ai.getId(): None for ai in members}
 
-        del ai
-        del client
-        del zone_id
-        del members
+        self.COMMAND_MAP.update({
+            constants.CMD_REDY, self.clientRedy,
+        })
 
     def cleanup(self):
         if hasattr(self, '__id2key') and self.__id2key:
@@ -43,19 +42,6 @@ class ZoneAI(ZoneBase):
         del ai
         del command
         del data
-        del datagram
-
-    def handleReceivedDatagram(self, datagram):
-        datagram = ZoneBase.handleReceivedDatagram(self, datagram)
-
-        if not datagram:
-            return
-
-        if datagram.getCommand() == constants.CMD_REDY:
-            self.clientRedy(datagram)
-        else:
-            self.notify.warning('received suspicious datagram')
-
         del datagram
 
     def sendHelo(self):

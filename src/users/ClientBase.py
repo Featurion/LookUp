@@ -22,6 +22,10 @@ class ClientBase(Node):
         self.__socket_receiver = None
         self.__send_success_flag = False
 
+        self.COMMAND_MAP.update({
+            constants.CMD_RESP: self.setResp,
+        })
+
     def start(self):
         Node.start(self)
         self.setupSocket()
@@ -276,12 +280,3 @@ class ClientBase(Node):
 
         del data
         del datagram
-
-    def handleReceivedDatagram(self, datagram):
-        if datagram.getCommand() == constants.CMD_RESP:
-            self.setResp(datagram)
-        else:
-            return datagram
-
-        del datagram
-        return None
