@@ -9,21 +9,34 @@ with open(config, "r") as f:
 APP_TITLE = settings['app-name']
 BASE_PATH = os.getcwd()
 LOG_PATH = BASE_PATH + settings['log-path']
+
 DEFAULT_ADDRESS = settings['default-address']
 DEFAULT_PORT = settings['default-port']
 MAX_PORT_SIZE = 16 # no port larger than 2 bytes (0 <= n <= 65535)
 PROTOCOL_VERSION = settings['version']
 MAX_NAME_LENGTH = 32
+
 TLS_ENABLED = settings['tls-enabled']
+SOCKET_TIMEOUT = 1
+DISCONNECT_DELAY = 2 # give threads time to wrap up
 
 # Logging
+
 DEBUG = 10
 INFO = 20
 WARNING = 30
 EXCEPTION = 40
 
 LOG_CONFIG = (None, None, INFO)
-LOG_FORMAT = settings['log-format']
+WANT_LOG_FORMATTING = settings.get('want-log-formatting', False)
+LOG_FORMAT = settings.get('log-format', None)
+
+MsgLevel2Name = {
+    DEBUG: 'DEBUG',
+    INFO: 'INFO',
+    WARNING: 'WARNING',
+    EXCEPTION: 'ERROR',
+}
 
 # Crypto
 
@@ -35,14 +48,14 @@ CMD_ERR = 0
 CMD_RESP = 1
 CMD_RESP_OK = 2
 CMD_RESP_NO = 3
-CMD_LOGIN = 4
-CMD_REQ_CHALLENGE = 5
-CMD_RESP_CHALLENGE = 6
-CMD_VERIFY_CHALLENGE = 7
+CMD_REQ_CONNECTION = 4
+CMD_REQ_LOGIN = 5
+CMD_REQ_CHALLENGE = 6
+CMD_REQ_CHALLENGE_VERIFY = 7
 CMD_REQ_ZONE = 8
-CMD_ZONE_MSG = 9
-CMD_HELO = 10
-CMD_REDY = 11
+CMD_HELO = 9
+CMD_REDY = 10
+CMD_ZONE_MSG = 11
 
 # Users
 

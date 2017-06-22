@@ -41,12 +41,15 @@ class ZoneManagerAI(UniqueIDManager):
                     datagram.setRecipient(ai.getId())
                     ai.sendDatagram(datagram)
 
+    def getZoneIds(self):
+        return [ai.getId() for ai in self.id2owner.values()]
+
     def getZoneById(self, id_: int):
         zone = self.id2owner.get(id_)
         if zone:
             return zone
         else:
-            self.notify.debug('zone with id {0} does not exist!'.format(id_))
+            self.notify.debug('zone {0} does not exist'.format(id_))
             return None
 
     def addZone(self, client, members, group):

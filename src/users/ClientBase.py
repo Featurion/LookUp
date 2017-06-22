@@ -1,8 +1,7 @@
-import base64
+import queue
+import select
 import socket
-import ssl
 import struct
-import threading
 
 from src.base import constants, utils
 from src.base.Datagram import Datagram
@@ -18,44 +17,29 @@ class ClientBase(Node):
         self.__socket = None
         self.__name = None
         self.__mode = None
-        self.is_secure = False
+        self.__resp = None
 
-    def __supportSSL(self, socket_):
-        self.setSocket(ssl.wrap_socket(socket_,
-                                       ca_certs="certs/pem.crt",
-                                       cert_reqs=ssl.CERT_REQUIRED,
-                                       ssl_version=ssl.PROTOCOL_TLSv1_2,
-                                       ciphers='ECDHE-RSA-AES256-GCM-SHA384'))
+    def start(self):
+        Node.start(self)
+        self.setupSocket()
+        self.startManagers()
+        self.startThreads()
 
-    def setupSocket(self, socket_, client=False):
-        """Setup socket"""
+    def startManagers(self): # overwrite in subclass
+        pass
+
+    def stop(self):
+        """Handle stopping of the client"""
         try:
-            if constants.TLS_ENABLED and client:
-                self.notify.info('connecting with SSL!')
-                self.__supportSSL(socket_)
-            else:
-                self.notify.info('connecting without SSL!')
-                self.setSocket(socket_)
-            self.notify.info('connected to server')
-        except ConnectionRefusedError:
-            self.notify.error('ConnectionError', 'could not connect to server')
-        except ssl.SSLError as e:
-            self.notify.error('SSLError', str(e))
+            Node.stop(self)
+            self.joinThreads(constants.DISCONNECT_DELAY) # wait for clean disconnect
+        except OSError:
+            self.notify.debug('socket is closed')
         except Exception as e:
-            self.notify.error('ConnectionError', str(e))
-            self.stop()
+            self.notify.error('ExitError', str(e))
+            return False
 
-    def setupThreads(self):
-        Node.setupThreads(self)
-        self.__socket_receiver = threading.Thread(target=self.__recv,
-                                                  daemon=True)
-        self.__socket_receiver.start()
-
-    def socketConnect(self, address, port):
-        try:
-            self.getSocket().connect((address, port))
-        except ssl.SSLError as e:
-            self.notify.critical(str(e))
+        return True
 
     def getSocket(self):
         """Getter for socket"""
@@ -67,20 +51,6 @@ class ClientBase(Node):
             self.__socket = socket_
         else:
             self.notify.critical('suspicious attempt to change socket')
-
-    def sendDatagram(self, datagram):
-        datagram.setTimestamp(utils.getTimestamp())
-        Node.sendDatagram(self, datagram)
-
-    def start(self):
-        Node.start(self)
-        self.startManagers()
-
-    def stop(self):
-        self.getSocket().shutdown(socket.SHUT_RDWR)
-
-    def startManagers(self): # overwrite in subclass
-        pass
 
     def getAddress(self):
         """Getter for client IP address"""
@@ -112,37 +82,53 @@ class ClientBase(Node):
         else:
             self.notify.critical('suspicious attempt to change mode')
 
-    def stop(self):
-        """Handle stopping of the client"""
-        try:
-            if self.waitForCleanDisconnect():
-                Node.stop(self)
-            else:
-                return False
-        except OSError:
-            self.notify.debug('socket is closed')
-        except Exception as e:
-            self.notify.error('ExitError', str(e))
-            return False
+    def getResp(self):
+        """Getter for received response"""
+        return self.__waitForResponse()
 
-        return True
+    def setResp(self, datagram):
+        """Setter for received response"""
+        self.__resp = datagram
+
+    def __waitForResponse(self):
+        """Stall while waiting for response"""
+        self.notify.debug('waiting for a response')
+
+        while self.isRunning and self.__resp is None:
+            pass
+        resp = self.__resp
+        self.__resp = None
+        return resp
+
+    def setupSocket(self):
+        self.getSocket().settimeout(constants.SOCKET_TIMEOUT)
+
+    def setupMessagingThreads(self):
+        Node.setupMessagingThreads(self)
+        self.__socket_receiver = self.addThread(target=self.__recv,
+                                                daemon=True)
 
     def _send(self):
         try:
             data = self.getDatagramFromOutbox().toJSON()
-            self.__send(self.encrypt(data))
-            return None
+            self.__send(data)
+            return True # successful
         except queue.Empty:
-            return None
+            return True # successful
         except ValueError:
             self.notify.error('NetworkError', 'tried sending invalid datagram')
-            return False
         except Exception as e:
             self.notify.error('NetworkError', str(e))
-            return False
+
+        return False # unsuccessful
 
     def __send(self, data):
         """Send data length and data"""
+        if self.isSecure:
+            data = self.encrypt(data)
+        else:
+            data = data.encode()
+
         size = len(data)
         self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
         self.__sendToSocket(data, size)
@@ -163,40 +149,44 @@ class ClientBase(Node):
         try:
             datagram = self.getDatagramFromInbox()
             self.handleReceivedDatagram(datagram)
-            return None
+            return True # successful
+        except queue.Empty:
+            return True # successful
         except InterruptedError:
             self.notify.error('ConnectionError', 'disconnected')
         except ValueError as e:
             self.notify.error('NetworkError', 'received invalid datagram')
         except Exception as e:
             self.notify.error('NetworkError', str(e))
-        return False
+
+        return False # unsuccessful
 
     def __recv(self):
         """Receive data length and data"""
-        while self.is_running:
+        while self.isRunning:
             try:
                 size_indicator = self.__recvFromSocket(4)
                 size = socket.ntohl(struct.unpack('I', size_indicator)[0])
                 data = self.__recvFromSocket(size)
-                if self.is_secure:
-                    datagram = Datagram.fromJSON(self.decrypt(data))
-                    self.receiveDatagram(datagram)
-                else:
-                    self.setResp(data)
+
+                if self.isSecure:
+                    data = self.decrypt(data)
+
+                datagram = Datagram.fromJSON(data)
+                self.receiveDatagram(datagram)
             except struct.error as e:
-                self.notify.error('ConnectionError', 'connection was closed unexpectedly')
+                self.notify.warning('connection was closed unexpectedly')
                 break
             except Exception as e:
                 self.notify.error('NetworkError', str(e))
                 break
 
-        self.stop()
+        self.notify.debug('done receiving')
 
     def __recvFromSocket(self, size):
         """Receive data through socket transfer"""
         data = b''
-        while size > 0:
+        while self.isRunning and size > 0:
             try:
                 _data = self.getSocket().recv(size)
                 if _data:
@@ -215,25 +205,23 @@ class ClientBase(Node):
 
         return data
 
-    def sendKey(self):
-        data = base64.b85encode(str(self.getKey()).encode())
-        self.__send(data)
-        self.notify.debug('sent public key')
+    def sendDatagram(self, datagram):
+        datagram.setTimestamp(utils.getTimestamp())
+        Node.sendDatagram(self, datagram)
 
-    def receiveKey(self):
-        key = int(base64.b85decode(self.getResp()).decode())
-        self.generateSecret(key)
-        self.notify.debug('received public key')
+    def sendResp(self, data):
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_RESP)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(data)
 
-    def waitForCleanDisconnect(self):
-        self.setRunning(False)
-        self.notify.info('disconnecting from the server...')
+        self.sendDatagram(datagram)
 
-        if self.getSendingSuccess():
-            self.notify.error('ExitError', 'an error occurred while halting datagram sending')
-            return False
-        elif self.getReceivingSuccess():
-            self.notify.error('ExitError', 'an error occurred while halting datagram receiving')
-            return False
+    def handleReceivedDatagram(self, datagram):
+        if datagram.getCommand() == constants.CMD_RESP:
+            self.setResp(datagram)
         else:
-            return True
+            return datagram
+
+        return None

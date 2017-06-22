@@ -40,7 +40,7 @@ class UniqueIDManager(Notifier):
             self.notify.debug('generating random ID...')
             scope = self.SCOPES['default']
             seed = base64.b64encode(os.urandom(32)).decode('utf-8')
-            id_ = int(uuid.uuid5(scope, seed))
+            id_ = uuid.uuid5(scope, seed)
             return id_
         elif scope is None and seed is not None:
             self.notify.error('ValueError', 'scope and seed are mutually exclusive args')
@@ -54,7 +54,7 @@ class UniqueIDManager(Notifier):
             self.notify.error('ValueError', 'seed argument expects a string')
         else:
             self.notify.debug('generating seeded id')
-            id_ = int(uuid.uuid5(scope, seed))
+            id_ = uuid.uuid5(scope, seed)
             return id_
 
         self.notify.critical('suspicious ID generation attempt')

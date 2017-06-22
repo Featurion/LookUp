@@ -15,7 +15,6 @@ class ZoneBase(Node):
         self.__client = client
         self.__members = members
         self.id2key = {} # overwrite in subclass
-        self.is_secure = False
 
         self.setId(zone_id)
         self.start() # zones start on creation
@@ -30,7 +29,7 @@ class ZoneBase(Node):
 
     def encrypt(self, datagram):
         key = self.getWorkingKey(datagram.getRecipient())
-        if key and self.is_secure:
+        if key and self.isSecure:
             self.generateSecret(key)
 
             data = Node.encrypt(self, datagram.toJSON())
@@ -81,6 +80,12 @@ class ZoneBase(Node):
         except Exception as e:
             self.notify.error('ZoneError', str(e))
             return False
+
+    def handleReceivedDatagram(self, datagram):
+        if self.isSecure:
+            return self.decrypt(datagram)
+        else:
+            return datagram
 
     def sendDatagram(self, datagram):
         self.getClient().sendDatagram(datagram)

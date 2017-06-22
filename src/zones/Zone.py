@@ -1,5 +1,4 @@
 import base64
-import json
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -18,7 +17,10 @@ class Zone(ZoneBase):
         return self.__alt_key
 
     def handleReceivedDatagram(self, datagram):
-        datagram = self.decrypt(datagram)
+        datagram = ZoneBase.handleReceivedDatagram(self, datagram)
+
+        if not datagram:
+            return
 
         if datagram.getCommand() == constants.CMD_REDY:
             self.zoneRedy(datagram)
@@ -30,11 +32,9 @@ class Zone(ZoneBase):
                                           self.getId(),
                                           self.getKey())
         self.sendDatagram(datagram)
-
-        self.is_secure = True
-
-        self.notify.debug('redy in zone {0}'.format(self.getId()))
+        self.setSecure(True)
+        self.notify.debug('sent redy'.format(self.getId()))
 
     def zoneRedy(self, datagram):
-        self.id2key = json.loads(datagram.getData())
+        self.id2key = datagram.getData()
         self.tab.zone_redy_signal.emit()

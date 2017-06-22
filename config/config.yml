@@ -4,7 +4,8 @@ version: 'PROTOTYPE-DEV'
 
 # Logging
 log-path: /logs
-log-format: 'outbracket'
+log-format: 'inbracket'
+want-log-formatting: true
 
 # Connection settings
 default-address: '127.0.0.1'

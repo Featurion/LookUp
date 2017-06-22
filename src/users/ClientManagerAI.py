@@ -22,7 +22,8 @@ class ClientManagerAI(UniqueIDManager):
         """Accept a connecting client"""
         self.notify.debug('waiting for socket connection...')
         socket_, (address, port) = self.server.accept()
-        ai = ClientAI(self.server, address, port, socket_)
+        ai = ClientAI(self.server, address, port)
+        ai.setSocket(socket_)
         self.notify.debug('client connected at {0}'.format(ai.getAddress()))
         return ai
 
@@ -30,13 +31,15 @@ class ClientManagerAI(UniqueIDManager):
         ai.setId(self.generateId(ai.getMode(), ai.getName()))
         self.allocateId(ai.getMode(), ai.getName(), ai.getId(), ai)
         self.clients.append(ai)
-        self.notify.debug('client with id {0} connected'.format(ai.getId()))
+        self.notify.debug('client {0}-{1} connected'.format(ai.getName(),
+                                                            ai.getId()))
 
     def removeClient(self, ai):
         """Stop managing an existing client"""
         self.deallocateId(ai.getId(), ai.getMode())
         self.clients.remove(ai)
-        self.notify.debug('client with id {0} disconnected'.format(ai.getId()))
+        self.notify.debug('client {0}-{1} disconnected'.format(ai.getName(),
+                                                               ai.getId()))
 
     def getClients(self):
         return self.clients

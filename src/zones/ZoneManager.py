@@ -26,7 +26,7 @@ class ZoneManager(Notifier):
                 return zone
 
         if not search:
-            self.notify.warning('zone with id {0} does not exist'.format(id_))
+            self.notify.warning('zone {0} does not exist'.format(id_))
 
     def getTabByMembers(self, members: tuple):
         return self.__members2tab.get(members)

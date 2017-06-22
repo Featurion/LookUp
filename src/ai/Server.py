@@ -32,20 +32,11 @@ class Server(Notifier):
             finally:
                 self.__socket = None
 
-        self.notify.info('server stopped!')
+        self.notify.info('server stopped')
         sys.exit(0)
 
     def accept(self):
         return self.__socket.accept()
-
-    def __supportSSL(self, socket_):
-        return ssl.wrap_socket(socket_,
-                               server_side=True,
-                               certfile='certs/pem.crt',
-                               keyfile='certs/pem.key',
-                               ssl_version=ssl.PROTOCOL_TLSv1_2,
-                               ciphers='ECDHE-RSA-AES256-GCM-SHA384',
-                               do_handshake_on_connect=True)
 
     def __connect(self):
         try:
@@ -53,15 +44,21 @@ class Server(Notifier):
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if TLS_ENABLED:
-                self.notify.info('wrapping socket in SSL!')
-                self.__socket = self.__supportSSL(self.__socket)
+                self.notify.info('wrapping socket in SSL')
+                self.__socket = ssl.wrap_socket(socket_,
+                                                server_side=True,
+                                                certfile='certs/pem.crt',
+                                                keyfile='certs/pem.key',
+                                                ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                                ciphers='ECDHE-RSA-AES256-GCM-SHA384',
+                                                do_handshake_on_connect=True)
             else:
-                self.notify.info('SSL is not enabled! Do not use this in production!')
+                self.notify.info('SSL is not enabled. Do not use this in production')
 
             self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.__socket.bind((self.__address, self.__port))
             self.__socket.listen(0) # refuse unaccepted connections
-            self.notify.info('server online!')
+            self.notify.info('server online')
         except Exception as e:
             self.notify.critical(str(e))
 

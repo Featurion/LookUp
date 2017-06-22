@@ -1,5 +1,4 @@
 import base64
-import json
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -10,13 +9,13 @@ class ZoneAI(ZoneBase):
 
     def __init__(self, client, zone_id, members):
         ZoneBase.__init__(self, client, zone_id, members)
-        self.id2key = {ai.getId(): None for ai in members}
+        self.__id2key = {ai.getId(): None for ai in members}
 
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
 
     def getWorkingKey(self, id_):
-        return self.id2key.get(id_)
+        return self.__id2key.get(id_)
 
     def emitDatagram(self, datagram):
         for ai in self.getMembers():
@@ -28,7 +27,10 @@ class ZoneAI(ZoneBase):
             ai.sendDatagram(datagram)
 
     def handleReceivedDatagram(self, datagram):
-        datagram = self.decrypt(datagram)
+        datagram = ZoneBase.handleReceivedDatagram(self, datagram)
+
+        if not datagram:
+            return
 
         if datagram.getCommand() == constants.CMD_REDY:
             self.clientRedy(datagram)
@@ -36,30 +38,31 @@ class ZoneAI(ZoneBase):
             self.notify.warning('received suspicious datagram')
 
     def sendHelo(self):
-        data = json.dumps([
+        data = [
             self.getId(),
             self.getKey(),
             [ai.getId() for ai in self.getMembers()],
             [ai.getName() for ai in self.getMembers()],
-        ])
+        ]
         self.emitMessage(constants.CMD_HELO, data)
-
-        self.notify.debug('sent helo in zone {0}'.format(self.getId()))
+        self.notify.debug('sent helo'.format(self.getId()))
 
     def sendRedy(self):
-        self.emitMessage(constants.CMD_REDY, json.dumps(self.id2key))
-        self.id2key.clear()
+        self.emitMessage(constants.CMD_REDY, self.__id2key)
+        self.notify.debug('sent redy'.format(self.getId()))
+
+        self.__id2key.clear()
+        del self.__id2key
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()
 
-        if id_ in self.id2key:
-            self.id2key[id_] = key
-            self.notify.debug('client {0} redy in zone {1}'.format(id_, self.getId()))
+        if id_ in self.__id2key:
+            self.__id2key[id_] = key
+            self.notify.debug('client {0} is redy'.format(id_, self.getId()))
         else:
             self.notify.error('ZoneError', '{0} not in zone'.format(id_))
 
-        if all(self.id2key.values()):
-            self.is_secure = True
+        if all(self.__id2key.values()):
+            self.setSecure(True)
             self.sendRedy()
-            self.notify.debug('zone {0} is redy'.format(self.getId()))

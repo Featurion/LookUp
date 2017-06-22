@@ -10,80 +10,91 @@ class Node(KeyHandler):
     def __init__(self):
         KeyHandler.__init__(self)
         self.__id = None
-        self.is_running = False
-        self.success = [None, None]
-        self.__resp = None
+        self.__running = False
+        self.__secure = False
 
-    def setupThreads(self):
+        self.__sender = None
+        self.__receiver = None
+        self.__threads = []
+
+    def setupMessagingThreads(self):
         """Setup messaging threads"""
         self.__inbox = queue.Queue()
         self.__outbox = queue.Queue()
 
-        self.__sender = threading.Thread(target=self.send, daemon=True)
-        self.__receiver = threading.Thread(target=self.recv, daemon=True)
+        self.__running = True
 
-        self.is_running = True
-        self.__sender.start()
-        self.__receiver.start()
+        self.__sender = self.addThread(target=self.send, daemon=True)
+        self.__receiver = self.addThread(target=self.recv, daemon=True)
+
+    def addThread(self, **kwargs):
+        _t = threading.Thread(**kwargs)
+        self.__threads.append(_t)
+        return _t
+
+    def startThreads(self):
+        for _t in self.__threads:
+            _t.start()
+
+    def joinThreads(self, timeout=5):
+        for _t in self.__threads:
+            _t.join(timeout)
 
     def getId(self):
         """Getter for Node ID"""
-        return self.__id
+        if self.__id:
+            return self.__id.bytes.hex()
+        else:
+            return None
 
     def setId(self, id_):
         """Setter for Node ID"""
         if self.__id is None:
             self.__id = id_
+            self.updateLoggingName('{0}({1})'.format(self.__class__.__name__,
+                                                     self.getId()))
         else:
             self.notify.critical('suspicious attempt to change ID')
 
-    def getRunning(self):
+    def setSecure(self, status):
+        self.__secure = status
+
+    @property
+    def isSecure(self):
+        return self.__secure
+
+    @property
+    def isRunning(self):
         """Getter for Node status"""
-        return self.is_running
+        return self.__running
 
-    def setRunning(self, running):
-        """Setter for Node status"""
-        self.is_running = running
+    @property
+    def isAlive(self):
+        return any(_t.isAlive() for _t in self.__threads)
 
-    def getSendingSuccess(self):
+    @property
+    def isSending(self):
         """Getter for sending-thread's status"""
-        return bool(self.success[0])
+        if self.__sender:
+            return self.__sender.isAlive()
+        else:
+            return False
 
-    def __setSendingSuccess(self, success: bool):
-        """Setter for sending-thread's status"""
-        self.success[0] = success
-
-    def getReceivingSuccess(self):
+    @property
+    def isReceiving(self):
         """Getter for receiving-thread's status"""
-        return bool(self.success[1])
-
-    def __setReceivingSuccess(self, success: bool):
-        """Setter for receiving-thread's status"""
-        self.success[1] = success
-
-    def getResp(self):
-        """Getter for received response"""
-        return self.__waitForResponse()
-
-    def setResp(self, datagram):
-        """Setter for received response"""
-        self.__resp = datagram
-
-    def __waitForResponse(self):
-        """Stall while waiting for response"""
-        while self.__resp is None:
-            pass
-        resp = self.__resp
-        self.__resp = None
-        return resp
+        if self.__receiver:
+            return self.__receiver.isAlive()
+        else:
+            return False
 
     def getDatagramFromInbox(self):
         """Getter for next datagram pending"""
-        return self.__inbox.get()
+        return self.__inbox.get_nowait()
 
     def getDatagramFromOutbox(self):
         """Getter for next datagram pending"""
-        return self.__outbox.get()
+        return self.__outbox.get_nowait()
 
     def sendDatagram(self, datagram):
         self.__outbox.put(datagram)
@@ -93,35 +104,34 @@ class Node(KeyHandler):
 
     def start(self):
         """Handle startup of the Node"""
-        try:
-            self.setupThreads()
-            self.is_running = True
-        except Exception as e:
-            self.notify.error('MessagingError', str(e))
+        self.setupMessagingThreads()
 
-    def stop(self): # overwrite in subclass
+    def stop(self):
         """Handle stopping of the Node"""
-        pass
+        self.__running = False
 
     def send(self):
         """Threaded function for message sending"""
-        while self.getRunning():
-            if self._send() is False:
-                self.__setSendingSuccess(False)
+        while self.isRunning:
+            if self._send():
+                continue
+            else:
+                self.notify.error('ThreadingError', 'sending thread broke')
                 return
 
-        self.__setSendingSuccess(True)
+        self.notify.warning('done sending')
 
     def recv(self):
         """Threaded function for message receiving"""
-        while self.getRunning():
-            if self._recv() is False:
-                self.__setReceivingSuccess(False)
+        while self.isRunning:
+            if self._recv():
+                continue
+            else:
+                self.notify.error('ThreadingError', 'receiving thread broke')
                 return
 
-        self.__setReceivingSuccess(True)
-        self.notify.warning('done receiving')
+        self.notify.warning('done handling messages')
 
-    def handleReceivedData(self, data): # overwrite in subclass
+    def handleReceivedData(self, datagram): # overwrite in subclass
         """In-between function for Node reaction to messages received"""
         return NotImplemented

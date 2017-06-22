@@ -1,11 +1,10 @@
-import json
 import os
 import socket
 import srp
+import ssl
+import uuid
 
-from src.base.constants import CMD_LOGIN, CMD_REQ_ZONE, CMD_RESP, CMD_RESP_OK, CMD_REQ_CHALLENGE, CMD_RESP_CHALLENGE, CMD_VERIFY_CHALLENGE
-from src.base.constants import CMD_RESP_NO, CMD_HELO, CMD_REDY, CMD_ZONE_MSG, CMD_ERR
-from src.base.constants import HMAC_KEY
+from src.base import constants
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 from src.users.ClientBase import ClientBase
@@ -19,115 +18,88 @@ class Client(ClientBase):
         ClientBase.__init__(self, address, port)
         self.interface = interface
         self.__pending_tabs = []
-        self.setupSocket(socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-                         True)
-        self.socketConnect(self.getAddress(), self.getPort())
-        self.__challenge_complete = False
+
+    def start(self):
+        """Handle startup of the client"""
+        ClientBase.start(self)
+        self.initiateHandshake()
+        self.interface.connected_signal.emit()
 
     def startManagers(self):
         """Start client managers"""
         self.zm = ZoneManager()
 
-    def start(self):
-        """Handle startup of the client"""
-        ClientBase.start(self)
-        self.doHandshake()
-        self.interface.connected_signal.emit()
-
     def stop(self):
         """Handle stopping of the client"""
-        if ClientBase.stop(self): # clean exit
+        self.notify.info('disconnecting from the server...')
+        ClientBase.stop(self)
+
+        if self.isSending:
+            self.notify.error('ExitError', 'an error occurred while halting datagram sending')
+
+        if self.isReceiving:
+            self.notify.error('ExitError', 'an error occurred while halting datagram receiving')
+
+        if not self.isAlive:
             self.notify.debug('stopped client')
         else:
             self.terminate()
+
+    def connect(self, address, port):
+        try:
+            self.getSocket().connect((address, port))
+        except ssl.SSLError as e:
+            self.notify.critical('error establishing ssl')
+        except Exception as e:
+            self.notify.critical(str(e))
 
     def terminate(self):
         """Forcefully exit the client"""
         self.notify.info('failed to quit, force quitting')
         os.kill(os.getpid(), 9)
 
-    def connect(self, name, callback):
-        # HMAC verification
-        hmac = self.generateHmac(name.encode(), HMAC_KEY, True)
+    def setupSocket(self):
+        self.setSocket(self.__buildSocket())
 
-        # Challenge verification
-        self.user = srp.User(name.encode(), HMAC_KEY)
-        uname, A = self.user.start_authentication()
+        try:
+            self.connect(self.getAddress(), self.getPort())
+            self.notify.info('connected to server')
+        except ConnectionRefusedError:
+            self.notify.error('ConnectionError', 'could not connect to server')
+        except Exception as e:
+            self.notify.error('ConnectionError', str(e))
+            self.stop()
 
-        datagram = Datagram()
-        datagram.setCommand(CMD_LOGIN)
-        datagram.setSender(self.getId())
-        datagram.setRecipient(self.getId())
-        datagram.setData(json.dumps([name, 'temp'])) # TODO: implement modes properly
-        datagram.setHMAC(hmac)
+        ClientBase.setupSocket(self)
 
-        self.notify.info('logging in as {0}'.format(name))
-        self.sendDatagram(datagram)
-
-        resp = self.getResp()
-        if resp.getData() is True:
-            self.setId(resp.getSender())
-            self.setName(name)
-
-            # Request a challenge
-            datagram.setCommand(CMD_REQ_CHALLENGE)
-            datagram.setData((uname.decode('latin-1'), A.decode('latin-1')))
-            self.sendDatagram(datagram)
-
-            while self.__challenge_complete is False:
-                if self.__challenge_complete is True:
-                    break
-                else:
-                    continue
-
-            resp = self.getResp()
-            if resp.getData() is True:
-                callback('')
+    def __buildSocket(self):
+        try:
+            if constants.TLS_ENABLED:
+                self.notify.info('connecting with SSL')
+                return ssl.wrap_socket(socket.socket(socket.AF_INET,
+                                                     socket.SOCK_STREAM),
+                                       ca_certs="certs/pem.crt",
+                                       cert_reqs=ssl.CERT_REQUIRED,
+                                       ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                       ciphers='ECDHE-RSA-AES256-GCM-SHA384')
             else:
-                callback('placeholder rejection message') # TODO: replace message
-        else:
-            callback('placeholder rejection message') # TODO: replace message
-
-    def doHandshake(self):
-        """Respond to an initiated handshake"""
-        self.receiveKey()
-        self.sendKey()
-        self.is_secure = True
+                self.notify.info('connecting without SSL')
+                return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        except ssl.SSLError as e:
+            self.notify.error('SSLError', str(e))
 
     def sendDatagram(self, datagram):
         datagram.setSender(self.getId())
         ClientBase.sendDatagram(self, datagram)
 
     def handleReceivedDatagram(self, datagram):
-        if datagram.getCommand() == CMD_RESP:
-            self.setResp(datagram)
-        elif datagram.getCommand() == CMD_RESP_OK:
-            self.setResp(datagram)
-        elif datagram.getCommand() == CMD_RESP_NO:
-            self.setResp(False)
-        elif datagram.getCommand() == CMD_RESP_CHALLENGE:
-            s, B = datagram.getData()
-            M = self.user.process_challenge(s.encode('latin-1'), B.encode('latin-1'))
+        datagram = ClientBase.handleReceivedDatagram(self, datagram)
 
-            if M is None:
-                self.notify.error('AuthenticationError', 'suspicious challenge failure')
+        if not datagram:
+            return
 
-            datagram.setCommand(CMD_RESP_CHALLENGE)
-            datagram.setData(M.decode('latin-1'))
-            self.sendDatagram(datagram)
-        elif datagram.getCommand() == CMD_VERIFY_CHALLENGE:
-            HAMK = datagram.getData()
-            HAMK = HAMK.encode('latin-1')
-
-            # Finish the authentication process
-            self.user.verify_session(HAMK)
-
-            if self.user.authenticated():
-                self.__challenge_complete = True
-            else:
-                self.notify.critical('suspiciously failed to complete challenge')
-        elif datagram.getCommand() == CMD_HELO:
-            zone_id, key, member_ids, member_names = json.loads(datagram.getData())
+        if datagram.getCommand() == constants.CMD_HELO:
+            zone_id, key, member_ids, member_names = datagram.getData()
             if not self.zm.getZoneById(zone_id, search=True):
                 if member_names[0] != self.getName():
                     window = self.interface.getWindow()
@@ -143,13 +115,13 @@ class Client(ClientBase):
                         zone.sendRedy()
                     else:
                         self.notify.error('ZoneError', 'could not find tab')
-        elif datagram.getCommand() == CMD_ZONE_MSG:
+        elif datagram.getCommand() == constants.CMD_ZONE_MSG:
             zone = self.zm.getZoneById(datagram.getSender())
             if zone:
                 zone.receiveDatagram(datagram)
             else:
                 self.notify.warning('received suspicious zone datagram')
-        elif datagram.getCommand() == CMD_ERR:
+        elif datagram.getCommand() == constants.CMD_ERR:
             title, err = datagram.getData()
             self.interface.error_signal.emit(str(title), str(err))
         else:
@@ -160,14 +132,112 @@ class Client(ClientBase):
         self.zm.addZone(zone)
         self.notify.debug('entered zone {0}'.format(zone.getId()))
 
-    def requestNewZone(self, tab, member_names):
+    def initiateHandshake(self):
+        """Initiate handshake"""
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_REQ_CONNECTION)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(self.getKey())
+        self.sendDatagram(datagram)
+        self.notify.debug('sent public key')
+
+        self.generateSecret(self.getResp().getData())
+        self.notify.debug('received public key')
+
+        self.setSecure(True)
+
+    def initiateLogin(self, name, callback):
+        hmac = self.generateHmac(name.encode(), constants.HMAC_KEY, True)
+
+        # login
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_REQ_LOGIN)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData([name, 'temp'])
+        datagram.setHMAC(hmac)
+        self.sendDatagram(datagram)
+
+        # credentials
+        resp = self.getResp()
+        if resp.getData() is True: # login success
+            id_ = resp.getSender()
+            self.notify.debug('credentials validated')
+        else:
+            callback('failed to login; bad credentials')
+            return
+
+        # challenge
+        M = self.initiateChallenge(name) # needed for verification
+        if M is False:
+            self.notify.warning('AuthenticationError',
+                                'suspicious challenge failure')
+            callback('challenge failed')
+            return
+        else:
+            self.notify.debug('challenge success')
+
+        # verification
+        if not self.initiateChallengeVerification(M):
+            self.notify.critical('suspiciously challenge failure')
+        else:
+            self.notify.debug('challenge verified')
+
+            self.setId(uuid.UUID(id_))
+            self.setName(name)
+            self.notify.info('logged in as {0}'.format(name, id_))
+
+            callback('') # start chatting
+
+    def initiateChallenge(self, name):
+        self.user = srp.User(name.encode(), constants.HMAC_KEY)
+        uname, A = self.user.start_authentication()
+
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_REQ_CHALLENGE)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(A.hex())
+
+        self.notify.debug('challenging')
+        self.sendDatagram(datagram)
+
+        resp = self.getResp().getData()
+        if resp is False:
+            return False
+        else:
+            s, B = map(bytes.fromhex, resp)
+            M = self.user.process_challenge(s, B)
+            if M is None:
+                self.sendNo()
+                return False
+            else:
+                return M
+
+    def initiateChallengeVerification(self, M):
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_REQ_CHALLENGE_VERIFY)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(M.hex())
+
+        self.notify.debug('verifying')
+        self.sendDatagram(datagram)
+
+        HAMK = bytes.fromhex(self.getResp().getData())
+        self.user.verify_session(HAMK)
+
+        return self.user.authenticated()
+
+    def initiateHelo(self, tab, member_names):
         member_names = [self.getName()] + member_names
 
         datagram = Datagram()
-        datagram.setCommand(CMD_REQ_ZONE)
+        datagram.setCommand(constants.CMD_HELO)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
-        datagram.setData(json.dumps(member_names))
+        datagram.setData(member_names)
 
         self.notify.debug('requesting new zone')
         self.sendDatagram(datagram)

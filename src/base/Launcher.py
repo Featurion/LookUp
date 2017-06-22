@@ -24,6 +24,9 @@ class Launcher(object):
             self.__launchClient(info.address, info.port)
 
     def getLogFilePath(self):
+        if not os.path.exists(LOG_PATH):
+            os.mkdir(LOG_PATH)
+
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         path = '{0}/{1} {2}.{3}.log'.format(LOG_PATH, APP_TITLE, now, self.type)
         return path
@@ -52,13 +55,9 @@ class Launcher(object):
 
     def __startLogging(self):
         if __debug__:
-            self.setConfig(stream=print,
-                           level=DEBUG)
+            self.setConfig(level=constants.DEBUG)
         else:
-            if not os.path.exists(LOG_PATH):
-                os.mkdir(LOG_PATH)
-            self.setConfig(filename=self.getLogFilePath(),
-                           level=INFO)
+            self.setConfig(filename=self.getLogFilePath())
 
     def __launchAIServer(self, address, port):
         from src.ai.Server import Server
@@ -68,7 +67,7 @@ class Launcher(object):
         from src.gui.ClientUI import ClientUI
         ClientUI(address, port).start()
 
-    def setConfig(self, stream=None, filename=None, level=INFO):
+    def setConfig(self, stream=None, filename=None, level=constants.INFO):
         constants.LOG_CONFIG = (stream, filename, level)
 
 
