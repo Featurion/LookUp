@@ -60,6 +60,7 @@ class ClientAI(ClientBase):
         self.sendResp(self.getKey())
         self.notify.debug('sent public key')
 
+        self.notify.info('secured socket connection')
         self.setSecure(True)
 
     def doLogin(self, datagram):

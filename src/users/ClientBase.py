@@ -19,6 +19,8 @@ class ClientBase(Node):
         self.__mode = None
         self.__resp = None
 
+        self.send_success_flag = False
+
     def start(self):
         Node.start(self)
         self.setupSocket()
@@ -100,6 +102,14 @@ class ClientBase(Node):
         self.__resp = None
         return resp
 
+    def __waitForSendSuccess(self):
+        """Stall while sending data"""
+        while self.isRunning and not self.send_success_flag:
+            pass
+
+        self.notify.debug('sent data successfully')
+        self.send_success_flag = False
+
     def setupSocket(self):
         self.getSocket().settimeout(constants.SOCKET_TIMEOUT)
 
@@ -133,9 +143,11 @@ class ClientBase(Node):
         self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
         self.__sendToSocket(data, size)
 
+        self.send_success_flag = True
+
     def __sendToSocket(self, data, size):
         """Send data through socket transfer"""
-        while size > 0:
+        while self.isRunning and size > 0:
             try:
                 size -= self.getSocket().send(data[:size])
             except OSError:
@@ -208,6 +220,8 @@ class ClientBase(Node):
     def sendDatagram(self, datagram):
         datagram.setTimestamp(utils.getTimestamp())
         Node.sendDatagram(self, datagram)
+
+        self.__waitForSendSuccess()
 
     def sendResp(self, data):
         datagram = Datagram()

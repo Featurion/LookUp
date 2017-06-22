@@ -145,6 +145,7 @@ class Client(ClientBase):
         self.generateSecret(self.getResp().getData())
         self.notify.debug('received public key')
 
+        self.notify.info('secured socket connection')
         self.setSecure(True)
 
     def initiateLogin(self, name, callback):
