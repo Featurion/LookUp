@@ -5,6 +5,7 @@ version: 'PROTOTYPE'
 # Logging
 log-path: /logs
 log-format: 'none'
+want-log-formatting: true
 
 # Connection settings
 default-address: '127.0.0.1'
@@ -14,4 +15,4 @@ tls-enabled: true
 # Security settings
 
 # TODO: Figure out a way to secure a key in production:
-hmac-key: 'aKMsOxxZA1s0usx2tZEoZA' # Change this key during production
+hmac-key: 'aKMsOxxZA1s0usx2tZEoZA' # Do NOT use this key in production
