@@ -92,7 +92,6 @@ class ChatTab(QWidget):
 
             if msg:
                 QMessageBox.warning(self, *msg)
-                # names.remove(name) - what is this supposed to be? causes AttributeError
                 return
 
         titled_names = utils.oxfordComma(names)
@@ -100,7 +99,7 @@ class ChatTab(QWidget):
         self.widget_stack.setCurrentIndex(1)
         self.interface.getWindow().setTabTitle(self, titled_names)
 
-        Thread(target=self.interface.getClient().requestNewZone,
+        Thread(target=self.interface.getClient().initiateHelo,
                args=(self, sorted(names)),
                daemon=True).start()
 
