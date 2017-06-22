@@ -232,14 +232,9 @@ class Client(ClientBase):
         del HAMK
 
         if self.user.authenticated():
-            resp = self.getResp()
-            if resp.getData() == True:
-                self.setId(uuid.UUID(resp.getRecipient()))
-                self.notify.debug('challenge verified')
-                return True
-            else:
-                self.notify.critical('suspiciously challenge failure')
-                return False
+            self.setId(uuid.UUID(resp.getRecipient()))
+            self.notify.debug('challenge verified')
+            return True
         else:
             self.notify.critical('suspiciously challenge failure')
             return False
