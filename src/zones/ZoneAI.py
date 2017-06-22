@@ -12,7 +12,7 @@ class ZoneAI(ZoneBase):
         self.__id2key = {ai.getId(): None for ai in members}
 
         self.COMMAND_MAP.update({
-            constants.CMD_REDY, self.clientRedy,
+            constants.CMD_REDY: self.clientRedy,
         })
 
     def cleanup(self):
@@ -31,7 +31,6 @@ class ZoneAI(ZoneBase):
         for ai in self.getMembers():
             ai.sendDatagram(datagram)
 
-        del ai
         del datagram
 
     def emitMessage(self, command, data=None):
@@ -39,10 +38,8 @@ class ZoneAI(ZoneBase):
             datagram = self.buildZoneDatagram(command, ai.getId(), data)
             ai.sendDatagram(datagram)
 
-        del ai
         del command
         del data
-        del datagram
 
     def sendHelo(self):
         data = [
