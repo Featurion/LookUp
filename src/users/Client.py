@@ -168,7 +168,7 @@ class Client(ClientBase):
         # credentials
         resp = self.getResp()
         if resp.getData() is True: # login success
-            id_ = resp.getSender()
+            self.setName(name)
             self.notify.debug('credentials validated')
         else:
             callback('failed to login; bad credentials')
@@ -185,15 +185,8 @@ class Client(ClientBase):
             self.notify.debug('challenge success')
 
         # verification
-        if not self.initiateChallengeVerification(M):
-            self.notify.critical('suspiciously challenge failure')
-        else:
-            self.notify.debug('challenge verified')
-
-            self.setId(uuid.UUID(id_))
-            self.setName(name)
-            self.notify.info('logged in as {0}'.format(name, id_))
-
+        if self.initiateChallengeVerification(M):
+            self.notify.info('logged in as {0}'.format(name, self.getId()))
             callback('') # start chatting
 
     def initiateChallenge(self, name):
@@ -231,10 +224,20 @@ class Client(ClientBase):
         self.notify.debug('verifying')
         self.sendDatagram(datagram)
 
-        HAMK = bytes.fromhex(self.getResp().getData())
+        resp = self.getResp()
+        HAMK = bytes.fromhex(resp.getData())
         self.user.verify_session(HAMK)
 
-        return self.user.authenticated()
+        del M
+        del HAMK
+
+        if self.user.authenticated():
+            self.setId(uuid.UUID(resp.getRecipient()))
+            self.notify.debug('challenge verified')
+            return True
+        else:
+            self.notify.critical('suspiciously challenge failure')
+            return False
 
     def initiateHelo(self, tab, member_names):
         member_names = [self.getName()] + member_names

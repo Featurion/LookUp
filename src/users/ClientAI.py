@@ -83,7 +83,6 @@ class ClientAI(ClientBase):
             self.notify.debug('HMAC matches')
             self.setName(name)
             self.setMode(mode)
-            self.server.cm.addClient(self)
             self.sendOK()
 
         del name
@@ -124,6 +123,7 @@ class ClientAI(ClientBase):
             HAMK = self.svr.verify_session(M)
             if HAMK and self.svr.authenticated(): # authenticated
                 self.notify.debug('challenge verified')
+                self.server.cm.addClient(self)
                 self.sendResp(HAMK.hex())
             else:
                 self.notify.warning('suspicious challenge failure')
