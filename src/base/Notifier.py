@@ -30,6 +30,13 @@ class _Message(object):
                + ': ' \
                + self.__text[:1].upper() + self.__text[1:]
 
+    @property
+    def formattedExc(self):
+        return self.__parent \
+               + ': ' \
+               + self.__text \
+               + '!'
+
 
 class Channel(object):
 
@@ -68,9 +75,10 @@ class Channel(object):
         del parent
 
     def exception(self, parent, msg, err='CRITICAL'):
+        msg = msg[:1].upper() + msg[1:]
         self.__write(_Message(parent + ': ' + err + ': ' + msg,
                               constants.EXCEPTION,
-                              'LookUpException: '))
+                              'LookUpException').formattedExc)
 
         del parent
         del msg
