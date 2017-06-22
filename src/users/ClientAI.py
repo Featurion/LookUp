@@ -125,6 +125,7 @@ class ClientAI(ClientBase):
                 self.notify.debug('challenge verified')
                 self.server.cm.addClient(self)
                 self.sendResp(HAMK.hex())
+                self.sendOK()
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()
