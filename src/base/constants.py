@@ -30,6 +30,7 @@ EXCEPTION = 40
 LOG_CONFIG = (None, None, INFO)
 WANT_LOG_FORMATTING = settings.get('want-log-formatting', False)
 LOG_FORMAT = settings.get('log-format', None)
+LOG_LEVEL = INFO
 
 MsgLevel2Name = {
     DEBUG: 'DEBUG',
