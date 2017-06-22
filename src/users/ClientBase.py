@@ -19,7 +19,8 @@ class ClientBase(Node):
         self.__mode = None
         self.__resp = None
 
-        self.send_success_flag = False
+        self.__socket_receiver = None
+        self.__send_success_flag = False
 
     def start(self):
         Node.start(self)
@@ -42,6 +43,24 @@ class ClientBase(Node):
             return False
 
         return True
+
+    def cleanup(self):
+        Node.cleanup(self)
+        self.__address = None
+        self.__port = None
+        self.__name = None
+        self.__mode = None
+        self.__resp = None
+        self.send_success_flag = None
+        if self.__socket:
+            self.__socket.shutdown(socket.SHUT_RDWR)
+            self.__socket.close()
+            del self.__socket
+            self.__socket = None
+        if self.__socket_receiver:
+            self.__socket_receiver.join()
+            del self.__socket_receiver
+            self.__socket_receiver = None
 
     def getSocket(self):
         """Getter for socket"""
@@ -104,11 +123,11 @@ class ClientBase(Node):
 
     def __waitForSendSuccess(self):
         """Stall while sending data"""
-        while self.isRunning and not self.send_success_flag:
+        while self.isRunning and not self.__send_success_flag:
             pass
 
         self.notify.debug('sent data successfully')
-        self.send_success_flag = False
+        self.__send_success_flag = False
 
     def setupSocket(self):
         self.getSocket().settimeout(constants.SOCKET_TIMEOUT)
@@ -122,6 +141,7 @@ class ClientBase(Node):
         try:
             data = self.getDatagramFromOutbox().toJSON()
             self.__send(data)
+            del data
             return True # successful
         except queue.Empty:
             return True # successful
@@ -136,14 +156,19 @@ class ClientBase(Node):
         """Send data length and data"""
         if self.isSecure:
             data = self.encrypt(data)
-        else:
+        elif data:
             data = data.encode()
+        else:
+            return
 
         size = len(data)
         self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
         self.__sendToSocket(data, size)
 
-        self.send_success_flag = True
+        self.__send_success_flag = True
+
+        del size
+        del data
 
     def __sendToSocket(self, data, size):
         """Send data through socket transfer"""
@@ -152,15 +177,22 @@ class ClientBase(Node):
                 size -= self.getSocket().send(data[:size])
             except OSError:
                 self.notify.error('SocketError', 'error sending data')
-                return
+                break
             except Exception as e:
                 self.notify.error('SocketError', str(e))
-                return
+                break
+
+        if size > 0:
+            Node.stop(self)
+
+        del data
+        del size
 
     def _recv(self):
         try:
             datagram = self.getDatagramFromInbox()
             self.handleReceivedDatagram(datagram)
+            del datagram
             return True # successful
         except queue.Empty:
             return True # successful
@@ -186,6 +218,11 @@ class ClientBase(Node):
 
                 datagram = Datagram.fromJSON(data)
                 self.receiveDatagram(datagram)
+
+                del size_indicator
+                del size
+                del data
+                del datagram
             except struct.error as e:
                 self.notify.warning('connection was closed unexpectedly')
                 break
@@ -193,6 +230,7 @@ class ClientBase(Node):
                 self.notify.error('NetworkError', str(e))
                 break
 
+        Node.stop(self)
         self.notify.debug('done receiving')
 
     def __recvFromSocket(self, size):
@@ -206,6 +244,7 @@ class ClientBase(Node):
                     data += _data
                 else:
                     raise OSError()
+                del _data
             except OSError as e:
                 if str(e) == 'timed out':
                     continue
@@ -215,6 +254,7 @@ class ClientBase(Node):
                 self.notify.error('NetworkError', str(e))
                 return b''
 
+        del size
         return data
 
     def sendDatagram(self, datagram):
@@ -222,6 +262,8 @@ class ClientBase(Node):
         Node.sendDatagram(self, datagram)
 
         self.__waitForSendSuccess()
+
+        del datagram
 
     def sendResp(self, data):
         datagram = Datagram()
@@ -232,10 +274,14 @@ class ClientBase(Node):
 
         self.sendDatagram(datagram)
 
+        del data
+        del datagram
+
     def handleReceivedDatagram(self, datagram):
         if datagram.getCommand() == constants.CMD_RESP:
             self.setResp(datagram)
         else:
             return datagram
 
+        del datagram
         return None

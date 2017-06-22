@@ -11,6 +11,17 @@ class ZoneAI(ZoneBase):
         ZoneBase.__init__(self, client, zone_id, members)
         self.__id2key = {ai.getId(): None for ai in members}
 
+        del ai
+        del client
+        del zone_id
+        del members
+
+    def cleanup(self):
+        if hasattr(self, '__id2key') and self.__id2key:
+            self.__id2key.clear()
+            del self.__id2key
+            self.__id2key = Non
+
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
 
@@ -21,10 +32,18 @@ class ZoneAI(ZoneBase):
         for ai in self.getMembers():
             ai.sendDatagram(datagram)
 
+        del ai
+        del datagram
+
     def emitMessage(self, command, data=None):
         for ai in self.getMembers():
             datagram = self.buildZoneDatagram(command, ai.getId(), data)
             ai.sendDatagram(datagram)
+
+        del ai
+        del command
+        del data
+        del datagram
 
     def handleReceivedDatagram(self, datagram):
         datagram = ZoneBase.handleReceivedDatagram(self, datagram)
@@ -37,6 +56,8 @@ class ZoneAI(ZoneBase):
         else:
             self.notify.warning('received suspicious datagram')
 
+        del datagram
+
     def sendHelo(self):
         data = [
             self.getId(),
@@ -47,12 +68,15 @@ class ZoneAI(ZoneBase):
         self.emitMessage(constants.CMD_HELO, data)
         self.notify.debug('sent helo'.format(self.getId()))
 
+        del data
+
     def sendRedy(self):
         self.emitMessage(constants.CMD_REDY, self.__id2key)
         self.notify.debug('sent redy'.format(self.getId()))
 
         self.__id2key.clear()
         del self.__id2key
+        self.__id2key = None
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()
@@ -66,3 +90,7 @@ class ZoneAI(ZoneBase):
         if all(self.__id2key.values()):
             self.setSecure(True)
             self.sendRedy()
+
+        del id_
+        del key
+        del datagram

@@ -17,6 +17,7 @@ class Client(ClientBase):
     def __init__(self, interface, address, port):
         ClientBase.__init__(self, address, port)
         self.interface = interface
+        self.zm = None
         self.__pending_tabs = []
 
     def start(self):
@@ -45,6 +46,23 @@ class Client(ClientBase):
         else:
             self.terminate()
 
+    def cleanup(self):
+        ClientBase.cleanup(self)
+        if self.interface:
+            self.interface.cleanup()
+            del self.interface
+            self.interface = None
+        if self.zm:
+            self.zm.cleanup()
+            del self.zm
+            self.zm = None
+        if self.__pending_tabs:
+            for _t in self.__pending_tabs:
+                del _t
+            del self.__pending_tabs[:]
+            del self.__pending_tabs
+            self.__pending_tabs = None
+
     def connect(self, address, port):
         try:
             self.getSocket().connect((address, port))
@@ -52,6 +70,9 @@ class Client(ClientBase):
             self.notify.critical('error establishing ssl')
         except Exception as e:
             self.notify.critical(str(e))
+
+        del address
+        del port
 
     def terminate(self):
         """Forcefully exit the client"""
@@ -92,6 +113,8 @@ class Client(ClientBase):
         datagram.setSender(self.getId())
         ClientBase.sendDatagram(self, datagram)
 
+        del datagram
+
     def handleReceivedDatagram(self, datagram):
         datagram = ClientBase.handleReceivedDatagram(self, datagram)
 
@@ -99,38 +122,31 @@ class Client(ClientBase):
             return
 
         if datagram.getCommand() == constants.CMD_HELO:
-            zone_id, key, member_ids, member_names = datagram.getData()
-            if not self.zm.getZoneById(zone_id, search=True):
-                if member_names[0] != self.getName():
-                    window = self.interface.getWindow()
-                    window.new_client_signal.emit(str(zone_id),
-                                                  str(key),
-                                                  member_ids,
-                                                  member_names)
-                else:
-                    tab = self.zm.getTabByMembers(tuple(member_names))
-                    if tab:
-                        zone = Zone(tab, zone_id, key, member_ids)
-                        self.enter(tab, zone)
-                        zone.sendRedy()
-                    else:
-                        self.notify.error('ZoneError', 'could not find tab')
+            self.doHelo(datagram)
         elif datagram.getCommand() == constants.CMD_ZONE_MSG:
-            zone = self.zm.getZoneById(datagram.getSender())
-            if zone:
-                zone.receiveDatagram(datagram)
-            else:
-                self.notify.warning('received suspicious zone datagram')
+            self.forwardZoneDatagram(datagram)
         elif datagram.getCommand() == constants.CMD_ERR:
-            title, err = datagram.getData()
-            self.interface.error_signal.emit(str(title), str(err))
+            self.doError(datagram)
         else:
             self.notify.warning('received suspicious datagram')
+
+        del datagram
 
     def enter(self, tab, zone):
         tab.setZone(zone)
         self.zm.addZone(zone)
         self.notify.debug('entered zone {0}'.format(zone.getId()))
+
+        del tab
+        del zone
+
+    def doError(self, datagram):
+        title, err = datagram.getData()
+        self.interface.error_signal.emit(str(title), str(err))
+
+        del title
+        del err
+        del datagram
 
     def initiateHandshake(self):
         """Initiate handshake"""
@@ -244,3 +260,39 @@ class Client(ClientBase):
         self.sendDatagram(datagram)
 
         self.zm.addTab(tab, tuple(member_names))
+
+    def doHelo(self, datagram):
+        zone_id, key, member_ids, member_names = datagram.getData()
+        if not self.zm.getZoneById(zone_id, search=True):
+            if member_names[0] != self.getName():
+                window = self.interface.getWindow()
+                window.new_client_signal.emit(str(zone_id),
+                                              str(key),
+                                              member_ids,
+                                              member_names)
+            else:
+                tab = self.zm.getTabByMembers(tuple(member_names))
+                if tab:
+                    zone = Zone(tab, zone_id, key, member_ids)
+                    self.enter(tab, zone)
+                    zone.sendRedy()
+                else:
+                    self.notify.error('ZoneError', 'could not find tab')
+
+                del tab
+                del zone
+
+        del zone_id
+        del key
+        del member_ids
+        del member_names
+
+    def forwardZoneDatagram(self, datagram):
+        zone = self.zm.getZoneById(datagram.getSender())
+        if zone:
+            zone.receiveDatagram(datagram)
+        else:
+            self.notify.warning('received suspicious zone datagram')
+
+        del zone
+        del datagram

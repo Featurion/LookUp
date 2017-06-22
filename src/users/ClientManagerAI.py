@@ -25,6 +25,11 @@ class ClientManagerAI(UniqueIDManager):
         ai = ClientAI(self.server, address, port)
         ai.setSocket(socket_)
         self.notify.debug('client connected at {0}'.format(ai.getAddress()))
+
+        del socket_
+        del address
+        del port
+
         return ai
 
     def addClient(self, ai):
@@ -34,12 +39,17 @@ class ClientManagerAI(UniqueIDManager):
         self.notify.debug('client {0}-{1} connected'.format(ai.getName(),
                                                             ai.getId()))
 
+        del ai
+
     def removeClient(self, ai):
         """Stop managing an existing client"""
         self.deallocateId(ai.getId(), ai.getMode())
         self.clients.remove(ai)
         self.notify.debug('client {0}-{1} disconnected'.format(ai.getName(),
                                                                ai.getId()))
+
+        ai.cleanup()
+        del ai
 
     def getClients(self):
         return self.clients
@@ -49,8 +59,11 @@ class ClientManagerAI(UniqueIDManager):
         for ai in self.getClients():
             if ai.getId() == id_:
                 return ai
+        self.notify.debug('client with id {0} does not exist'.format(id_))
+        
+        del id_
+        del ai
 
-        self.notify.debug('client with id {0} does not exist!'.format(id_))
         return None
 
     def getClientByName(self, name):
@@ -58,8 +71,11 @@ class ClientManagerAI(UniqueIDManager):
         for ai in self.getClients():
             if ai.getName() == name:
                 return ai
+        self.notify.debug('client with name {0} does not exist'.format(name))
 
-        self.notify.debug('client with name {0} does not exist!'.format(name))
+        del name
+        del ai
+
         return None
 
     def getClientsByMode(self, mode):
@@ -68,3 +84,5 @@ class ClientManagerAI(UniqueIDManager):
             return self.scope_map.get(mode).values()
         else:
             pass
+
+        del mode

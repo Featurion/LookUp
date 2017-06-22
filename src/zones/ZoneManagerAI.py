@@ -17,12 +17,16 @@ class ZoneManagerAI(UniqueIDManager):
     def __init__(self, server):
         UniqueIDManager.__init__(self)
         self.server = server
+        del server
 
     def emitDatagram(self, datagram):
         """Send message to all clients"""
         for ai in self.server.cm.getClients():
             datagram.setRecipient(ai.getId())
             ai.sendDatagram(datagram)
+
+        del ai
+        del datagram
 
     def emitDatagramInsideZone(self, datagram, zone_id):
         """Send message to all clients with interest in zone"""
@@ -32,6 +36,11 @@ class ZoneManagerAI(UniqueIDManager):
                 datagram.setRecipient(id_)
                 ai.sendDatagram(datagram)
 
+        del zone
+        del ai
+        del zone_id
+        del datagram
+
     def emitDatagramOutsideZone(self, datagram, zone_id):
         """Send message to all clients without interest in zone"""
         zone = self.getZoneById(zone_id)
@@ -40,6 +49,11 @@ class ZoneManagerAI(UniqueIDManager):
                 if ai.getId() not in zone.getMembers():
                     datagram.setRecipient(ai.getId())
                     ai.sendDatagram(datagram)
+
+        del zone
+        del ai
+        del zone_id
+        del datagram
 
     def getZoneIds(self):
         return [ai.getId() for ai in self.id2owner.values()]
@@ -52,29 +66,43 @@ class ZoneManagerAI(UniqueIDManager):
             self.notify.debug('zone {0} does not exist'.format(id_))
             return None
 
-    def addZone(self, client, members, group):
+        del zone
+        del id_
+
+    def addZone(self, client, member_names, group):
         if group:
             mode = 'group'
         else:
             mode = 'private'
 
-        if not group and members > 2:
+        if len(member_names) > 2 and not group:
             self.notify.error('ZoneError', 'private chats cannot have over 2 members')
             return
 
-        member_ais = [self.server.cm.getClientByName(n) for n in members]
+        member_ais = [self.server.cm.getClientByName(n) for n in member_names]
         for member in member_ais:
-            if member == None:
+            if member is None:
                 return
 
-        seed = ','.join(members)
+        seed = ','.join(member_names)
         zone_id = self.generateId(mode, seed)
         ai = ZoneAI(client, zone_id, member_ais)
         self.allocateId(mode, seed, zone_id, ai)
-
         self.notify.debug('created zone {0}'.format(ai.getId()))
+
+        del client
+        del member_names
+        del group
+        del member_ais[:]
+        del member_ais
+        del member
+        del seed
+        del zone_id
 
         return ai
 
     def removeZone(self, ai):
         self.deallocateId(ai.getId(), ai.getMode())
+
+        ai.cleanup()
+        del ai

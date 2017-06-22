@@ -51,8 +51,30 @@ class InputWidget(QWidget):
         hbox2.addStretch(1)
         self.setLayout(hbox2)
 
+        del parent
+        del image
+        del image_width
+        del label_text
+        del button_text
+        del max_chars
+        del _image
+        del hbox1
+        del vbox
+        del hbox2
+
+    def cleanup(self):
+        del self.image
+        self.image = None
+        del self.label
+        self.label = None
+        del self.input
+        self.input = None
+        del self.button
+        self.button = None
+
     def getText(self):
         return self.input.text()
 
     def setText(self, text):
         self.input.setText(text)
+        del text

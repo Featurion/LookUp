@@ -14,10 +14,23 @@ class ZoneBase(Node):
         Node.__init__(self)
         self.__client = client
         self.__members = members
-        self.id2key = {} # overwrite in subclass
 
         self.setId(zone_id)
         self.start() # zones start on creation
+
+        del client
+        del zone_id
+        del members
+
+    def cleanup(self):
+        Node.cleanup()
+        if self.__client:
+            del self.__client
+            self.__client = None
+        if self.__members:
+            del self.__members[:]
+            del self.__members
+            self.__members = None
 
     def getClient(self):
         """Getter for client"""
@@ -41,6 +54,9 @@ class ZoneBase(Node):
             datagram.setRecipient(self.getId())
             datagram.setData(data)
 
+            del data
+        del key
+
         return datagram
 
     def decrypt(self, datagram):
@@ -51,6 +67,7 @@ class ZoneBase(Node):
             data = base64.b85decode(datagram.getData())
             data = Node.decrypt(self, data)
             return Datagram.fromJSON(data)
+        del key
 
         return datagram
 
@@ -61,12 +78,17 @@ class ZoneBase(Node):
         datagram.setRecipient(id_)
         datagram.setData(data)
 
+        del command
+        del id_
+        del data
+
         return self.encrypt(datagram)
 
     def _send(self):
         try:
             datagram = self.getDatagramFromOutbox()
             Node.sendDatagram(self.client, datagram)
+            del datagram
             return None
         except Exception as e:
             self.notify.error('ZoneError', str(e))
@@ -76,6 +98,7 @@ class ZoneBase(Node):
         try:
             datagram = self.getDatagramFromInbox()
             self.handleReceivedDatagram(datagram)
+            del datagram
             return None
         except Exception as e:
             self.notify.error('ZoneError', str(e))

@@ -13,7 +13,26 @@ class Zone(ZoneBase):
         self.id2key = {id_: None for id_ in member_ids}
         self.__alt_key = key
 
+        del id_
+        del tab
+        del zone_id
+        del key
+        del member_ids
+
+    def cleanup(self):
+        ZoneBase.cleanup(self)
+        self.__alt_key = None
+        if self.tab:
+            self.tab.cleanup()
+            del self.tab
+            self.tab = None
+        if self.id2key:
+            self.id2key.clear()
+            del self.id2key
+            self.id2key = None
+
     def getWorkingKey(self, id_):
+        del id_
         return self.__alt_key
 
     def handleReceivedDatagram(self, datagram):
@@ -27,6 +46,8 @@ class Zone(ZoneBase):
         else:
             self.notify.warning('received suspicious datagram')
 
+        del datagram
+
     def sendRedy(self):
         datagram = self.buildZoneDatagram(constants.CMD_REDY,
                                           self.getId(),
@@ -35,6 +56,9 @@ class Zone(ZoneBase):
         self.setSecure(True)
         self.notify.debug('sent redy'.format(self.getId()))
 
+        del datagram
+
     def zoneRedy(self, datagram):
         self.id2key = datagram.getData()
         self.tab.zone_redy_signal.emit()
+        del datagram

@@ -13,6 +13,8 @@ class Node(KeyHandler):
         self.__running = False
         self.__secure = False
 
+        self.__inbox = None
+        self.__outbox = None
         self.__sender = None
         self.__receiver = None
         self.__threads = []
@@ -36,9 +38,13 @@ class Node(KeyHandler):
         for _t in self.__threads:
             _t.start()
 
+        del _t
+
     def joinThreads(self, timeout=5):
         for _t in self.__threads:
             _t.join(timeout)
+
+        del _t
 
     def getId(self):
         """Getter for Node ID"""
@@ -58,6 +64,7 @@ class Node(KeyHandler):
 
     def setSecure(self, status):
         self.__secure = status
+        del status
 
     @property
     def isSecure(self):
@@ -98,9 +105,11 @@ class Node(KeyHandler):
 
     def sendDatagram(self, datagram):
         self.__outbox.put(datagram)
+        del datagram
 
     def receiveDatagram(self, datagram):
         self.__inbox.put(datagram)
+        del datagram
 
     def start(self):
         """Handle startup of the Node"""
@@ -109,6 +118,31 @@ class Node(KeyHandler):
     def stop(self):
         """Handle stopping of the Node"""
         self.__running = False
+
+    def cleanup(self):
+        KeyHandler.cleanup(self)
+        self.__id = None
+        self.__running = None
+        self.__secure = None
+        self.__threads = None
+        if self.__inbox:
+            with q.mutex:
+                self.__inbox.queue.clear()
+            del self.__inbox
+            self.__inbox = None
+        if self.__outbox:
+            with q.mutex:
+                self.__outbox.queue.clear()
+            del self.__outbox
+            self.__outbox = None
+        if self.__sender:
+            self.__sender.join()
+            del self.__sender
+            self.__sender = None
+        if self.__receiver:
+            self.__receiver.join()
+            del self.__receiver
+            self.__receiver = None
 
     def send(self):
         """Threaded function for message sending"""
@@ -119,6 +153,7 @@ class Node(KeyHandler):
                 self.notify.error('ThreadingError', 'sending thread broke')
                 return
 
+        Node.stop(self)
         self.notify.warning('done sending')
 
     def recv(self):
@@ -130,8 +165,10 @@ class Node(KeyHandler):
                 self.notify.error('ThreadingError', 'receiving thread broke')
                 return
 
+        Node.stop(self)
         self.notify.warning('done handling messages')
 
     def handleReceivedData(self, datagram): # overwrite in subclass
         """In-between function for Node reaction to messages received"""
-        return NotImplemented
+        del datagram
+        return None

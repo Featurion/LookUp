@@ -1,14 +1,17 @@
 import re
 from threading import Thread
+
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QSplitter
-from src.base import utils
-from src.base.constants import URL_REGEX
+
+from src.base import constants, utils
 
 
 class ChatWidget(QWidget):
+
+    URL_REGEX = re.compile(constants.URL_REGEX)
 
     class _MessageLog(list):
 
@@ -16,6 +19,8 @@ class ChatWidget(QWidget):
             list.__init__(self, args)
             self.sort()
             self.widget = widget
+
+            del widget
 
         def sort(self):
             list.sort(self, key=lambda i: i[0])
@@ -25,19 +30,25 @@ class ChatWidget(QWidget):
             self.sort()
             self.update()
 
+            del ts
+            del msg
+
         def update(self):
             full_text = '<br>'.join(msg for ts, msg in self)
             self.widget.chat_log.setText(full_text)
 
-    def __init__(self, tab, group: bool):
+            del ts
+            del msg
+            del full_text
+
+    def __init__(self, tab, is_group: bool):
         QWidget.__init__(self, tab)
 
-        self.tab = tab
-        self.group = group
+        self.__tab = tab
+        self.is_group = is_group
 
         self.disabled = False
         self.cleared = False
-        self.url_regex = re.compile(URL_REGEX)
         self.log = ChatWidget._MessageLog(self)
 
         self.chat_log = QTextBrowser()
@@ -64,11 +75,30 @@ class ChatWidget(QWidget):
         splitter = QSplitter(Qt.Vertical)
         splitter.addWidget(self.chat_log)
         splitter.addWidget(input_wrapper)
-        splitter.setSizes([int(self.tab.height()), 1])
+        splitter.setSizes([int(self.__tab.height()), 1])
 
         hbox = QHBoxLayout()
         hbox.addWidget(splitter)
         self.setLayout(hbox)
+
+        del font_metrics
+        del hbox
+        del input_wrapper
+        del splitter
+
+    def cleanup(self):
+        self.__tab = None # cleaned up in ZoneManager
+        self.is_group = None
+        self.disabled = None
+        self.cleared = None
+        del self.log
+        self.log = None
+        del self.chat_log
+        self.chat_log = None
+        del self.input
+        self.input = None
+        del self.send_button
+        self.send_button = None
 
     def getClient(self):
         return self.__tab.getClient()
@@ -87,9 +117,12 @@ class ChatWidget(QWidget):
                 self.cleared = True
                 self.input.clear()
 
-                Thread(target=self.getTab().getSession().sendChatMessage,
-                       args=(text,),
-                       daemon=True).start()
+                _t = Thread(target=self.getTab().getSession().sendChatMessage,
+                            args=(text,),
+                            daemon=True).start()
+                del _t
+
+            del text
 
     def disable(self):
         self.disabled = True
@@ -100,10 +133,14 @@ class ChatWidget(QWidget):
         self.input.setReadOnly(False)
 
     def __linkify(self, text):
-        matches = self.url_regex.findall(text)
+        matches = self.URL_REGEX.findall(text)
         for match in matches:
             text = text.replace(match[0],
                                 '<a href="{0}">{0}</a>'.format(match[0]))
+
+        del match
+        del matches
+
         return text
 
     def chatInputTextChanged(self):

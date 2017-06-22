@@ -10,11 +10,19 @@ class ClientAI(ClientBase):
     def __init__(self, server, address, port):
         ClientBase.__init__(self, address, port)
         self.server = server
+        self.svr = None
 
     def stop(self):
         """Handle stopping of the client"""
         self.server.cm.removeClient(self)
         ClientBase.stop(self)
+
+    def cleanup(self):
+        ClientBase.cleanup(self)
+        self.server = None
+        if self.svr:
+            del self.svr
+            self.svr = None
 
     def sendOK(self):
         self.sendResp(True)
@@ -30,6 +38,7 @@ class ClientAI(ClientBase):
         datagram.setData((title, err))
 
         self.sendDatagram(datagram)
+        del datagram
 
     def handleReceivedDatagram(self, datagram):
         datagram = ClientBase.handleReceivedDatagram(self, datagram)
@@ -51,6 +60,9 @@ class ClientAI(ClientBase):
             self.forwardZoneMessage(datagram)
         else:
             self.notify.warning('received suspicious datagram')
+            return None
+
+        del datagram
 
     def doHandshake(self, datagram):
         """Respond to an initiated handshake"""
@@ -62,6 +74,8 @@ class ClientAI(ClientBase):
 
         self.notify.info('secured socket connection')
         self.setSecure(True)
+
+        del datagram
 
     def doLogin(self, datagram):
         name, mode = datagram.getData()
@@ -86,6 +100,12 @@ class ClientAI(ClientBase):
             self.server.cm.addClient(self)
             self.sendOK()
 
+        del name
+        del mode
+        del client_hmac
+        del server_hmac
+        del datagram
+
     def doChallenge(self, datagram):
         self.notify.debug('challenging')
         salt, vkey = srp.create_salted_verification_key(self.getName().encode(),
@@ -105,6 +125,12 @@ class ClientAI(ClientBase):
             self.notify.debug('challenge success')
             self.sendResp([s.hex(), B.hex()])
 
+        del salt
+        del vkey
+        del s
+        del B
+        del datagram
+
     def doChallengeVerification(self, datagram):
         self.notify.debug('verifying')
         M = bytes.fromhex(datagram.getData())
@@ -116,9 +142,18 @@ class ClientAI(ClientBase):
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()
+        else:
+            HAMK = None
+
+        del M
+        del HAMK
+        del datagram
 
     def doHelo(self, datagram):
-        ai = self.server.zm.addZone(self, *datagram.getData())
+        member_names = datagram.getData()
+        is_group = member_names == [self.getName()]
+
+        ai = self.server.zm.addZone(self, member_names, is_group)
         if ai is None:
             self.sendError(constants.TITLE_NAME_DOESNT_EXIST,
                            constants.NAME_DOESNT_EXIST)
@@ -126,6 +161,13 @@ class ClientAI(ClientBase):
         else:
             ai.sendHelo()
 
+        del member_names
+        del is_group
+        del datagram
+
     def forwardZoneDatagram(self, datagram):
         ai = self.server.zm.getZoneById(datagram.getRecipient())
         ai.receiveDatagram(datagram)
+
+        del ai
+        del datagram
