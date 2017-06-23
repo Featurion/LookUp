@@ -57,14 +57,14 @@ class ClientAI(ClientBase):
         self.sendResp(self.getKey())
         self.notify.debug('sent public key')
 
-        self.notify.info('secured socket connection')
+        self.notify.debug('secured socket connection')
         self.setSecure(True)
 
         del datagram
 
     def doLogin(self, datagram):
         name, mode = datagram.getData()
-        self.notify.info('{0} attempting to log in'.format(name))
+        self.notify.debug('{0} attempting to log in'.format(name))
 
         if utils.isNameInvalid(name):
             self.notify.debug('name is invalid')
