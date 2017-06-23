@@ -80,7 +80,10 @@ class Console(threading.Thread):
         else:
             if __debug__:
                 try:
-                    exec(' '.join(code))
+                    exp = ''
+                    for length in code:
+                        exp = exp + length
+                    exec(exp)
                 except Exception as e:
                     print(str(e))
             else:
