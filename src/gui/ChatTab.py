@@ -23,7 +23,29 @@ class ChatTab(QWidget):
         self.__zone = None
         self.__unread = 0
 
+<<<<<<< HEAD
         self.setupWidgets()
+=======
+        self.input_widget = InputWidget(self,
+                                        'images/new_chat.png', 150,
+                                        'Username:',
+                                        'LookUp',
+                                        constants.MAX_NAME_LENGTH,
+                                        self.connect)
+        self.chat_widget = ChatWidget(self, self.is_group)
+
+        self.widget_stack = QStackedWidget(self)
+        self.widget_stack.addWidget(self.input_widget)
+        self.widget_stack.addWidget(ConnectingWidget(self))
+        self.widget_stack.addWidget(self.chat_widget)
+        self.widget_stack.addWidget(self.chat_widget.input_widget)
+
+        if self.is_group:
+            self.widget_stack.setCurrentIndex(1)
+            self.connect()
+        else:
+            self.widget_stack.setCurrentIndex(0)
+>>>>>>> 7382d566651d3388d44e39d2e1b81256307813ec
 
         self.new_message_signal.connect(self.newMessage)
         self.zone_redy_signal.connect(self.zoneRedy)
