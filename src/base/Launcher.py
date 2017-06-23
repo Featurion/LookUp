@@ -61,7 +61,13 @@ class Launcher(object):
 
     def __launchAIServer(self, address, port):
         from src.ai.Server import Server
-        Server(address, port).start()
+        from src.ai.Console import Console
+
+        server = Server(address, port)
+        console = Console(server.cm, server.bm)
+
+        console.start()
+        server.start()
 
     def __launchClient(self, address, port):
         from src.gui.ClientUI import ClientUI

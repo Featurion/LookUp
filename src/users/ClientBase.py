@@ -62,7 +62,8 @@ class ClientBase(Node):
             del self.__socket
             self.__socket = None
         if self.__socket_receiver:
-            self.__socket_receiver.join()
+            if self.__socket_receiver.isAlive():
+                self.__socket_receiver.join()
             del self.__socket_receiver
             self.__socket_receiver = None
 
