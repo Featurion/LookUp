@@ -74,9 +74,9 @@ class ZoneManagerAI(UniqueIDManager):
             if member is None:
                 return
 
-        seed = ','.join(member_names)
-        zone_id = self.generateId(mode, seed)
-        ai = ZoneAI(client, zone_id.bytes.hex(), member_ais, is_group)
+        seed = ','.join(sorted(member_names))
+        zone_id = self.generateId(mode, seed).bytes.hex()
+        ai = ZoneAI(client, zone_id, member_ais, is_group)
         self.allocateId(mode, seed, zone_id, ai)
         self.notify.debug('created zone {0}'.format(ai.getId()))
 

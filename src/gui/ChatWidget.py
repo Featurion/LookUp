@@ -41,11 +41,10 @@ class ChatWidget(QWidget):
             del msg
             del full_text
 
-    def __init__(self, tab, is_group: bool):
+    def __init__(self, tab):
         QWidget.__init__(self, tab)
 
         self.__tab = tab
-        self.is_group = is_group
 
         self.disabled = False
         self.cleared = False
@@ -88,7 +87,6 @@ class ChatWidget(QWidget):
 
     def cleanup(self):
         self.__tab = None # cleaned up in ZoneManager
-        self.is_group = None
         self.disabled = None
         self.cleared = None
         del self.log

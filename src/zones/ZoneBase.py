@@ -91,5 +91,4 @@ class ZoneBase(Node):
             return True # successful
         except Exception as e:
             self.notify.error('ZoneError', str(e))
-            raise e
             return False # unsuccessful

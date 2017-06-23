@@ -22,6 +22,8 @@ DISCONNECT_DELAY = 2 # give threads time to wrap up
 ACCEPTED = b'accepted'
 BANNED = b'banned'
 
+WANT_BLANK_GROUPS = settings['want-blank-groups']
+
 # Logging
 
 DEBUG = 10
@@ -55,10 +57,9 @@ CMD_REQ_CONNECTION = 4
 CMD_REQ_LOGIN = 5
 CMD_REQ_CHALLENGE = 6
 CMD_REQ_CHALLENGE_VERIFY = 7
-CMD_REQ_ZONE = 8
-CMD_HELO = 9
-CMD_REDY = 10
-CMD_ZONE_MSG = 11
+CMD_HELO = 8
+CMD_REDY = 9
+CMD_ZONE_MSG = 10
 
 # Users
 

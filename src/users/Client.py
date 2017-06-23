@@ -18,7 +18,7 @@ class Client(ClientBase):
         ClientBase.__init__(self, address, port)
         self.interface = interface
         self.zm = None
-        self.__pending_tabs = []
+        self.__pending_tabs = {}
 
         self.COMMAND_MAP.update({
             constants.CMD_ERR: self.doError,
@@ -62,9 +62,8 @@ class Client(ClientBase):
             del self.zm
             self.zm = None
         if self.__pending_tabs:
-            for _t in self.__pending_tabs:
+            for _m, _t in self.__pending_tabs:
                 del _t
-            del self.__pending_tabs[:]
             del self.__pending_tabs
             self.__pending_tabs = None
 
@@ -76,11 +75,11 @@ class Client(ClientBase):
         except Exception as e:
             self.notify.critical(str(e))
 
-        response = self.waitForApproval()
-        if response == True:
+        if self.waitForApproval():
             pass
         else:
-            self.interface.error_signal.emit(constants.TITLE_BANNED, constants.CLIENT_BANNED)
+            self.interface.error_signal.emit(constants.TITLE_BANNED,
+                                             constants.CLIENT_BANNED)
 
         del address
         del port
@@ -92,8 +91,7 @@ class Client(ClientBase):
                 return True
             elif recv == constants.BANNED:
                 return False
-            else:
-                continue
+
 
     def terminate(self):
         """Forcefully exit the client"""
@@ -150,7 +148,6 @@ class Client(ClientBase):
 
         del title
         del err
-        del datagram
 
     def initiateHandshake(self):
         """Initiate handshake"""
@@ -254,48 +251,49 @@ class Client(ClientBase):
             self.notify.critical('suspiciously challenge failure')
             return False
 
-    def initiateHelo(self, tab, member_names):
-        member_names = [self.getName()] + member_names
+    def initiateHelo(self, tab, member_names, is_group):
+        member_names = (*sorted([self.getName(), *member_names]),)
+
+        if not is_group:
+            assert len(member_names) == 2
 
         datagram = Datagram()
         datagram.setCommand(constants.CMD_HELO)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
-        datagram.setData(member_names)
+        datagram.setData([member_names, is_group])
 
         self.notify.debug('requesting new zone')
         self.sendDatagram(datagram)
 
-        self.zm.addTab(tab, tuple(member_names))
-
-        del tab
-        del member_names
-        del datagram
+        self.__pending_tabs[member_names] = tab
 
     def doHelo(self, datagram):
         zone_id, key, member_ids, member_names, is_group = datagram.getData()
-        tab = self.zm.getTabByMembers(tuple(member_names))
+        tab = self.__pending_tabs.get((*sorted(member_names),))
+
+        if self.getName() in member_names:
+            member_names.remove(self.getName())
+        else:
+            self.notify.warning('received helo from unknown zone')
+            return
 
         if tab:
             zone = Zone(tab, zone_id, key, member_ids, is_group)
             self.enter(tab, zone)
             zone.sendRedy()
-        elif not self.zm.getZoneById(zone_id) \
-             and member_names[0] != self.getName():
+        else:
             self.interface.getWindow().new_client_signal.emit(zone_id,
                                                               str(key),
                                                               member_ids,
                                                               member_names,
                                                               is_group)
-        else:
-            self.notify.error('ZoneError', 'could not find tab')
 
         del zone_id
         del key
         del member_ids
         del member_names
         del is_group
-        del tab
         del datagram
 
     def forwardZoneDatagram(self, datagram):

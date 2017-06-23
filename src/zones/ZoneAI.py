@@ -21,7 +21,14 @@ class ZoneAI(ZoneBase):
         if hasattr(self, '__id2key') and self.__id2key:
             self.__id2key.clear()
             del self.__id2key
-            self.__id2key = Non
+            self.__id2key = None
+
+    def getZoneData(self):
+        return [self.getId(),
+                self.getKey(),
+                [ai.getId() for ai in self.getMembers()],
+                [ai.getName() for ai in self.getMembers()],
+                self.isGroup]
 
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
@@ -72,12 +79,7 @@ class ZoneAI(ZoneBase):
 
     def sendHelo(self):
         self.notify.debug('sending helo'.format(self.getId()))
-        self.emitMessage(constants.CMD_HELO,
-                         [self.getId(),
-                          self.getKey(),
-                          [ai.getId() for ai in self.getMembers()],
-                          [ai.getName() for ai in self.getMembers()],
-                          self.isGroup])
+        self.emitMessage(constants.CMD_HELO, self.getZoneData())
 
     def sendRedy(self):
         self.notify.debug('sending redy'.format(self.getId()))

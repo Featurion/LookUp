@@ -12,6 +12,9 @@ default-address: '127.0.0.1'
 default-port: 1492
 tls-enabled: true
 
+# Chat settings
+want-blank-groups: true
+
 # Security settings
 
 # TODO: Figure out a way to secure a key in production:

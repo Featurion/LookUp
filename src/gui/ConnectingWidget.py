@@ -25,4 +25,7 @@ class ConnectingWidget(QWidget):
         self.setLayout(hbox)
 
     def setConnectingToName(self, name):
-        self.connecting_label.setText('Connecting to {0}...'.format(name))
+        if name:
+            self.connecting_label.setText('Connecting to {0}...'.format(name))
+        else:
+            self.connecting_label.setText('Connecting...')

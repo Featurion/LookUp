@@ -130,13 +130,16 @@ class ChatWindow(QMainWindow):
         index = self.chat_tabs.indexOf(tab)
         self.chat_tabs.setTabText(index, title)
 
+    def doConnecting(self, tab, title):
+        tab.widget_stack.widget(2).setConnectingToName(title)
+        tab.widget_stack.setCurrentIndex(2)
+
     def openTab(self, title=None):
         tab = ChatTab(self.interface, False)
 
         if title:
             self.chat_tabs.addTab(tab, title)
-            tab.widget_stack.widget(1).setConnectingToName(title)
-            tab.widget_stack.setCurrentIndex(1)
+            self.doConnecting(tab, title)
         else:
             self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
 
@@ -149,9 +152,7 @@ class ChatWindow(QMainWindow):
         tab = ChatTab(self.interface, True)
 
         if title:
-            self.chat_tabs.addTab(tab, title)
-            tab.widget_stack.widget(1).setConnectingToName(title)
-            tab.widget_stack.setCurrentIndex(1)
+            self.doConnecting(tab, title)
         else:
             self.chat_tabs.addTab(tab, constants.BLANK_GROUP_TAB_TITLE)
 
@@ -181,8 +182,6 @@ class ChatWindow(QMainWindow):
             utils.showDesktopNotification(self.tray_icon,
                                           'Chat request from {0}'.format(member_names[0]),
                                           '')
-
-            member_names.remove(self.interface.getClient().getName())
 
         if is_group:
             tab = self.openGroupTab(utils.oxfordComma(member_names))
