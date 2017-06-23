@@ -76,8 +76,24 @@ class Client(ClientBase):
         except Exception as e:
             self.notify.critical(str(e))
 
+        response = self.waitForApproval()
+        if response == True:
+            pass
+        else:
+            self.interface.error_signal.emit(constants.TITLE_BANNED, constants.CLIENT_BANNED)
+
         del address
         del port
+
+    def waitForApproval(self):
+        while True:
+            recv = self.getSocket().recv(1024)
+            if recv == constants.ACCEPTED:
+                return True
+            elif recv == constants.BANNED:
+                return False
+            else:
+                continue
 
     def terminate(self):
         """Forcefully exit the client"""

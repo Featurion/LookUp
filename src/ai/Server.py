@@ -4,9 +4,10 @@ import sys
 
 from src.base.Notifier import Notifier
 from src.base.constants import TLS_ENABLED
+from src.users.BanManagerAI import BanManagerAI
 from src.users.ClientManagerAI import ClientManagerAI
 from src.zones.ZoneManagerAI import ZoneManagerAI
-
+from src.ai.Console import Console
 
 class Server(Notifier):
 
@@ -16,9 +17,10 @@ class Server(Notifier):
         self.__address = address
         self.__port = port
 
+        self.startManagers()
+
     def start(self):
         self.__connect()
-        self.startManagers()
         self.waitForClients()
 
     def stop(self):
@@ -64,13 +66,18 @@ class Server(Notifier):
 
     def startManagers(self):
         self.cm = ClientManagerAI(self)
+        self.bm = BanManagerAI(self.cm)
         self.zm = ZoneManagerAI(self)
 
     def waitForClients(self):
         while True:
             try:
                 ai = self.cm.acceptClient()
-                ai.start()
+                if ai == False:
+                    # This client has been banned
+                    continue
+                else:
+                    ai.start()
             except KeyboardInterrupt:
                 self.notify.error('KeyboardInterrupt',
                                   'server killed while waiting for clients')

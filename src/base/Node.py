@@ -14,6 +14,7 @@ class Node(KeyHandler):
         self.__id = None
         self.__running = False
         self.__secure = False
+        self.__new = False
 
         self.__inbox = None
         self.__outbox = None
@@ -68,9 +69,17 @@ class Node(KeyHandler):
         self.__secure = status
         del status
 
+    def setNew(self, status):
+        self.__new = status
+        del status
+
     @property
     def isSecure(self):
         return self.__secure
+
+    @property
+    def isNew(self):
+        return self.__new
 
     @property
     def isRunning(self):
@@ -136,7 +145,6 @@ class Node(KeyHandler):
             with self.__outbox.mutex:
                 self.__outbox.queue.clear()
             del self.__outbox
-            self.__outbox = None
         if self.__sender:
             if self.__sender.isAlive():
                 self.__sender.join()

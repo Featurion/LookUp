@@ -19,6 +19,8 @@ MAX_NAME_LENGTH = 32
 TLS_ENABLED = settings['tls-enabled']
 SOCKET_TIMEOUT = 1
 DISCONNECT_DELAY = 2 # give threads time to wrap up
+ACCEPTED = b'accepted'
+BANNED = b'banned'
 
 # Logging
 
@@ -76,6 +78,7 @@ TITLE_EMPTY_NAME = 'No username provided'
 TITLE_SELF_CONNECT = 'Tried connecting to self'
 TITLE_NAME_IN_USE = 'Username is taken'
 TITLE_NAME_DOESNT_EXIST = "Username doesn't exist"
+TITLE_BANNED = "You have been banned"
 
 CHOOSE = 'Please choose another'
 EMPTY_NAME = 'Please enter a username.'
@@ -85,6 +88,7 @@ SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
 NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
 NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
+CLIENT_BANNED = "You have been IP banned."
 
 # Chatting
 
