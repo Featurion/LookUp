@@ -11,13 +11,18 @@ from src.base.Node import Node
 
 class ZoneBase(Node):
 
-    def __init__(self, client, zone_id, members):
+    def __init__(self, client, zone_id: str, members: list, is_group: bool):
         Node.__init__(self)
         self.__client = client
         self.__members = members
+        self.__group = is_group
 
         self.setId(uuid.UUID(hex=zone_id))
         self.start() # zones start on creation
+
+    def start(self):
+        Node.start(self)
+        self.startThreads()
 
     def cleanup(self):
         Node.cleanup()
@@ -36,6 +41,10 @@ class ZoneBase(Node):
     def getMembers(self):
         """Getter for zone members"""
         return self.__members
+
+    @property
+    def isGroup(self):
+        return self.__group
 
     def encrypt(self, datagram):
         key = self.getWorkingKey(datagram.getRecipient())
@@ -68,46 +77,19 @@ class ZoneBase(Node):
 
         return datagram
 
-    def buildZoneDatagram(self, command, id_, data=None):
-        datagram = Datagram()
-        datagram.setCommand(command)
-        datagram.setSender(self.getClient().getId())
-        datagram.setRecipient(id_)
-        datagram.setData(data)
-
-        del command
-        del id_
-        del data
-
-        return self.encrypt(datagram)
-
-    def _send(self):
-        try:
-            datagram = self.getDatagramFromOutbox()
-            Node.sendDatagram(self.client, datagram)
-            del datagram
-            return None
-        except Exception as e:
-            self.notify.error('ZoneError', str(e))
-            return False
-
     def _recv(self):
         try:
             datagram = self.getDatagramFromInbox()
+
+            if self.isSecure:
+                datagram = self.decrypt(datagram)
+
             self.handleReceivedDatagram(datagram)
             del datagram
-            return None
+            return True # successful
+        except queue.Empty:
+            return True # successful
         except Exception as e:
             self.notify.error('ZoneError', str(e))
-            return False
-
-    def handleReceivedDatagram(self, datagram):
-        if self.isSecure:
-            return self.decrypt(datagram)
-        else:
-            return datagram
-
-        Node.handleReceivedDatagram(self, datagram)
-
-    def sendDatagram(self, datagram):
-        self.getClient().sendDatagram(datagram)
+            raise e
+            return False # unsuccessful

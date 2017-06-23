@@ -56,27 +56,17 @@ class ZoneManagerAI(UniqueIDManager):
         del datagram
 
     def getZoneIds(self):
-        return [ai.getId() for ai in self.id2owner.values()]
+        return self.id2owner.keys()
 
-    def getZoneById(self, id_: int):
-        zone = self.id2owner.get(id_)
-        if zone:
-            return zone
-        else:
-            self.notify.debug('zone {0} does not exist'.format(id_))
-            return None
+    def getZoneById(self, id_: str):
+        return self.id2owner.get(id_)
 
-        del zone
-        del id_
+    def addZone(self, client, member_names, is_group):
+        mode = 'group' if is_group else 'private'
 
-    def addZone(self, client, member_names, group):
-        if group:
-            mode = 'group'
-        else:
-            mode = 'private'
-
-        if len(member_names) > 2 and not group:
-            self.notify.error('ZoneError', 'private chats cannot have over 2 members')
+        if len(member_names) > 2 and not is_group:
+            self.notify.error('ZoneError',
+                              'private chats cannot have over 2 members')
             return
 
         member_ais = [self.server.cm.getClientByName(n) for n in member_names]
@@ -86,14 +76,13 @@ class ZoneManagerAI(UniqueIDManager):
 
         seed = ','.join(member_names)
         zone_id = self.generateId(mode, seed)
-        ai = ZoneAI(client, zone_id, member_ais)
+        ai = ZoneAI(client, zone_id.bytes.hex(), member_ais, is_group)
         self.allocateId(mode, seed, zone_id, ai)
         self.notify.debug('created zone {0}'.format(ai.getId()))
 
         del client
         del member_names
-        del group
-        del member_ais[:]
+        del is_group
         del member_ais
         del member
         del seed

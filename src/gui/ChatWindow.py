@@ -13,7 +13,7 @@ from src.zones.Zone import Zone
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, str, list, list)
+    new_client_signal = pyqtSignal(str, str, list, list, bool)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -175,27 +175,22 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, str, list, list)
-    def newClient(self, zone_id, key, member_ids, member_names, group):
-        zone_id, key = int(zone_id), int(key)
-
-        if group:
-            accepted = True
-        else:
-            if not self.isActiveWindow():
-                utils.showDesktopNotification(self.tray_icon,
-                                              'Chat request from {0}'.format(member_names[0]),
-                                              '')
+    @pyqtSlot(str, str, list, list, bool)
+    def newClient(self, zone_id, key, member_ids, member_names, is_group):
+        if not is_group and not self.isActiveWindow():
+            utils.showDesktopNotification(self.tray_icon,
+                                          'Chat request from {0}'.format(member_names[0]),
+                                          '')
 
             member_names.remove(self.interface.getClient().getName())
-            accepted = ConnectionDialog.getAnswer(self, member_names)
 
-        if accepted:
-            if group:
-                tab = self.openGroupTab(utils.oxfordComma(member_names))
-            else:
-                tab = self.openTab(utils.oxfordComma(member_names))
+        if is_group:
+            tab = self.openGroupTab(utils.oxfordComma(member_names))
+        elif ConnectionDialog.getAnswer(self, member_names):
+            tab = self.openTab(utils.oxfordComma(member_names))
+        else:
+            return
 
-            zone = Zone(tab, zone_id, key, member_ids)
-            self.interface.getClient().enter(tab, zone)
-            zone.sendRedy()
+        zone = Zone(tab, zone_id, int(key), member_ids, is_group)
+        self.interface.getClient().enter(tab, zone)
+        zone.sendRedy()

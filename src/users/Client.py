@@ -23,7 +23,6 @@ class Client(ClientBase):
         self.COMMAND_MAP.update({
             constants.CMD_ERR: self.doError,
             constants.CMD_HELO: self.doHelo,
-            constants.CMD_ZONE_MSG: self.forwardZoneDatagram,
         })
 
     def start(self):
@@ -232,7 +231,7 @@ class Client(ClientBase):
         del HAMK
 
         if self.user.authenticated():
-            self.setId(uuid.UUID(resp.getRecipient()))
+            self.setId(uuid.UUID(hex=resp.getRecipient()))
             self.notify.debug('challenge verified')
             return True
         else:
@@ -258,30 +257,29 @@ class Client(ClientBase):
         del datagram
 
     def doHelo(self, datagram):
-        zone_id, key, member_ids, member_names = datagram.getData()
-        if not self.zm.getZoneById(zone_id, search=True):
-            if member_names[0] != self.getName():
-                window = self.interface.getWindow()
-                window.new_client_signal.emit(str(zone_id),
-                                              str(key),
-                                              member_ids,
-                                              member_names)
-            else:
-                tab = self.zm.getTabByMembers(tuple(member_names))
-                if tab:
-                    zone = Zone(tab, zone_id, key, member_ids)
-                    self.enter(tab, zone)
-                    zone.sendRedy()
-                else:
-                    self.notify.error('ZoneError', 'could not find tab')
+        zone_id, key, member_ids, member_names, is_group = datagram.getData()
+        tab = self.zm.getTabByMembers(tuple(member_names))
 
-                del tab
-                del zone
+        if tab:
+            zone = Zone(tab, zone_id, key, member_ids, is_group)
+            self.enter(tab, zone)
+            zone.sendRedy()
+        elif not self.zm.getZoneById(zone_id) \
+             and member_names[0] != self.getName():
+            self.interface.getWindow().new_client_signal.emit(zone_id,
+                                                              str(key),
+                                                              member_ids,
+                                                              member_names,
+                                                              is_group)
+        else:
+            self.notify.error('ZoneError', 'could not find tab')
 
         del zone_id
         del key
         del member_ids
         del member_names
+        del is_group
+        del tab
         del datagram
 
     def forwardZoneDatagram(self, datagram):

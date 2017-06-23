@@ -8,8 +8,8 @@ from src.zones.ZoneBase import ZoneBase
 
 class ZoneAI(ZoneBase):
 
-    def __init__(self, client, zone_id, members):
-        ZoneBase.__init__(self, client, zone_id, members)
+    def __init__(self, client, zone_id, members, is_group):
+        ZoneBase.__init__(self, client, zone_id, members, is_group)
         self.__id2key = {ai.getId(): None for ai in members}
 
         self.COMMAND_MAP.update({
@@ -26,42 +26,62 @@ class ZoneAI(ZoneBase):
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
 
+    def getMemberById(self, id_):
+        for ai in self.getMembers():
+            if ai.getId() == id_:
+                return ai
+        return None
+
     def getWorkingKey(self, id_):
         return self.__id2key.get(id_)
 
-    def emitDatagram(self, datagram):
-        for ai in self.getMembers():
-            ai.sendDatagram(datagram)
-
-        del datagram
-
     def emitMessage(self, command, data=None):
         for ai in self.getMembers():
-            datagram = self.buildZoneDatagram(command, ai.getId(), data)
-            ai.sendDatagram(datagram)
+            datagram = Datagram()
+            datagram.setCommand(command)
+            datagram.setSender(self.getClient().getId())
+            datagram.setRecipient(ai.getId())
+            datagram.setData(data)
+            self.sendDatagram(datagram)
+            del datagram
 
         del command
         del data
 
-    def sendHelo(self):
-        data = [
-            self.getId(),
-            self.getKey(),
-            [ai.getId() for ai in self.getMembers()],
-            [ai.getName() for ai in self.getMembers()],
-        ]
-        self.emitMessage(constants.CMD_HELO, data)
-        self.notify.debug('sent helo'.format(self.getId()))
+    def _send(self):
+        try:
+            datagram = self.getDatagramFromOutbox()
+            dg = self.encrypt(datagram)
+            ai = self.getMemberById(datagram.getRecipient())
 
-        del data
+            if ai:
+                ai.sendDatagram(dg) # send through client
+            else:
+                return False # unsuccessful
+
+            del datagram
+            del dg
+            del ai
+
+            return True # successful
+        except queue.Empty:
+            return True # successful
+        except Exception as e:
+            self.notify.error('ZoneError', str(e))
+            return False # unsuccessful
+
+    def sendHelo(self):
+        self.notify.debug('sending helo'.format(self.getId()))
+        self.emitMessage(constants.CMD_HELO,
+                         [self.getId(),
+                          self.getKey(),
+                          [ai.getId() for ai in self.getMembers()],
+                          [ai.getName() for ai in self.getMembers()],
+                          self.isGroup])
 
     def sendRedy(self):
+        self.notify.debug('sending redy'.format(self.getId()))
         self.emitMessage(constants.CMD_REDY, self.__id2key)
-        self.notify.debug('sent redy'.format(self.getId()))
-
-        self.__id2key.clear()
-        del self.__id2key
-        self.__id2key = None
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()

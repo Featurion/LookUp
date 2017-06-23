@@ -24,6 +24,7 @@ class ClientBase(Node):
 
         self.COMMAND_MAP.update({
             constants.CMD_RESP: self.setResp,
+            constants.CMD_ZONE_MSG: self.forwardZoneDatagram,
         })
 
     def start(self):
@@ -203,8 +204,6 @@ class ClientBase(Node):
             return True # successful
         except InterruptedError:
             self.notify.error('ConnectionError', 'disconnected')
-        except ValueError as e:
-            self.notify.error('NetworkError', 'received invalid datagram')
         except Exception as e:
             self.notify.error('NetworkError', str(e))
 
@@ -280,4 +279,8 @@ class ClientBase(Node):
         self.sendDatagram(datagram)
 
         del data
+        del datagram
+
+    def forwardZoneDatagram(self, datagram): # overwrite in subclass
+        """Send datagram to the proper zone"""
         del datagram
