@@ -83,7 +83,8 @@ class Console(threading.Thread):
                     exp = ''
                     for length in code:
                         exp = exp + length
-                    exec(exp)
+                    d = dict(locals(), **globals())
+                    exec(exp, d, d)
                 except Exception as e:
                     print(str(e))
             else:
