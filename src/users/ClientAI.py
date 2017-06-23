@@ -19,7 +19,6 @@ class ClientAI(ClientBase):
             constants.CMD_REQ_CHALLENGE_VERIFY: self.doChallengeVerification,
             constants.CMD_HELO: self.doHelo,
             constants.CMD_REDY: self.forwardZoneDatagram,
-            constants.CMD_ZONE_MSG: self.forwardZoneDatagram,
         })
 
     def stop(self):
@@ -137,7 +136,7 @@ class ClientAI(ClientBase):
 
     def doHelo(self, datagram):
         member_names = datagram.getData()
-        is_group = member_names == [self.getName()]
+        is_group = bool(member_names == [self.getName()])
 
         ai = self.server.zm.addZone(self, member_names, is_group)
         if ai is None:
@@ -152,7 +151,7 @@ class ClientAI(ClientBase):
         del datagram
 
     def forwardZoneDatagram(self, datagram):
-        if datagram.getRecipient() in self.zm.getZoneIds():
+        if datagram.getRecipient() in self.server.zm.getZoneIds():
             ai = self.server.zm.getZoneById(datagram.getRecipient())
             ai.receiveDatagram(datagram)
             del ai

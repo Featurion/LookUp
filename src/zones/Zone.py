@@ -1,4 +1,5 @@
 import base64
+import queue
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -7,14 +8,14 @@ from src.zones.ZoneBase import ZoneBase
 
 class Zone(ZoneBase):
 
-    def __init__(self, tab, zone_id, key, member_ids):
-        ZoneBase.__init__(self, tab.getClient(), zone_id, member_ids)
+    def __init__(self, tab, zone_id, key, member_ids, is_group):
+        ZoneBase.__init__(self, tab.getClient(), zone_id, member_ids, is_group)
         self.tab = tab
         self.id2key = {id_: None for id_ in member_ids}
         self.__alt_key = key
 
         self.COMMAND_MAP.update({
-            constants.CMD_REDY, self.zoneRedy,
+            constants.CMD_REDY: self.doRedy,
         })
 
     def cleanup(self):
@@ -33,17 +34,44 @@ class Zone(ZoneBase):
         del id_
         return self.__alt_key
 
-    def sendRedy(self):
-        datagram = self.buildZoneDatagram(constants.CMD_REDY,
-                                          self.getId(),
-                                          self.getKey())
+    def sendMessage(self, command, data=None):
+        datagram = Datagram()
+        datagram.setCommand(command)
+        datagram.setSender(self.getClient().getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(data)
         self.sendDatagram(datagram)
-        self.setSecure(True)
-        self.notify.debug('sent redy'.format(self.getId()))
 
+        del command
+        del data
         del datagram
 
-    def zoneRedy(self, datagram):
+    def _send(self):
+        try:
+            datagram = self.getDatagramFromOutbox()
+            dg = self.encrypt(datagram)
+            self.getClient().sendDatagram(dg) # send through client
+
+            if datagram.getCommand() == constants.CMD_REDY:
+                self.setSecure(True)
+
+            del datagram
+            del dg
+
+            return True # successful
+        except queue.Empty:
+            return True # successful
+        except Exception as e:
+            self.notify.error('ZoneError', str(e))
+            return False # unsuccessful
+
+    def sendRedy(self):
+        self.notify.debug('sending redy'.format(self.getId()))
+        self.sendMessage(constants.CMD_REDY, self.getKey())
+
+    def doRedy(self, datagram):
+        self.notify.debug('redy')
+
         self.id2key = datagram.getData()
         self.tab.zone_redy_signal.emit()
         del datagram

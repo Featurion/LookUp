@@ -37,20 +37,20 @@ class ZoneManager(Notifier):
         del tab
         del members
 
-    def getZonesIds(self):
+    def getZones(self):
+        return self.__zones
+
+    def getZoneIds(self):
         return [z.getId() for z in self.__zones]
 
-    def getZoneById(self, id_, search=False):
+    def getZoneById(self, id_):
         for zone in self.getZones():
             if zone.getId() == id_:
                 return zone
 
-        if not search:
-            self.notify.warning('zone {0} does not exist'.format(id_))
+        self.notify.warning('zone {0} does not exist'.format(id_))
 
         del id_
-        del search
-        del zone
 
     def getTabByMembers(self, members: tuple):
         return self.__members2tab.get(members)

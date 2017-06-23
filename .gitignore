@@ -1,6 +1,9 @@
 # LookUp logs
 logs/
 
+# Config files
+*.yml
+
 # TLS
 *.key
 *.csr

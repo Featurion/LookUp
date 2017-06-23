@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
-from src.base import utils
-from src.base.constants import APP_TITLE, BLANK_TAB_TITLE, BLANK_GROUP_TAB_TITLE
+from src.base import constants, utils
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
@@ -14,7 +13,7 @@ from src.zones.Zone import Zone
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, str, list, list)
+    new_client_signal = pyqtSignal(str, str, list, list, bool)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -121,7 +120,7 @@ class ChatWindow(QMainWindow):
 
     def start(self):
         name = self.interface.getClient().getName()
-        self.setWindowTitle(APP_TITLE + ': ' + name)
+        self.setWindowTitle(constants.APP_TITLE + ': ' + name)
         self.show()
 
     def stop(self):
@@ -139,7 +138,7 @@ class ChatWindow(QMainWindow):
             tab.widget_stack.widget(1).setConnectingToName(title)
             tab.widget_stack.setCurrentIndex(1)
         else:
-            self.chat_tabs.addTab(tab, BLANK_TAB_TITLE)
+            self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -154,7 +153,7 @@ class ChatWindow(QMainWindow):
             tab.widget_stack.widget(1).setConnectingToName(title)
             tab.widget_stack.setCurrentIndex(1)
         else:
-            self.chat_tabs.addTab(tab, BLANK_GROUP_TAB_TITLE)
+            self.chat_tabs.addTab(tab, constants.BLANK_GROUP_TAB_TITLE)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -176,27 +175,22 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, str, list, list)
-    def newClient(self, zone_id, key, member_ids, member_names, group):
-        zone_id, key = int(zone_id), int(key)
-
-        if group:
-            accepted = True
-        else:
-            if not self.isActiveWindow():
-                utils.showDesktopNotification(self.tray_icon,
-                                              'Chat request from {0}'.format(member_names[0]),
-                                              '')
+    @pyqtSlot(str, str, list, list, bool)
+    def newClient(self, zone_id, key, member_ids, member_names, is_group):
+        if not is_group and not self.isActiveWindow():
+            utils.showDesktopNotification(self.tray_icon,
+                                          'Chat request from {0}'.format(member_names[0]),
+                                          '')
 
             member_names.remove(self.interface.getClient().getName())
-            accepted = ConnectionDialog.getAnswer(self, member_names)
 
-        if accepted:
-            if group:
-                tab = self.openGroupTab(utils.oxfordComma(member_names))
-            else:
-                tab = self.openTab(utils.oxfordComma(member_names))
+        if is_group:
+            tab = self.openGroupTab(utils.oxfordComma(member_names))
+        elif ConnectionDialog.getAnswer(self, member_names):
+            tab = self.openTab(utils.oxfordComma(member_names))
+        else:
+            return
 
-            zone = Zone(tab, zone_id, key, member_ids)
-            self.interface.getClient().enter(tab, zone)
-            zone.sendRedy()
+        zone = Zone(tab, zone_id, int(key), member_ids, is_group)
+        self.interface.getClient().enter(tab, zone)
+        zone.sendRedy()
