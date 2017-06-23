@@ -35,6 +35,7 @@ class ChatTab(QWidget):
         self.widget_stack.addWidget(self.input_widget)
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(self.chat_widget)
+        self.widget_stack.addWidget(self.chat_widget.input_widget)
 
         if self.is_group:
             self.widget_stack.setCurrentIndex(1)

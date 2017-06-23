@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QSplitter
 
 from src.base import constants, utils
-
+from src.gui.MultipleInputWidget import MultipleInputWidget
 
 class ChatWidget(QWidget):
 
@@ -81,6 +81,21 @@ class ChatWidget(QWidget):
         hbox.addWidget(splitter)
         self.setLayout(hbox)
 
+        self.input_widget = MultipleInputWidget(self,
+                                                'images/new_chat.png', 150,
+                                                'Usernames:', 'Add',
+                                                self.addUser, self.addInput)
+
+        self.add_user_button = QPushButton('Add', self)
+        self.add_user_button.setGeometry(584, 8, 31, 23)
+        self.add_user_button.clicked.connect(self.enterAddScreen)
+        self.add_user_button.show()
+
+        self.cancel_button = QPushButton('Cancel', self.input_widget)
+        self.cancel_button.setGeometry(570, 8, 45, 23)
+        self.cancel_button.clicked.connect(self.exitAddScreen)
+        self.cancel_button.show()
+
         del font_metrics
         del hbox
         del input_wrapper
@@ -99,12 +114,45 @@ class ChatWidget(QWidget):
         self.input = None
         del self.send_button
         self.send_button = None
+        self.input_widget = None
+        del self.add_user_button
+        self.add_user_button = None
 
     def getClient(self):
         return self.__tab.getClient()
 
     def getTab(self):
         return self.__tab
+
+    def enterAddScreen(self):
+        self.getTab().widget_stack.setCurrentIndex(3)
+
+    def exitAddScreen(self):
+        self.getTab().widget_stack.setCurrentIndex(2)
+
+    def addInput(self):
+        _iw = MultipleInputWidget(*self.input_widget._data,
+                                  self.input_widget.getInputsText(),
+                                  len(self.input_widget.inputs) + 1)
+        self.getTab().widget_stack.removeWidget(self.input_widget)
+        self.input_widget = _iw
+        self.getTab().widget_stack.insertWidget(4, self.input_widget)
+        self.getTab().widget_stack.setCurrentIndex(4)
+
+    def addUser(self, name):
+        name = str(name.text()).lower()
+
+        # Validate the given name
+        name_status = utils.isNameInvalid(name)
+        if name_status == constants.VALID_NAME:
+            # TODO Zach: Add to group chat
+            pass
+        elif name_status == constants.INVALID_NAME_CONTENT:
+            self.interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_CONTENT)
+        elif name_status == constants.INVALID_NAME_LENGTH:
+            self.interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_LENGTH)
+        elif name_status == constants.INVALID_EMPTY_NAME:
+            self.interface.error_signal.emit(constants.TITLE_EMPTY_NAME, constants.EMPTY_NAME)
 
     def send(self):
         if self.disabled:
