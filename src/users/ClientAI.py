@@ -137,7 +137,7 @@ class ClientAI(ClientBase):
 
     def doHelo(self, datagram):
         member_names = datagram.getData()
-        is_group = member_names == [self.getName()]
+        is_group = bool(member_names == [self.getName()])
 
         ai = self.server.zm.addZone(self, member_names, is_group)
         if ai is None:

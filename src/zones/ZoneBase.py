@@ -1,6 +1,7 @@
 import base64
 import queue
 import threading
+import uuid
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -15,7 +16,7 @@ class ZoneBase(Node):
         self.__client = client
         self.__members = members
 
-        self.setId(zone_id)
+        self.setId(uuid.UUID(hex=zone_id))
         self.start() # zones start on creation
 
     def cleanup(self):

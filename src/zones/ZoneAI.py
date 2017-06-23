@@ -1,4 +1,5 @@
 import base64
+import queue
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -16,6 +17,7 @@ class ZoneAI(ZoneBase):
         })
 
     def cleanup(self):
+        ZoneBase.cleanup(self)
         if hasattr(self, '__id2key') and self.__id2key:
             self.__id2key.clear()
             del self.__id2key

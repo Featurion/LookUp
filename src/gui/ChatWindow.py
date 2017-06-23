@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
-from src.base import utils
-from src.base.constants import APP_TITLE, BLANK_TAB_TITLE, BLANK_GROUP_TAB_TITLE
+from src.base import constants, utils
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
@@ -121,7 +120,7 @@ class ChatWindow(QMainWindow):
 
     def start(self):
         name = self.interface.getClient().getName()
-        self.setWindowTitle(APP_TITLE + ': ' + name)
+        self.setWindowTitle(constants.APP_TITLE + ': ' + name)
         self.show()
 
     def stop(self):
@@ -139,7 +138,7 @@ class ChatWindow(QMainWindow):
             tab.widget_stack.widget(1).setConnectingToName(title)
             tab.widget_stack.setCurrentIndex(1)
         else:
-            self.chat_tabs.addTab(tab, BLANK_TAB_TITLE)
+            self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -154,7 +153,7 @@ class ChatWindow(QMainWindow):
             tab.widget_stack.widget(1).setConnectingToName(title)
             tab.widget_stack.setCurrentIndex(1)
         else:
-            self.chat_tabs.addTab(tab, BLANK_GROUP_TAB_TITLE)
+            self.chat_tabs.addTab(tab, constants.BLANK_GROUP_TAB_TITLE)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()

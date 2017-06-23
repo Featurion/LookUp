@@ -128,21 +128,23 @@ class Node(KeyHandler):
         self.__secure = None
         self.__threads = None
         if self.__inbox:
-            with q.mutex:
+            with self.__inbox.mutex:
                 self.__inbox.queue.clear()
             del self.__inbox
             self.__inbox = None
         if self.__outbox:
-            with q.mutex:
+            with self.__outbox.mutex:
                 self.__outbox.queue.clear()
             del self.__outbox
             self.__outbox = None
         if self.__sender:
-            self.__sender.join()
+            if self.__sender.isAlive():
+                self.__sender.join()
             del self.__sender
             self.__sender = None
         if self.__receiver:
-            self.__receiver.join()
+            if self.__receiver.isAlive():
+                self.__receiver.join()
             del self.__receiver
             self.__receiver = None
 
