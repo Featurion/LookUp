@@ -65,7 +65,7 @@ class ChatWindow(QMainWindow):
         exit_action = QAction(exit_icon, '&Exit', self)
 
         new_chat_action.triggered.connect(self.openTab)
-        new_group_chat_action.triggered.connect(self.openGroupTab)
+        new_group_chat_action.triggered.connect(self.createGroupTab)
         auth_chat_action.triggered.connect(self.__showAuthDialog)
         exit_action.triggered.connect(self.stop)
 
@@ -147,6 +147,10 @@ class ChatWindow(QMainWindow):
         tab.setFocus()
 
         return tab
+
+    def createGroupTab(self):
+        tab = self.openGroupTab(None)
+        tab.connect()
 
     def openGroupTab(self, title=None):
         tab = ChatTab(self.interface, True)

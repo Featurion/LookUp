@@ -66,7 +66,7 @@ class Zone(ZoneBase):
             return False # unsuccessful
 
     def sendRedy(self):
-        self.notify.debug('sending redy'.format(self.getId()))
+        self.notify.debug('sending redy {0}'.format(self.getId()))
         self.sendMessage(constants.CMD_REDY, self.getKey())
 
     def doRedy(self, datagram):
@@ -75,3 +75,9 @@ class Zone(ZoneBase):
         self.id2key = datagram.getData()
         self.tab.zone_redy_signal.emit()
         del datagram
+
+    def addUser(self, name):
+        if self.isGroup:
+            self.sendMessage(constants.CMD_ZONE_ADD, name)
+        else:
+            self.notify.debug('tried adding use to private zone')

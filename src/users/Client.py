@@ -263,7 +263,7 @@ class Client(ClientBase):
         datagram.setRecipient(self.getId())
         datagram.setData([member_names, is_group])
 
-        self.notify.debug('requesting new zone')
+        self.notify.debug('requesting new zone: ' + ",".join(member_names))
         self.sendDatagram(datagram)
 
         self.__pending_tabs[member_names] = tab

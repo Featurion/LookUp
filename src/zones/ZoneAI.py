@@ -14,6 +14,7 @@ class ZoneAI(ZoneBase):
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.clientRedy,
+            constants.CMD_ZONE_ADD: self.addUser,
         })
 
     def cleanup(self):
@@ -59,8 +60,8 @@ class ZoneAI(ZoneBase):
         try:
             datagram = self.getDatagramFromOutbox()
             dg = self.encrypt(datagram)
-            ai = self.getMemberById(datagram.getRecipient())
 
+            ai = self.getMemberById(datagram.getRecipient())
             if ai:
                 ai.sendDatagram(dg) # send through client
             else:
@@ -77,11 +78,22 @@ class ZoneAI(ZoneBase):
             self.notify.error('ZoneError', str(e))
             return False # unsuccessful
 
-    def sendHelo(self):
+    def __sendHelo(self, id_):
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_HELO)
+        datagram.setSender(self.getClient().getId())
+        datagram.setRecipient(id_)
+        datagram.setData(self.getZoneData())
+        self.sendDatagram(datagram)
+
+        del id_
+        del datagram
+
+    def emitHelo(self):
         self.notify.debug('sending helo'.format(self.getId()))
         self.emitMessage(constants.CMD_HELO, self.getZoneData())
 
-    def sendRedy(self):
+    def emitRedy(self):
         self.notify.debug('sending redy'.format(self.getId()))
         self.emitMessage(constants.CMD_REDY, self.__id2key)
 
@@ -96,8 +108,26 @@ class ZoneAI(ZoneBase):
 
         if all(self.__id2key.values()):
             self.setSecure(True)
-            self.sendRedy()
+            self.emitRedy()
 
         del id_
         del key
+        del datagram
+
+    def addUser(self, datagram):
+        name = datagram.getData()
+        ai = self.getClient().server.cm.getClientByName(name)
+
+        self.addMember(ai)
+
+        if ai is None:
+            self.getClient().sendError(constants.TITLE_NAME_DOESNT_EXIST,
+                                       constants.NAME_DOESNT_EXIST)
+            return
+        else:
+            self.notify.debug('adding user {0}'.format(name))
+            self.__sendHelo(ai.getId())
+
+        del name
+        del ai
         del datagram
