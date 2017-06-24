@@ -1,8 +1,7 @@
 from threading import Thread
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QStackedWidget, QHBoxLayout
-from PyQt5.QtWidgets import QMessageBox, QPushButton
+from PyQt5.QtWidgets import QWidget, QStackedWidget, QHBoxLayout, QMessageBox
 
 from src.base import constants, utils
 from src.gui.MultipleInputWidget import MultipleInputWidget
@@ -67,43 +66,35 @@ class ChatTab(QWidget):
     def setZone(self, zone):
         if self.getZone() is None:
             self.__zone = zone
+        else:
+            self.notify.error('GUIError', 'attempted to change zone')
 
         del zone
 
     def setupWidgets(self):
-        if not constants.WANT_BLANK_GROUPS:
-            connector = self.connect
-        else:
-            connector = self.addUsers
-
-        self.multi_input = MultipleInputWidget(self,
-                                               'images/new_chat.png', 150,
-                                               'Usernames:', 'LookUp',
-                                               constants.MAX_NAME_LENGTH,
-                                               connector,
-                                               self.addInput)
-
         self.input_widget = InputWidget(self,
                                         'images/new_chat.png', 150,
                                         'Username:', 'LookUp',
                                         constants.MAX_NAME_LENGTH,
                                         self.connect)
-
+        self.multi_input = MultipleInputWidget(self,
+                                               'images/new_chat.png', 150,
+                                               'Usernames:', 'LookUp',
+                                               constants.MAX_NAME_LENGTH,
+                                               self.connect,
+                                               self.addInput)
         self.chat_widget = ChatWidget(self)
-
-        self.cancel_button = QPushButton('Cancel', self.multi_input)
-        self.cancel_button.setGeometry(570, 8, 45, 23)
-        self.cancel_button.clicked.connect(self.exitAddScreen)
-        self.cancel_button.show()
 
         self.widget_stack = QStackedWidget(self)
         self.widget_stack.addWidget(self.multi_input)
         self.widget_stack.addWidget(self.input_widget)
         self.widget_stack.addWidget(ConnectingWidget(self))
         self.widget_stack.addWidget(self.chat_widget)
+        self.widget_stack.addWidget(self.chat_widget.input_widget)
 
         if self.is_group and constants.WANT_BLANK_GROUPS:
             self.widget_stack.setCurrentIndex(2) # connecting
+            self.connect()
         elif self.is_group:
             self.widget_stack.setCurrentIndex(0) # multi input
         else:
@@ -120,24 +111,28 @@ class ChatTab(QWidget):
 
         del _iw
 
-    def addUsers(self, *names):
-        for name in set(names):
-            msg = self.checkName(name)
-            if msg:
-                self.interface.error_signal.emit(self, *msg)
-                return
-            else:
-                self.getZone().addUser(name)
-
-        self.widget_stack.setCurrentIndex(2) # connecting
-
-        del names
-
     def connect(self, *names):
         for name in set(names):
-            msg = self.checkName(name)
+            status = utils.isNameInvalid(name)
+            msg = None
+
+            if name == self.interface.getClient().getName():
+                msg = (constants.TITLE_SELF_CONNECT,
+                       constants.SELF_CONNECT)
+            elif status == constants.INVALID_NAME_CONTENT:
+                msg = (constants.TITLE_INVALID_NAME,
+                       constants.NAME_CONTENT)
+            elif status == constants.INVALID_NAME_LENGTH:
+                msg = (constants.TITLE_INVALID_NAME,
+                       constants.NAME_LENGTH)
+            elif status == constants.INVALID_EMPTY_NAME:
+                msg = (constants.TITLE_EMPTY_NAME,
+                       constants.EMPTY_NAME)
+            else:
+                pass
+
             if msg:
-                self.interface.error_signal.emit(self, *msg)
+                QMessageBox.warning(self, *msg)
                 return
 
         titled_names = utils.oxfordComma(names)
@@ -145,35 +140,14 @@ class ChatTab(QWidget):
         window.doConnecting(self, titled_names)
         window.setTabTitle(self, titled_names)
 
-        self.getClient().initiateHelo(self, names, self.is_group)
+
+        _t = Thread(target=self.interface.getClient().initiateHelo,
+                    args=(self, names, self.is_group),
+                    daemon=True).start()
 
         del names
         del titled_names
-
-    def checkName(self, name):
-        status = utils.isNameInvalid(name)
-        msg = None
-
-        if name == self.interface.getClient().getName():
-            msg = (constants.TITLE_SELF_CONNECT,
-                   constants.SELF_CONNECT)
-        elif status == constants.INVALID_NAME_CONTENT:
-            msg = (constants.TITLE_INVALID_NAME,
-                   constants.NAME_CONTENT)
-        elif status == constants.INVALID_NAME_LENGTH:
-            msg = (constants.TITLE_INVALID_NAME,
-                   constants.NAME_LENGTH)
-        elif status == constants.INVALID_EMPTY_NAME:
-            msg = (constants.TITLE_EMPTY_NAME,
-                   constants.EMPTY_NAME)
-
-        return msg
-
-    def enterAddScreen(self):
-        self.widget_stack.setCurrentIndex(0)
-
-    def exitAddScreen(self):
-        self.widget_stack.setCurrentIndex(3)
+        del _t
 
     @pyqtSlot(str, float)
     def newMessage(self, msg, ts):

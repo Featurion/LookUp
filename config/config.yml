@@ -4,7 +4,7 @@ version: 'PROTOTYPE-DEV'
 
 # Logging
 log-path: /logs
-log-format: 'inbracket'
+log-format: 'none'
 want-log-formatting: true
 
 # Connection settings

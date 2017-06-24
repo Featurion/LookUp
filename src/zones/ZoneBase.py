@@ -42,21 +42,12 @@ class ZoneBase(Node):
         """Getter for zone members"""
         return self.__members
 
-    def addMember(self, ai):
-        """Add a member"""
-        if self.isGroup:
-            self.__members.append(ai)
-
     @property
     def isGroup(self):
         return self.__group
 
     def encrypt(self, datagram):
         key = self.getWorkingKey(datagram.getRecipient())
-
-        if not key and datagram.getCommand() == constants.CMD_REDY:
-            return datagram
-
         if key and self.isSecure:
             self.generateSecret(key)
 
@@ -70,8 +61,8 @@ class ZoneBase(Node):
             datagram.setData(data)
 
             del data
-
         del key
+
         return datagram
 
     def decrypt(self, datagram):
