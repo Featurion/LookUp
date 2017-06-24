@@ -46,6 +46,14 @@ class Zone(ZoneBase):
         del data
         del datagram
 
+    def sendTypingMessage(self, status):
+        # TODO Messaging
+        pass
+
+    def sendChatMessage(self, message):
+        # TODO Messaging
+        pass
+
     def _send(self):
         try:
             datagram = self.getDatagramFromOutbox()

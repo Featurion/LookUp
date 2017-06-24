@@ -70,6 +70,9 @@ USER_TEMP = 2
 USER_LITE = 3
 USER_PAID = 4
 
+SENDER = 1
+RECEIVER = 2
+
 VALID_NAME = 0
 INVALID_EMPTY_NAME = 1
 INVALID_NAME_CONTENT = 2
@@ -98,3 +101,8 @@ URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\
 MSG_TEMPLATE = "<font color='{0}'>{1} <strong>{2}:</strong></font> {3}"
 BLANK_TAB_TITLE = 'New Chat'
 BLANK_GROUP_TAB_TITLE = 'New Group Chat'
+
+TYPING_TIMEOUT = 1500
+TYPING_START = 0
+TYPING_STOP_WITHOUT_TEXT = 1
+TYPING_STOP_WITH_TEXT = 2

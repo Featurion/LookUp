@@ -12,7 +12,7 @@ from src.gui.ChatWidget import ChatWidget
 
 class ChatTab(QWidget):
 
-    new_message_signal = pyqtSignal(str, float)
+    new_message_signal = pyqtSignal(str, float, int)
     zone_redy_signal = pyqtSignal()
 
     def __init__(self, interface, is_group: bool):
@@ -148,17 +148,12 @@ class ChatTab(QWidget):
         del names
         del tab_name
 
-    @pyqtSlot(str, float)
-    def newMessage(self, msg, ts):
-        self.chat_widget.log.addMessage(msg, ts)
-
-        scrollbar = self.chat_widget.chat_log.verticalScrollBar()
-        if scrollbar.value() == scrollbar.maximum():
-            scrollbar.setValue(scrollbar.maximum())
+    @pyqtSlot(str, float, int)
+    def newMessage(self, msg, ts, src):
+        self.chat_widget.appendMessage(msg, ts, src)
 
         del msg
         del ts
-        del scrollbar
 
     @pyqtSlot()
     def zoneRedy(self):
