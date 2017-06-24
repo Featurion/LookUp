@@ -13,7 +13,7 @@ from src.gui.ChatWidget import ChatWidget
 class ChatTab(QWidget):
 
     new_message_signal = pyqtSignal(str, float)
-    zone_redy_signal = pyqtSignal()
+    zone_redy_signal = pyqtSignal(list)
 
     def __init__(self, interface, is_group: bool):
         QWidget.__init__(self)
@@ -160,6 +160,15 @@ class ChatTab(QWidget):
         del ts
         del scrollbar
 
-    @pyqtSlot()
-    def zoneRedy(self):
+    @pyqtSlot(list)
+    def zoneRedy(self, member_names):
+        member_names.remove(self.getClient().getName())
+        if member_names:
+            tab_name = utils.oxfordComma(member_names)
+        elif self.is_group:
+            tab_name = constants.BLANK_GROUP_TAB_TITLE
+        else:
+            return # should not happen
+
+        self.interface.getWindow().setTabTitle(self, tab_name)
         self.widget_stack.setCurrentIndex(3)

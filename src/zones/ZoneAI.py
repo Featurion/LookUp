@@ -24,21 +24,24 @@ class ZoneAI(ZoneBase):
             del self.__id2key
             self.__id2key = None
 
-    def getZoneData(self):
-        return [self.getId(),
-                self.getKey(),
-                [ai.getId() for ai in self.getMembers()],
-                [ai.getName() for ai in self.getMembers()],
-                self.isGroup]
-
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
+
+    def getMemberNames(self):
+        return [ai.getName() for ai in self.getMembers()]
 
     def getMemberById(self, id_):
         for ai in self.getMembers():
             if ai.getId() == id_:
                 return ai
         return None
+
+    def getZoneData(self):
+        return [self.getId(),
+                self.getKey(),
+                self.getMemberIds(),
+                self.getMemberNames(),
+                self.isGroup]
 
     def getWorkingKey(self, id_):
         return self.__id2key.get(id_)
@@ -95,7 +98,8 @@ class ZoneAI(ZoneBase):
 
     def emitRedy(self):
         self.notify.debug('sending redy'.format(self.getId()))
-        self.emitMessage(constants.CMD_REDY, self.__id2key)
+        self.emitMessage(constants.CMD_REDY, [self.getMemberNames(),
+                                              self.__id2key])
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()

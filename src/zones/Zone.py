@@ -72,8 +72,9 @@ class Zone(ZoneBase):
     def doRedy(self, datagram):
         self.notify.debug('redy')
 
-        self.id2key = datagram.getData()
-        self.tab.zone_redy_signal.emit()
+        member_names, key_map = datagram.getData()
+        self.id2key = key_map
+        self.tab.zone_redy_signal.emit(member_names)
         del datagram
 
     def addUser(self, name):
