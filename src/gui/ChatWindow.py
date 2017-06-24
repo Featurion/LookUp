@@ -188,11 +188,11 @@ class ChatWindow(QMainWindow):
                                           'Chat request from {0}'.format(member_names[0]),
                                           '')
 
+        tab_name = utils.oxfordComma(member_names)
         if is_group:
-            tab = self.openGroupTab(utils.oxfordComma(member_names),
-                                    initiate=False)
+            tab = self.openGroupTab(tab_name, initiate=False)
         elif ConnectionDialog.getAnswer(self, member_names):
-            tab = self.openTab(utils.oxfordComma(member_names))
+            tab = self.openTab(tab_name)
         else:
             return
 
