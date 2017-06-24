@@ -13,7 +13,7 @@ from src.zones.Zone import Zone
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, str, list, list, bool)
+    new_client_signal = pyqtSignal(str, str, str, list, list, bool)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -181,22 +181,22 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, str, list, list, bool)
-    def newClient(self, zone_id, key, member_ids, member_names, is_group):
+    @pyqtSlot(str, str, str, list, list, bool)
+    def newClient(self, zone_name, zone_id, key, member_ids, member_names, is_group):
         if not is_group and not self.isActiveWindow():
             utils.showDesktopNotification(self.tray_icon,
                                           'Chat request from {0}'.format(member_names[0]),
                                           '')
 
         if is_group:
-            tab = self.openGroupTab(utils.oxfordComma(member_names),
+            tab = self.openGroupTab(zone_name,
                                     initiate=False)
         elif ConnectionDialog.getAnswer(self, member_names):
-            tab = self.openTab(utils.oxfordComma(member_names))
+            tab = self.openTab(member_names[0])
         else:
             return
 
         if tab and not tab.getZone():
-            zone = Zone(tab, zone_id, int(key), member_ids, is_group)
+            zone = Zone(tab, zone_name, zone_id, int(key), member_ids, is_group)
             self.interface.getClient().enter(tab, zone)
             zone.sendRedy()

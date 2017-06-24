@@ -135,8 +135,8 @@ class ClientAI(ClientBase):
         del datagram
 
     def doHelo(self, datagram):
-        member_names, is_group = datagram.getData()
-        ai = self.server.zm.addZone(self, member_names, is_group)
+        member_names, zone_name, is_group = datagram.getData()
+        ai = self.server.zm.addZone(self, member_names, zone_name, is_group)
 
         if ai is None:
             self.sendError(constants.TITLE_NAME_DOESNT_EXIST,
@@ -146,6 +146,7 @@ class ClientAI(ClientBase):
             ai.emitHelo()
 
         del member_names
+        del zone_name
         del is_group
         del datagram
 

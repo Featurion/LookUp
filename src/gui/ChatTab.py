@@ -133,7 +133,7 @@ class ChatTab(QWidget):
                 return
 
         window = self.interface.getWindow()
-        if names:
+        if names and not self.is_group:
             tab_name = utils.oxfordComma(names)
             window.doConnecting(self, tab_name)
         elif self.is_group:
@@ -143,7 +143,7 @@ class ChatTab(QWidget):
             return # should not happen
         window.setTabTitle(self, tab_name)
 
-        self.interface.getClient().initiateHelo(self, names, self.is_group)
+        self.interface.getClient().initiateHelo(self, names, tab_name, self.is_group)
 
         del names
         del tab_name

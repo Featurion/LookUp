@@ -8,8 +8,8 @@ from src.zones.ZoneBase import ZoneBase
 
 class Zone(ZoneBase):
 
-    def __init__(self, tab, zone_id, key, member_ids, is_group):
-        ZoneBase.__init__(self, tab.getClient(), zone_id, member_ids, is_group)
+    def __init__(self, tab, zone_name, zone_id, key, member_ids, is_group):
+        ZoneBase.__init__(self, tab.getClient(), zone_name, zone_id, member_ids, is_group)
         self.tab = tab
         self.id2key = {id_: None for id_ in member_ids}
         self.__alt_key = key

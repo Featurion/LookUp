@@ -8,8 +8,8 @@ from src.zones.ZoneBase import ZoneBase
 
 class ZoneAI(ZoneBase):
 
-    def __init__(self, client, zone_id, members, is_group):
-        ZoneBase.__init__(self, client, zone_id, members, is_group)
+    def __init__(self, client, zone_name, zone_id, members, is_group):
+        ZoneBase.__init__(self, client, zone_name, zone_id, members, is_group)
         self.__id2key = {ai.getId(): None for ai in members}
 
         self.COMMAND_MAP.update({
@@ -26,6 +26,7 @@ class ZoneAI(ZoneBase):
 
     def getZoneData(self):
         return [self.getId(),
+                self.getName(),
                 self.getKey(),
                 [ai.getId() for ai in self.getMembers()],
                 [ai.getName() for ai in self.getMembers()],

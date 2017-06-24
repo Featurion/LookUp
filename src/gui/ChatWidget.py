@@ -146,11 +146,11 @@ class ChatWidget(QWidget):
             if name_status == constants.VALID_NAME:
                 self.getTab().getZone().addUser(name)
             elif name_status == constants.INVALID_NAME_CONTENT:
-                self.interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_CONTENT)
+                self.getTab().interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_CONTENT)
             elif name_status == constants.INVALID_NAME_LENGTH:
-                self.interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_LENGTH)
+                self.getTab().interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_LENGTH)
             elif name_status == constants.INVALID_EMPTY_NAME:
-                self.interface.error_signal.emit(constants.TITLE_EMPTY_NAME, constants.EMPTY_NAME)
+                self.getTab().interface.error_signal.emit(constants.TITLE_EMPTY_NAME, constants.EMPTY_NAME)
 
     def send(self):
         if self.disabled:

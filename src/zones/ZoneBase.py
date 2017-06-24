@@ -11,12 +11,13 @@ from src.base.Node import Node
 
 class ZoneBase(Node):
 
-    def __init__(self, client, zone_id: str, members: list, is_group: bool):
+    def __init__(self, client, zone_name: str, zone_id: str, members: list, is_group: bool):
         Node.__init__(self)
         self.__client = client
         self.__members = members
         self.__group = is_group
 
+        self.setName(zone_name)
         self.setId(uuid.UUID(hex=zone_id))
         self.start() # zones start on creation
 

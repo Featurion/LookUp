@@ -61,7 +61,7 @@ class ZoneManagerAI(UniqueIDManager):
     def getZoneById(self, id_: str):
         return self.id2owner.get(id_)
 
-    def addZone(self, client, member_names, is_group):
+    def addZone(self, client, member_names, zone_name: str, is_group):
         mode = 'group' if is_group else 'private'
 
         if len(member_names) > 2 and not is_group:
@@ -76,7 +76,7 @@ class ZoneManagerAI(UniqueIDManager):
 
         seed = ','.join(sorted(member_names))
         zone_id = self.generateId(mode, seed).bytes.hex()
-        ai = ZoneAI(client, zone_id, member_ais, is_group)
+        ai = ZoneAI(client, zone_name, zone_id, member_ais, is_group)
         self.allocateId(mode, seed, zone_id, ai)
         self.notify.debug('created zone {0}'.format(ai.getId()))
 

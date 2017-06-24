@@ -251,7 +251,7 @@ class Client(ClientBase):
             self.notify.critical('suspiciously challenge failure')
             return False
 
-    def initiateHelo(self, tab, member_names, is_group):
+    def initiateHelo(self, tab, member_names, zone_name, is_group):
         member_names = (*sorted([self.getName(), *member_names]),)
 
         if not is_group:
@@ -261,7 +261,7 @@ class Client(ClientBase):
         datagram.setCommand(constants.CMD_HELO)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
-        datagram.setData([member_names, is_group])
+        datagram.setData([member_names, zone_name, is_group])
 
         self.notify.debug('requesting new zone')
         self.sendDatagram(datagram)
@@ -269,7 +269,7 @@ class Client(ClientBase):
         self.__pending_tabs[member_names] = tab
 
     def doHelo(self, datagram):
-        zone_id, key, member_ids, member_names, is_group = datagram.getData()
+        zone_id, zone_name, key, member_ids, member_names, is_group = datagram.getData()
         tab = self.__pending_tabs.get((*sorted(member_names),))
 
         if self.getName() in member_names:
@@ -279,17 +279,19 @@ class Client(ClientBase):
             return
 
         if tab and not tab.getZone():
-            zone = Zone(tab, zone_id, key, member_ids, is_group)
+            zone = Zone(tab, zone_name, zone_id, key, member_ids, is_group)
             self.enter(tab, zone)
             zone.sendRedy()
         else:
-            self.interface.getWindow().new_client_signal.emit(zone_id,
+            self.interface.getWindow().new_client_signal.emit(zone_name,
+                                                              zone_id,
                                                               str(key),
                                                               member_ids,
                                                               member_names,
                                                               is_group)
 
         del zone_id
+        del zone_name
         del key
         del member_ids
         del member_names
