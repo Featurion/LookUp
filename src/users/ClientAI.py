@@ -143,7 +143,7 @@ class ClientAI(ClientBase):
                            constants.NAME_DOESNT_EXIST)
             return
         else:
-            ai.sendHelo()
+            ai.emitHelo()
 
         del member_names
         del is_group

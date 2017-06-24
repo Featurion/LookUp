@@ -278,7 +278,7 @@ class Client(ClientBase):
             self.notify.warning('received helo from unknown zone')
             return
 
-        if tab:
+        if tab and not tab.getZone():
             zone = Zone(tab, zone_id, key, member_ids, is_group)
             self.enter(tab, zone)
             zone.sendRedy()

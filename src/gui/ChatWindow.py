@@ -148,13 +148,18 @@ class ChatWindow(QMainWindow):
 
         return tab
 
-    def openGroupTab(self, title=None):
+    def openGroupTab(self, title=None, initiate=True):
         tab = ChatTab(self.interface, True)
 
-        if title:
-            self.doConnecting(tab, title)
-        else:
+        if not title and constants.WANT_BLANK_GROUPS:
             self.chat_tabs.addTab(tab, constants.BLANK_GROUP_TAB_TITLE)
+        else:
+            self.chat_tabs.addTab(tab, title)
+            self.setTabTitle(tab, title)
+            self.doConnecting(tab, title)
+
+        if initiate:
+            tab.connect()
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -184,12 +189,14 @@ class ChatWindow(QMainWindow):
                                           '')
 
         if is_group:
-            tab = self.openGroupTab(utils.oxfordComma(member_names))
+            tab = self.openGroupTab(utils.oxfordComma(member_names),
+                                    initiate=False)
         elif ConnectionDialog.getAnswer(self, member_names):
             tab = self.openTab(utils.oxfordComma(member_names))
         else:
             return
 
-        zone = Zone(tab, zone_id, int(key), member_ids, is_group)
-        self.interface.getClient().enter(tab, zone)
-        zone.sendRedy()
+        if tab and not tab.getZone():
+            zone = Zone(tab, zone_id, int(key), member_ids, is_group)
+            self.interface.getClient().enter(tab, zone)
+            zone.sendRedy()

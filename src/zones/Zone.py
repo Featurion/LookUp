@@ -75,3 +75,6 @@ class Zone(ZoneBase):
         self.id2key = datagram.getData()
         self.tab.zone_redy_signal.emit()
         del datagram
+
+    def addUser(self, name):
+        self.sendMessage(constants.CMD_ZONE_ADD, name)

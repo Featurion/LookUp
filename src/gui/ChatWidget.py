@@ -144,8 +144,7 @@ class ChatWidget(QWidget):
             # Validate the given name
             name_status = utils.isNameInvalid(name)
             if name_status == constants.VALID_NAME:
-                # TODO Zach: Add to group chat
-                pass
+                self.getTab().getZone().addUser(name)
             elif name_status == constants.INVALID_NAME_CONTENT:
                 self.interface.error_signal.emit(constants.TITLE_INVALID_NAME, constants.INVALID_NAME_CONTENT)
             elif name_status == constants.INVALID_NAME_LENGTH:

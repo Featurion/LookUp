@@ -66,8 +66,6 @@ class ChatTab(QWidget):
     def setZone(self, zone):
         if self.getZone() is None:
             self.__zone = zone
-        else:
-            self.notify.error('GUIError', 'attempted to change zone')
 
         del zone
 
@@ -94,7 +92,6 @@ class ChatTab(QWidget):
 
         if self.is_group and constants.WANT_BLANK_GROUPS:
             self.widget_stack.setCurrentIndex(2) # connecting
-            self.connect()
         elif self.is_group:
             self.widget_stack.setCurrentIndex(0) # multi input
         else:
@@ -135,19 +132,21 @@ class ChatTab(QWidget):
                 QMessageBox.warning(self, *msg)
                 return
 
-        titled_names = utils.oxfordComma(names)
         window = self.interface.getWindow()
-        window.doConnecting(self, titled_names)
-        window.setTabTitle(self, titled_names)
+        if names:
+            tab_name = utils.oxfordComma(names)
+            window.doConnecting(self, tab_name)
+        elif self.is_group:
+            tab_name = constants.BLANK_GROUP_TAB_TITLE
+            window.doConnecting(self, None)
+        else:
+            return # should not happen
+        window.setTabTitle(self, tab_name)
 
-
-        _t = Thread(target=self.interface.getClient().initiateHelo,
-                    args=(self, names, self.is_group),
-                    daemon=True).start()
+        self.interface.getClient().initiateHelo(self, names, self.is_group)
 
         del names
-        del titled_names
-        del _t
+        del tab_name
 
     @pyqtSlot(str, float)
     def newMessage(self, msg, ts):
