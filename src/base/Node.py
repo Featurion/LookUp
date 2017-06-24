@@ -10,7 +10,6 @@ class Node(KeyHandler):
     def __init__(self):
         KeyHandler.__init__(self)
         self.__id = None
-        self.__name = None
         self.__running = False
         self.__secure = False
         self.__new = False
@@ -65,20 +64,6 @@ class Node(KeyHandler):
                                                      self.getId()))
         else:
             self.notify.critical('suspicious attempt to change ID')
-
-    def getName(self):
-        """Getter for Node name"""
-        if self.__name:
-            return self.__name
-        else:
-            return None
-
-    def setName(self, name_):
-        """Setter for Node name"""
-        if self.__name is None:
-            self.__name = name_
-        else:
-            self.notify.critical('suspicious attempt to change name')
 
     def setSecure(self, status):
         self.__secure = status
