@@ -10,12 +10,14 @@ class MultipleInputWidget(QWidget):
     def __init__(self, parent,
                  image, image_width,
                  label_text, button_text,
+                 max_chars,
                  connector, addField,
                  defaults=[], num_inputs=1):
         QWidget.__init__(self, parent)
         self._data = (parent,
                       image, image_width,
                       label_text, button_text,
+                      max_chars,
                       connector, addField)
         _image = QPixmap(utils.getResourcePath(image))
         _image = _image.scaledToWidth(image_width, Qt.SmoothTransformation)
@@ -23,10 +25,15 @@ class MultipleInputWidget(QWidget):
         self.image.setPixmap(_image)
         self.input_label = QLabel(label_text, self)
         self.inputs = [QLineEdit('', self) for _ in range(num_inputs)]
+
+        if max_chars is not None:
+            for _i in self.inputs:
+                _i.setMaxLength(max_chars)
+
         self.connect_button = QPushButton(button_text, self)
         self.connect_button.resize(self.connect_button.sizeHint())
         self.connect_button.setAutoDefault(False)
-        self.connect_button.clicked.connect(lambda: connector(self.getInputsText()))
+        self.connect_button.clicked.connect(lambda: connector(*self.getInputsText()))
         self.build(defaults[:num_inputs])
 
     def build(self, _defaults):

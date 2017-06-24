@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
-from src.base import utils
-from src.base.constants import APP_TITLE, BLANK_TAB_TITLE
+from src.base import constants, utils
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
@@ -14,7 +13,7 @@ from src.zones.Zone import Zone
 
 class ChatWindow(QMainWindow):
 
-    new_client_signal = pyqtSignal(str, str, list, list)
+    new_client_signal = pyqtSignal(str, str, list, list, bool)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -61,30 +60,37 @@ class ChatWindow(QMainWindow):
         menu_icon = QIcon(utils.getResourcePath('images/menu.png'))
 
         new_chat_action = QAction(new_chat_icon, '&New chat', self)
+        new_group_chat_action = QAction(new_chat_icon, '&New group chat', self)
         auth_chat_action = QAction(new_chat_icon, '&Authenticate chat', self)
         exit_action = QAction(exit_icon, '&Exit', self)
 
         new_chat_action.triggered.connect(self.openTab)
+        new_group_chat_action.triggered.connect(self.openGroupTab)
         auth_chat_action.triggered.connect(self.__showAuthDialog)
         exit_action.triggered.connect(self.stop)
 
         new_chat_action.setShortcut('Ctrl+N')
+        new_group_chat_action.setShortcut('Ctrl+M')
         exit_action.setShortcut('Ctrl+Q')
 
         options_menu = QMenu()
         options_menu.addAction(new_chat_action)
+        options_menu.addAction(new_group_chat_action)
         options_menu.addAction(auth_chat_action)
         options_menu.addAction(exit_action)
 
         options_menu_button = QToolButton()
         new_chat_button = QToolButton()
+        new_group_chat_button = QToolButton()
         exit_button = QToolButton()
 
         new_chat_button.clicked.connect(self.openTab)
+        new_group_chat_button.clicked.connect(self.openGroupTab)
         exit_button.clicked.connect(self.stop)
 
         options_menu_button.setIcon(menu_icon)
         new_chat_button.setIcon(new_chat_icon)
+        new_group_chat_button.setIcon(new_chat_icon)
         exit_button.setIcon(exit_icon)
 
         options_menu_button.setMenu(options_menu)
@@ -93,6 +99,7 @@ class ChatWindow(QMainWindow):
         toolbar = QToolBar(self)
         toolbar.addWidget(options_menu_button)
         toolbar.addWidget(new_chat_button)
+        toolbar.addWidget(new_group_chat_button)
         toolbar.addWidget(exit_button)
 
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
@@ -113,7 +120,7 @@ class ChatWindow(QMainWindow):
 
     def start(self):
         name = self.interface.getClient().getName()
-        self.setWindowTitle(APP_TITLE + ': ' + name)
+        self.setWindowTitle(constants.APP_TITLE + ': ' + name)
         self.show()
 
     def stop(self):
@@ -123,16 +130,36 @@ class ChatWindow(QMainWindow):
         index = self.chat_tabs.indexOf(tab)
         self.chat_tabs.setTabText(index, title)
 
+    def doConnecting(self, tab, title):
+        tab.widget_stack.widget(2).setConnectingToName(title)
+        tab.widget_stack.setCurrentIndex(2)
+
     def openTab(self, title=None):
-        tab = ChatTab(self.interface)
+        tab = ChatTab(self.interface, False)
 
         if title:
             self.chat_tabs.addTab(tab, title)
-            tab.widget_stack.widget(1).setConnectingToName(title)
-            tab.widget_stack.setCurrentIndex(1)
-            # TODO: tab.showNowChattingMessage()
+            self.doConnecting(tab, title)
         else:
-            self.chat_tabs.addTab(tab, BLANK_TAB_TITLE)
+            self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
+
+        self.chat_tabs.setCurrentWidget(tab)
+        tab.setFocus()
+
+        return tab
+
+    def openGroupTab(self, title=None, initiate=True):
+        tab = ChatTab(self.interface, True)
+
+        if not title and constants.WANT_BLANK_GROUPS:
+            self.chat_tabs.addTab(tab, constants.BLANK_GROUP_TAB_TITLE)
+        else:
+            self.chat_tabs.addTab(tab, title)
+            self.setTabTitle(tab, title)
+            self.doConnecting(tab, title)
+
+        if initiate:
+            tab.connect()
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
@@ -146,7 +173,7 @@ class ChatWindow(QMainWindow):
         self.chat_tabs.removeTab(index)
 
         if self.chat_tabs.count() == 0:
-            self.addNewTab()
+            self.openTab()
 
     def _tabChanged(self):
         pass
@@ -154,24 +181,22 @@ class ChatWindow(QMainWindow):
     def __showAuthDialog(self):
         pass
 
-    @pyqtSlot(str, str, list, list)
-    def newClient(self, zone_id, key, member_ids, member_names):
-        zone_id, key = int(zone_id), int(key)
+    @pyqtSlot(str, str, list, list, bool)
+    def newClient(self, zone_id, key, member_ids, member_names, is_group):
+        if not is_group and not self.isActiveWindow():
+            utils.showDesktopNotification(self.tray_icon,
+                                          'Chat request from {0}'.format(member_names[0]),
+                                          '')
 
-        if len(member_ids) > 2:
-            accepted = True
+        tab_name = utils.oxfordComma(member_names)
+        if is_group:
+            tab = self.openGroupTab(tab_name, initiate=False)
+        elif ConnectionDialog.getAnswer(self, member_names):
+            tab = self.openTab(tab_name)
         else:
-            if not self.isActiveWindow():
-                utils.showDesktopNotification(self.tray_icon,
-                                              'Chat request from {0}'.format(member_names[0]),
-                                              '')
+            return
 
-            member_names.remove(self.interface.getClient().getName())
-            accepted = ConnectionDialog.getAnswer(self, member_names)
-
-        if accepted:
-            tab = self.openTab(utils.oxfordComma(member_names))
-
-            zone = Zone(tab, zone_id, key, member_ids)
+        if tab and not tab.getZone():
+            zone = Zone(tab, zone_id, int(key), member_ids, is_group)
             self.interface.getClient().enter(tab, zone)
             zone.sendRedy()

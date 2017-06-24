@@ -4,12 +4,16 @@ version: 'PROTOTYPE-DEV'
 
 # Logging
 log-path: /logs
-log-format: 'outbracket'
+log-format: 'none'
+want-log-formatting: true
 
 # Connection settings
 default-address: '127.0.0.1'
 default-port: 1492
 tls-enabled: false
+
+# Chat settings
+want-blank-groups: true
 
 # Security settings
 

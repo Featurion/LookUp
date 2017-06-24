@@ -4,9 +4,10 @@ import sys
 
 from src.base.Notifier import Notifier
 from src.base.constants import TLS_ENABLED
+from src.users.BanManagerAI import BanManagerAI
 from src.users.ClientManagerAI import ClientManagerAI
 from src.zones.ZoneManagerAI import ZoneManagerAI
-
+from src.ai.Console import Console
 
 class Server(Notifier):
 
@@ -16,9 +17,10 @@ class Server(Notifier):
         self.__address = address
         self.__port = port
 
+        self.startManagers()
+
     def start(self):
         self.__connect()
-        self.startManagers()
         self.waitForClients()
 
     def stop(self):
@@ -32,20 +34,11 @@ class Server(Notifier):
             finally:
                 self.__socket = None
 
-        self.notify.info('server stopped!')
+        self.notify.info('server stopped')
         sys.exit(0)
 
     def accept(self):
         return self.__socket.accept()
-
-    def __supportSSL(self, socket_):
-        return ssl.wrap_socket(socket_,
-                               server_side=True,
-                               certfile='certs/pem.crt',
-                               keyfile='certs/pem.key',
-                               ssl_version=ssl.PROTOCOL_TLSv1_2,
-                               ciphers='ECDHE-RSA-AES256-GCM-SHA384',
-                               do_handshake_on_connect=True)
 
     def __connect(self):
         try:
@@ -53,27 +46,38 @@ class Server(Notifier):
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if TLS_ENABLED:
-                self.notify.info('wrapping socket in SSL!')
-                self.__socket = self.__supportSSL(self.__socket)
+                self.notify.info('wrapping socket in SSL')
+                self.__socket = ssl.wrap_socket(socket_,
+                                                server_side=True,
+                                                certfile='certs/pem.crt',
+                                                keyfile='certs/pem.key',
+                                                ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                                ciphers='ECDHE-RSA-AES256-GCM-SHA384',
+                                                do_handshake_on_connect=True)
             else:
-                self.notify.info('SSL is not enabled! Do not use this in production!')
+                self.notify.info('SSL is not enabled. Do not use this in production')
 
             self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.__socket.bind((self.__address, self.__port))
             self.__socket.listen(0) # refuse unaccepted connections
-            self.notify.info('server online!')
+            self.notify.info('server online')
         except Exception as e:
             self.notify.critical(str(e))
 
     def startManagers(self):
         self.cm = ClientManagerAI(self)
+        self.bm = BanManagerAI(self.cm)
         self.zm = ZoneManagerAI(self)
 
     def waitForClients(self):
         while True:
             try:
                 ai = self.cm.acceptClient()
-                ai.start()
+                if ai == False:
+                    # This client has been banned
+                    continue
+                else:
+                    ai.start()
             except KeyboardInterrupt:
                 self.notify.error('KeyboardInterrupt',
                                   'server killed while waiting for clients')

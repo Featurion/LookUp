@@ -54,7 +54,7 @@ class LoginWindow(QDialog):
         self.close()
 
     def __login(self, name):
-        threading.Thread(target=self.interface.getClient().connect,
+        threading.Thread(target=self.interface.getClient().initiateLogin,
                          args=(name, self.interface.login_signal.emit)).start()
 
     def __connect(self, name: str):

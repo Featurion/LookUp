@@ -48,7 +48,17 @@ class KeyHandler(Notifier):
         self.__aes_iv = None
         self.__pub_key = None
         self.__priv_key = None
+        self.__dh_secret = None
         self.generateKey()
+
+    def cleanup(self):
+        Notifier.cleanup(self)
+        self.__aes_mode = None
+        self.__aes_key = None
+        self.__aes_iv = None
+        self.__pub_key = None
+        self.__priv_key = None
+        self.__dh_secret = None
 
     def getKey(self):
         if self.__pub_key is None:
@@ -79,9 +89,12 @@ class KeyHandler(Notifier):
             hash_ = self.generateHash(str(self.__dh_secret).encode())
             self.__aes_key = hash_[0:32]
             self.__aes_iv = hash_[16:32]
+            del hash_
         else:
             self.notify.error('CryptoError', 'no private key exists')
             return
+
+        del key
 
     def __generateCipher(self):
         return AES.new(self.__aes_key, self.__aes_mode, self.__aes_iv)
@@ -103,6 +116,7 @@ class KeyHandler(Notifier):
             return data
         except Exception as e:
             self.notify.error('CryptoError', 'error encrypting data')
+            del data
 
     def decrypt(self, data: bytes):
         try:
@@ -112,3 +126,4 @@ class KeyHandler(Notifier):
             return data
         except Exception as e:
             self.notify.error('CryptoError', 'error decrypting data')
+            del data
