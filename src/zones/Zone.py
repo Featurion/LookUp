@@ -34,6 +34,13 @@ class Zone(ZoneBase):
         del id_
         return self.__alt_key
 
+    def getClientNameById(self, id_):
+        member = self.id2member.get(id_)
+        if member:
+            return member[1]
+        else:
+            return None
+
     def sendMessage(self, command, data=None):
         datagram = Datagram()
         datagram.setCommand(command)
