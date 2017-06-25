@@ -170,7 +170,7 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.chat_input.setReadOnly(False)
 
-    def appendMessage(self, message, timestamp, source):
+    def appendMessage(self, message: str, timestamp: float, source: int):
         color = self.__getColor(source)
 
         if source == constants.SENDER:

@@ -15,6 +15,8 @@ class ZoneAI(ZoneBase):
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.clientRedy,
             constants.CMD_ZONE_ADD: self.addUser,
+            constants.CMD_TYPING: self.clientTyping,
+            constants.CMD_MSG: self.clientMsg
         })
 
     def cleanup(self):
@@ -122,6 +124,16 @@ class ZoneAI(ZoneBase):
         del key
         del name
         del datagram
+
+    def clientTyping(self, datagram):
+        status = datagram.getData()
+
+        self.emitMessage(constants.CMD_TYPING, status)
+
+    def clientMsg(self, datagram):
+        text = datagram.getData()
+
+        self.emitMessage(constants.CMD_MSG, text)
 
     def addUser(self, datagram):
         name = datagram.getData()

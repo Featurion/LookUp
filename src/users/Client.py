@@ -22,7 +22,7 @@ class Client(ClientBase):
 
         self.COMMAND_MAP.update({
             constants.CMD_ERR: self.doError,
-            constants.CMD_HELO: self.doHelo,
+            constants.CMD_HELO: self.doHelo
         })
 
     def start(self):

@@ -53,6 +53,8 @@ class ChatWindow(QMainWindow):
 
         self.widget_stack.setCurrentIndex(1)
 
+        self.status_bar = self.statusBar()
+
         # menubar setup
 
         new_chat_icon = QIcon(utils.getResourcePath('images/new_chat.png'))

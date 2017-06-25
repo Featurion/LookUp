@@ -61,6 +61,8 @@ CMD_HELO = 8
 CMD_REDY = 9
 CMD_ZONE_MSG = 10
 CMD_ZONE_ADD = 11
+CMD_TYPING = 12
+CMD_MSG = 13
 
 # Users
 
@@ -84,6 +86,7 @@ TITLE_SELF_CONNECT = 'Tried connecting to self'
 TITLE_NAME_IN_USE = 'Username is taken'
 TITLE_NAME_DOESNT_EXIST = "Username doesn't exist"
 TITLE_BANNED = "You have been banned"
+TITLE_INVALID_COMMAND = "Received invalid command"
 
 CHOOSE = 'Please choose another'
 EMPTY_NAME = 'Please enter a username.'
@@ -93,7 +96,8 @@ SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
 NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
 NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
-CLIENT_BANNED = "You have been IP banned."
+CLIENT_BANNED = 'You have been IP banned.'
+INVALID_COMMAND = 'A client has sent you an invalid command.'
 
 # Chatting
 

@@ -4,7 +4,7 @@ import queue
 from src.base import constants
 from src.base.Datagram import Datagram
 from src.zones.ZoneBase import ZoneBase
-
+from src.base import utils
 
 class Zone(ZoneBase):
 
@@ -16,6 +16,8 @@ class Zone(ZoneBase):
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.doRedy,
+            constants.CMD_TYPING: self.doTyping,
+            constants.CMD_MSG: self.doMsg
         })
 
     def cleanup(self):
@@ -53,13 +55,11 @@ class Zone(ZoneBase):
         del data
         del datagram
 
-    def sendTypingMessage(self, status):
-        # TODO Messaging
-        pass
+    def sendChatMessage(self, text: str):
+        self.sendMessage(constants.CMD_MSG, text)
 
-    def sendChatMessage(self, message):
-        # TODO Messaging
-        pass
+    def sendTypingMessage(self, status):
+        self.sendMessage(constants.CMD_TYPING, str(status))
 
     def _send(self):
         try:
@@ -93,3 +93,18 @@ class Zone(ZoneBase):
 
     def addUser(self, name):
         self.sendMessage(constants.CMD_ZONE_ADD, name)
+
+    def doTyping(self, datagram):
+        status = datagram.getData()
+        name = datagram.getSender()
+
+        self.tab.new_message_signal.emit(constants.CMD_TYPING, (status), constants.RECEIVER, datagram.getSender())
+
+        del status
+
+    def doMsg(self, datagram):
+        text = datagram.getData()
+
+        self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER)
+
+        del text

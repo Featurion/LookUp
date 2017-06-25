@@ -12,7 +12,7 @@ from src.gui.ChatWidget import ChatWidget
 
 class ChatTab(QWidget):
 
-    new_message_signal = pyqtSignal(str, float, int)
+    new_message_signal = pyqtSignal(int, tuple, int, str)
     zone_redy_signal = pyqtSignal(list)
 
     def __init__(self, interface, is_group: bool):
@@ -148,12 +148,26 @@ class ChatTab(QWidget):
         del names
         del tab_name
 
-    @pyqtSlot(str, float, int)
-    def newMessage(self, msg, ts, src):
-        self.chat_widget.appendMessage(msg, ts, src)
+    @pyqtSlot(int, tuple, int, str)
+    def newMessage(self, command, data, src, name):
+        if command == constants.CMD_TYPING:
+            status = int(data)
+            if status == TYPING_START:
+                self.interface.getWindow().status_bar.showMessage("%s is typing" % nick)
+            elif status == TYPING_STOP_WITHOUT_TEXT:
+                self.interface.getWindow().status_bar.showMessage('')
+            elif status == TYPING_STOP_WITH_TEXT:
+                self.interface.getWindow().status_bar.showMessage("%s has entered text" % nick)
+        elif command == constants.CMD_MSG:
+            timestamp, text = data
+            self.chat_widget.appendMessage(text, timestamp, src)
+        else:
+            self.notify.warning('received invalid command: {0}'.format(command))
+            self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.INVALID_COMMAND)
 
-        del msg
-        del ts
+        del command
+        del data
+        del src
 
     @pyqtSlot(list)
     def zoneRedy(self, member_names):
