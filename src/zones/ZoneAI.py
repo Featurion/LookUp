@@ -16,7 +16,7 @@ class ZoneAI(ZoneBase):
             constants.CMD_REDY: self.clientRedy,
             constants.CMD_ZONE_ADD: self.addUser,
             constants.CMD_TYPING: self.clientTyping,
-            constants.CMD_MSG: self.clientMsg
+            constants.CMD_MSG: self.clientMsg,
         })
 
     def cleanup(self):

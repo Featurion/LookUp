@@ -18,7 +18,7 @@ class Zone(ZoneBase):
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.doRedy,
             constants.CMD_TYPING: self.doTyping,
-            constants.CMD_MSG: self.doMsg
+            constants.CMD_MSG: self.doMsg,
         })
 
     def cleanup(self):
