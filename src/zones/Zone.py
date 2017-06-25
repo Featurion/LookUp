@@ -11,7 +11,7 @@ class Zone(ZoneBase):
     def __init__(self, tab, zone_id, key, member_ids, is_group):
         ZoneBase.__init__(self, tab.getClient(), zone_id, member_ids, is_group)
         self.tab = tab
-        self.id2key = {id_: None for id_ in member_ids}
+        self.id2member = {id_: tuple() for id_ in member_ids}
         self.__alt_key = key
 
         self.COMMAND_MAP.update({
@@ -25,10 +25,10 @@ class Zone(ZoneBase):
             self.tab.cleanup()
             del self.tab
             self.tab = None
-        if self.id2key:
-            self.id2key.clear()
-            del self.id2key
-            self.id2key = None
+        if self.id2member:
+            self.id2member.clear()
+            del self.id2member
+            self.id2member = None
 
     def getWorkingKey(self, id_):
         del id_
@@ -80,9 +80,8 @@ class Zone(ZoneBase):
     def doRedy(self, datagram):
         self.notify.debug('redy')
 
-        member_names, key_map = datagram.getData()
-        self.id2key = key_map
-        self.tab.zone_redy_signal.emit(member_names)
+        self.id2member = datagram.getData()
+        self.tab.zone_redy_signal.emit([n for k, n in self.id2member.values()])
         del datagram
 
     def addUser(self, name):

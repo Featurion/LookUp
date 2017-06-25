@@ -10,7 +10,7 @@ class ZoneAI(ZoneBase):
 
     def __init__(self, client, zone_id, members, is_group):
         ZoneBase.__init__(self, client, zone_id, members, is_group)
-        self.__id2key = {ai.getId(): None for ai in members}
+        self.__id2member = {ai.getId(): tuple() for ai in members}
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.clientRedy,
@@ -19,10 +19,10 @@ class ZoneAI(ZoneBase):
 
     def cleanup(self):
         ZoneBase.cleanup(self)
-        if hasattr(self, '__id2key') and self.__id2key:
-            self.__id2key.clear()
-            del self.__id2key
-            self.__id2key = None
+        if self.__id2member:
+            self.__id2member.clear()
+            del self.__id2member
+            self.__id2member = None
 
     def getMemberIds(self):
         return [ai.getId() for ai in self.getMembers()]
@@ -44,7 +44,11 @@ class ZoneAI(ZoneBase):
                 self.isGroup]
 
     def getWorkingKey(self, id_):
-        return self.__id2key.get(id_)
+        member = self.__id2member.get(id_)
+        if member:
+            return member[0]
+        else:
+            return None
 
     def emitMessage(self, command, data=None):
         for ai in self.getMembers():
@@ -98,24 +102,25 @@ class ZoneAI(ZoneBase):
 
     def emitRedy(self):
         self.notify.debug('sending redy'.format(self.getId()))
-        self.emitMessage(constants.CMD_REDY, [self.getMemberNames(),
-                                              self.__id2key])
+        self.emitMessage(constants.CMD_REDY, self.__id2member)
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()
+        name = self.getClient().server.cm.getClientById(id_).getName()
 
-        if id_ in self.__id2key:
-            self.__id2key[id_] = key
-            self.notify.debug('client {0} is redy'.format(id_, self.getId()))
+        if id_ in self.__id2member:
+            self.__id2member[id_] = (key, name)
+            self.notify.debug('client {0}-{1} is redy'.format(name, id_))
         else:
             self.notify.error('ZoneError', '{0} not in zone'.format(id_))
 
-        if all(self.__id2key.values()):
+        if all(self.__id2member.values()):
             self.setSecure(True)
             self.emitRedy()
 
         del id_
         del key
+        del name
         del datagram
 
     def addUser(self, datagram):
@@ -129,7 +134,7 @@ class ZoneAI(ZoneBase):
         else:
             self.notify.debug('adding user {0}'.format(name))
             self.addMember(ai)
-            self.__id2key[ai.getId()] = None
+            self.__id2member[ai.getId()] = tuple()
             self.__sendHelo(ai.getId())
 
         del name
