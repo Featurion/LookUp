@@ -152,7 +152,7 @@ class ChatWidget(QWidget):
                     daemon=True).start()
         del _t
 
-        self.appendMessage(text, utils.getTimestamp(), constants.SENDER)
+        self.appendMessage(text, utils.getTimestamp(), constants.SENDER, self.getClient().getName())
 
         del text
 
@@ -170,23 +170,15 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.chat_input.setReadOnly(False)
 
-    def appendMessage(self, message: str, timestamp: float, source: int):
+    def appendMessage(self, message: str, timestamp: float, source: int, name: str):
         color = self.__getColor(source)
-
-        if source == constants.SENDER:
-            source = self.getClient().getName()
-        elif source == constants.RECEIVER:
-            source = self.getReceiverName() # TODO Zach
-        else:
-            source = 'SYSTEM'
 
         timestamp = utils.formatTimestamp(timestamp)
 
         timestamp = '<font color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
-                    str(source) + ':</strong></font> '
+                    name + ':</strong></font> '
 
         message = timestamp + message
-        #message = message.format(utils.formatTimestamp(timestamp))
 
         # If the user has scrolled up (current value != maximum), do not move the scrollbar
         # to the bottom after appending the message

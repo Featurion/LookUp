@@ -151,16 +151,16 @@ class ChatTab(QWidget):
     @pyqtSlot(int, tuple, int, str)
     def newMessage(self, command, data, src, name):
         if command == constants.CMD_TYPING:
-            status = int(data)
-            if status == TYPING_START:
-                self.interface.getWindow().status_bar.showMessage("%s is typing" % nick)
-            elif status == TYPING_STOP_WITHOUT_TEXT:
+            status = int(*data[0])
+            if status == constants.TYPING_START:
+                self.interface.getWindow().status_bar.showMessage("%s is typing" % name)
+            elif status == constants.TYPING_STOP_WITHOUT_TEXT:
                 self.interface.getWindow().status_bar.showMessage('')
-            elif status == TYPING_STOP_WITH_TEXT:
-                self.interface.getWindow().status_bar.showMessage("%s has entered text" % nick)
+            elif status == constants.TYPING_STOP_WITH_TEXT:
+                self.interface.getWindow().status_bar.showMessage("%s has entered text" % name)
         elif command == constants.CMD_MSG:
             timestamp, text = data
-            self.chat_widget.appendMessage(text, timestamp, src)
+            self.chat_widget.appendMessage(text, timestamp, src, name)
         else:
             self.notify.warning('received invalid command: {0}'.format(command))
             self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.INVALID_COMMAND)

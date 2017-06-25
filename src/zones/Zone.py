@@ -13,6 +13,7 @@ class Zone(ZoneBase):
         self.tab = tab
         self.id2member = {id_: tuple() for id_ in member_ids}
         self.__alt_key = key
+        self.pending_messages = []
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.doRedy,
@@ -50,6 +51,8 @@ class Zone(ZoneBase):
         datagram.setRecipient(self.getId())
         datagram.setData(data)
         self.sendDatagram(datagram)
+
+        self.pending_messages.append(datagram)
 
         del command
         del data
@@ -96,15 +99,19 @@ class Zone(ZoneBase):
 
     def doTyping(self, datagram):
         status = datagram.getData()
-        name = datagram.getSender()
+        name = self.getClientNameById(datagram.getSender())
 
-        self.tab.new_message_signal.emit(constants.CMD_TYPING, (status), constants.RECEIVER, datagram.getSender())
+        self.tab.new_message_signal.emit(constants.CMD_TYPING, (status,), constants.RECEIVER, name)
 
         del status
 
     def doMsg(self, datagram):
         text = datagram.getData()
+        name = self.getClientNameById(datagram.getSender())
 
-        self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER)
+        if datagram in self.pending_messages:
+            pass
+
+        self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name)
 
         del text

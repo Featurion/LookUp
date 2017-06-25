@@ -52,8 +52,11 @@ class ZoneAI(ZoneBase):
         else:
             return None
 
-    def emitMessage(self, command, data=None):
+    def emitMessage(self, command, data=None, sender=None):
         for ai in self.getMembers():
+            if sender:
+                if ai.getId() == sender:
+                    return
             datagram = Datagram()
             datagram.setCommand(command)
             datagram.setSender(self.getClient().getId())
@@ -128,7 +131,7 @@ class ZoneAI(ZoneBase):
     def clientTyping(self, datagram):
         status = datagram.getData()
 
-        self.emitMessage(constants.CMD_TYPING, status)
+        self.emitMessage(constants.CMD_TYPING, status, datagram.getSender())
 
     def clientMsg(self, datagram):
         text = datagram.getData()
