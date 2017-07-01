@@ -1,12 +1,11 @@
 import json
 
 from src.base import utils
-from src.base.UniqueIDManager import UniqueIDManager
 
 class Datagram(object):
 
     def __init__(self):
-        self.__id = str(UniqueIDManager().generateId())
+        self.__id = str()
         self.__command = int()
         self.__sender = int()
         self.__recipient = int()
