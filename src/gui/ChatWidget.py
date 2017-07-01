@@ -11,6 +11,25 @@ from src.gui.MultipleInputWidget import MultipleInputWidget
 
 class ChatWidget(QWidget):
 
+    class _MessageLog(list):
+
+        def __init__(self, widget, *args):
+            list.__init__(self, args)
+            self.sort()
+            self.widget = widget
+
+        def sort(self):
+            list.sort(self, key=lambda i: i[0])
+
+        def addMessage(self, msg):
+            list.append(self, msg)
+            self.sort()
+            self.update()
+
+        def update(self):
+            full_text = '<br>'.join(msg for msg in self)
+            self.widget.chat_log.setText(full_text)
+
     URL_REGEX = re.compile(constants.URL_REGEX)
 
     def __init__(self, tab):
@@ -23,6 +42,8 @@ class ChatWidget(QWidget):
 
         self.chat_log = QTextBrowser()
         self.chat_log.setOpenExternalLinks(True)
+
+        self.log = ChatWidget._MessageLog(self)
 
         self.chat_input = QTextEdit()
         self.chat_input.textChanged.connect(self.chatInputTextChanged)
@@ -175,7 +196,7 @@ class ChatWidget(QWidget):
 
         timestamp = utils.formatTimestamp(timestamp)
 
-        timestamp = '<font color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
+        timestamp = '<font style="opacity:.6" color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
                     name + ':</strong></font> '
 
         message = timestamp + message
@@ -187,11 +208,14 @@ class ChatWidget(QWidget):
         if scrollbar.value() != scrollbar.maximum() and source != constants.SENDER:
             should_scroll = False
 
-        self.chat_log.append(message)
+        self.log.addMessage(message)
 
         # Move the vertical scrollbar to the bottom of the chat log
         if should_scroll:
             scrollbar.setValue(scrollbar.maximum())
+
+    def confirmMessage(self, message: str, name: str):
+        log = self.chat_log.toHtml()
 
     def __linkify(self, text):
         matches = self.URL_REGEX.findall(text)

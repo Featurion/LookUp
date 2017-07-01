@@ -12,7 +12,7 @@ from src.gui.ChatWidget import ChatWidget
 
 class ChatTab(QWidget):
 
-    new_message_signal = pyqtSignal(int, tuple, int, str)
+    new_message_signal = pyqtSignal(int, tuple, int, str, bool)
     zone_redy_signal = pyqtSignal(list)
 
     def __init__(self, interface, is_group: bool):
@@ -148,8 +148,8 @@ class ChatTab(QWidget):
         del names
         del tab_name
 
-    @pyqtSlot(int, tuple, int, str)
-    def newMessage(self, command, data, src, name):
+    @pyqtSlot(int, tuple, int, str, bool)
+    def newMessage(self, command, data, src, name, loop):
         if command == constants.CMD_TYPING:
             status = int(*data[0])
             if status == constants.TYPING_START:
@@ -160,7 +160,10 @@ class ChatTab(QWidget):
                 self.interface.getWindow().status_bar.showMessage("%s has entered text" % name)
         elif command == constants.CMD_MSG:
             timestamp, text = data
-            self.chat_widget.appendMessage(text, timestamp, src, name)
+            if not loop:
+                self.chat_widget.appendMessage(text, timestamp, src, name)
+            else:
+                self.chat_widget.confirmMessage(text, name)
         else:
             self.notify.warning('received invalid command: {0}'.format(command))
             self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.INVALID_COMMAND)
