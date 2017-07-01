@@ -19,16 +19,49 @@ class ChatWidget(QWidget):
             self.widget = widget
 
         def sort(self):
-            list.sort(self, key=lambda i: i[0])
+            try:
+                list.sort(self, key=lambda i: i[0])
+            except IndexError: # This can be (shouldn't be) caused by the only message in the chat being deleted, no harm done if it happens
+                pass
 
         def addMessage(self, msg):
             list.append(self, msg)
             self.sort()
             self.update()
 
+        def editMessage(self, msg, new_msg, delete=False):
+            full_text = ''.join(message for message in self)
+            edit_text = full_text.replace(msg, new_msg)
+
+            if delete:
+                self.remove(msg)
+            else:
+                index = self.index(msg)
+                self[index] = edit_text
+
+            self.widget.chat_log.setText(edit_text)
+
+            del full_text
+            del delete
+            del edit_text
+            del msg
+            del new_msg
+
+        def delMessage(self, msg):
+            self.editMessage(msg, '', True)
+
+            del msg
+
+        def getMessage(self, text, name):
+            for message in self:
+                if text and name in message:
+                    return message
+
         def update(self):
             full_text = '<br>'.join(msg for msg in self)
             self.widget.chat_log.setText(full_text)
+
+            del full_text
 
     URL_REGEX = re.compile(constants.URL_REGEX)
 
@@ -214,8 +247,9 @@ class ChatWidget(QWidget):
         if should_scroll:
             scrollbar.setValue(scrollbar.maximum())
 
-    def confirmMessage(self, message: str, name: str):
-        log = self.chat_log.toHtml()
+    def confirmMessage(self, text: str, name: str):
+        message = self.log.getMessage(text, name)
+        self.log.delMessage(message)
 
     def __linkify(self, text):
         matches = self.URL_REGEX.findall(text)
