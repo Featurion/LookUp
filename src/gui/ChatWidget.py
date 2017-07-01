@@ -29,9 +29,19 @@ class ChatWidget(QWidget):
             self.sort()
             self.update()
 
-        def editMessage(self, msg, new_msg, delete=False):
-            full_text = ''.join(message for message in self)
-            edit_text = full_text.replace(msg, new_msg)
+        def editMessage(self, msg, new_msg, text_only=False, delete=False):
+            if text_only:
+                full_text = '<br>'.join(message for message in self)
+                split = msg.rsplit(' ', 1)
+                split[1] = new_msg
+                new_msg = split[0] + split[1]
+                edit_text = full_text.replace(msg, new_msg)
+            else:
+                if delete:
+                    full_text = ''.join(message for message in self)
+                else:
+                    full_text = '<br>'.join(message for message in self)
+                edit_text = full_text.replace(msg, new_msg)
 
             if delete:
                 self.remove(msg)
@@ -249,7 +259,7 @@ class ChatWidget(QWidget):
 
     def confirmMessage(self, text: str, name: str):
         message = self.log.getMessage(text, name)
-        self.log.delMessage(message)
+        self.log.editMessage(message, '', True)
 
     def __linkify(self, text):
         matches = self.URL_REGEX.findall(text)
