@@ -1,3 +1,4 @@
+import os
 from uuid import UUID
 
 from src.base.Datagram import Datagram
@@ -62,7 +63,10 @@ class ZoneManagerAI(UniqueIDManager):
         return self.id2owner.get(id_)
 
     def addZone(self, client, member_names, is_group):
-        mode = 'group' if is_group else 'private'
+        if is_group:
+            mode = 'group'
+        else:
+            mode = 'private'
 
         if len(member_names) > 2 and not is_group:
             self.notify.error('ZoneError',
@@ -74,7 +78,11 @@ class ZoneManagerAI(UniqueIDManager):
             if member is None:
                 return
 
-        seed = ','.join(sorted(member_names))
+        if mode == 'private':
+            seed = ','.join(sorted(member_names))
+        else:
+            seed = ''.join(chr(c) for c in os.urandom(64))
+
         zone_id = self.generateId(mode, seed).bytes.hex()
         ai = ZoneAI(client, zone_id, member_ais, is_group)
         self.allocateId(mode, seed, zone_id, ai)
