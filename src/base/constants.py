@@ -24,6 +24,10 @@ BANNED = b'banned'
 
 WANT_BLANK_GROUPS = settings['want-blank-groups']
 
+# GUI
+
+WANT_LIGHT_THEME = settings['want-light-theme']
+
 # Logging
 
 DEBUG = 10

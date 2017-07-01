@@ -279,17 +279,17 @@ class ChatWidget(QWidget):
 
     def __getColor(self, source):
         if source == constants.SENDER:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#0000CC'
             else:
                 return '#6666FF'
         elif source == constants.RECEIVER:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#CC0000'
             else:
                 return '#CC3333'
         else:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#000000'
             else:
                 return '#FFFFFF'
