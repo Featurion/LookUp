@@ -239,7 +239,7 @@ class ChatWidget(QWidget):
 
         timestamp = utils.formatTimestamp(timestamp)
 
-        timestamp = '<font style="opacity:.6" color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
+        timestamp = '<font style="opacity:.5" color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
                     name + ':</strong></font> '
 
         message = timestamp + message
@@ -259,7 +259,13 @@ class ChatWidget(QWidget):
 
     def confirmMessage(self, text: str, name: str):
         message = self.log.getMessage(text, name)
-        self.log.editMessage(message, '', True)
+
+        message_list = list(message)
+        message_list[21] = ''
+        message_list[22] = '1'
+
+        new_message = "".join(message_list)
+        self.log.editMessage(message, new_message)
 
     def __linkify(self, text):
         matches = self.URL_REGEX.findall(text)
