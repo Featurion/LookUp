@@ -56,7 +56,7 @@ class ZoneAI(ZoneBase):
         for ai in self.getMembers():
             if sender:
                 if ai.getId() == sender:
-                    return
+                    continue
             datagram = Datagram()
             datagram.setCommand(command)
             datagram.setSender(self.getClient().getId())

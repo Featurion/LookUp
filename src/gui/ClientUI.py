@@ -70,7 +70,7 @@ class ClientUI(QApplication, Notifier):
     def __loginDone(self, resp):
         if resp:
             self.notify.info('failed to login; trying again')
-            self.__showError(resp)
+            self.__showError('Login error', resp)
             self.__window.widget_stack.setCurrentIndex(1)
         else:
             self.notify.info('successfully logged in')
