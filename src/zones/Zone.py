@@ -114,7 +114,7 @@ class Zone(ZoneBase):
         if datagram.getId() in self.pending_messages:
             self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name, True)
         else:
-            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name)
+            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name, False)
 
         del text
         del name
