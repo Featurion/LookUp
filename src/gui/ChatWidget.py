@@ -11,6 +11,68 @@ from src.gui.MultipleInputWidget import MultipleInputWidget
 
 class ChatWidget(QWidget):
 
+    class _MessageLog(list):
+
+        def __init__(self, widget, *args):
+            list.__init__(self, args)
+            self.sort()
+            self.widget = widget
+
+        def sort(self):
+            try:
+                list.sort(self, key=lambda i: i[0])
+            except IndexError: # This can be (shouldn't be) caused by the only message in the chat being deleted, no harm done if it happens
+                pass
+
+        def addMessage(self, msg):
+            list.append(self, msg)
+            self.sort()
+            self.update()
+
+        def editMessage(self, msg, new_msg, text_only=False, delete=False):
+            if text_only:
+                full_text = '<br>'.join(message for message in self)
+                split = msg.rsplit(' ', 1)
+                split[1] = new_msg
+                new_msg = split[0] + split[1]
+                edit_text = full_text.replace(msg, new_msg)
+            else:
+                if delete:
+                    full_text = ''.join(message for message in self)
+                else:
+                    full_text = '<br>'.join(message for message in self)
+                edit_text = full_text.replace(msg, new_msg)
+
+            if delete:
+                self.remove(msg)
+            else:
+                index = self.index(msg)
+                self[index] = edit_text
+
+            self.widget.chat_log.setText(edit_text)
+
+            del full_text
+            del delete
+            del edit_text
+            del msg
+            del new_msg
+
+        def delMessage(self, msg):
+            self.editMessage(msg, '', True)
+
+            del msg
+
+        def getMessage(self, text, name):
+            for message in self:
+                if text and name in message:
+                    return message
+
+        def update(self):
+            full_text = '<br>'.join(msg for msg in self)
+            self.widget.chat_log.setText(full_text)
+
+            del full_text
+
     URL_REGEX = re.compile(constants.URL_REGEX)
 
     def __init__(self, tab):
@@ -23,6 +85,8 @@ class ChatWidget(QWidget):
 
         self.chat_log = QTextBrowser()
         self.chat_log.setOpenExternalLinks(True)
+
+        self.log = ChatWidget._MessageLog(self)
 
         self.chat_input = QTextEdit()
         self.chat_input.textChanged.connect(self.chatInputTextChanged)
@@ -175,7 +239,7 @@ class ChatWidget(QWidget):
 
         timestamp = utils.formatTimestamp(timestamp)
 
-        timestamp = '<font color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
+        timestamp = '<font style="opacity:.5" color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
                     name + ':</strong></font> '
 
         message = timestamp + message
@@ -187,11 +251,21 @@ class ChatWidget(QWidget):
         if scrollbar.value() != scrollbar.maximum() and source != constants.SENDER:
             should_scroll = False
 
-        self.chat_log.append(message)
+        self.log.addMessage(message)
 
         # Move the vertical scrollbar to the bottom of the chat log
         if should_scroll:
             scrollbar.setValue(scrollbar.maximum())
+
+    def confirmMessage(self, text: str, name: str):
+        message = self.log.getMessage(text, name)
+
+        message_list = list(message)
+        message_list[21] = ''
+        message_list[22] = '1'
+
+        new_message = "".join(message_list)
+        self.log.editMessage(message, new_message)
 
     def __linkify(self, text):
         matches = self.URL_REGEX.findall(text)
@@ -205,17 +279,17 @@ class ChatWidget(QWidget):
 
     def __getColor(self, source):
         if source == constants.SENDER:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#0000CC'
             else:
                 return '#6666FF'
         elif source == constants.RECEIVER:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#CC0000'
             else:
                 return '#CC3333'
         else:
-            if utils.isLightTheme:
+            if constants.WANT_LIGHT_THEME:
                 return '#000000'
             else:
                 return '#FFFFFF'

@@ -52,21 +52,17 @@ class ZoneAI(ZoneBase):
         else:
             return None
 
-    def emitMessage(self, command, data=None, sender=None):
+    def emitMessage(self, datagram, sender=None):
         for ai in self.getMembers():
             if sender:
                 if ai.getId() == sender:
-                    return
-            datagram = Datagram()
-            datagram.setCommand(command)
+                    continue
             datagram.setSender(self.getClient().getId())
             datagram.setRecipient(ai.getId())
-            datagram.setData(data)
-            self.sendDatagram(datagram)
+            self.emitDatagram(datagram)
             del datagram
 
-        del command
-        del data
+        del sender
 
     def _send(self):
         try:
@@ -103,11 +99,17 @@ class ZoneAI(ZoneBase):
 
     def emitHelo(self):
         self.notify.debug('sending helo'.format(self.getId()))
-        self.emitMessage(constants.CMD_HELO, self.getZoneData())
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_HELO)
+        datagram.setData(self.getZoneData())
+        self.emitMessage(datagram)
 
     def emitRedy(self):
         self.notify.debug('sending redy'.format(self.getId()))
-        self.emitMessage(constants.CMD_REDY, self.__id2member)
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_REDY)
+        datagram.setData(self.__id2member)
+        self.emitMessage(datagram)
 
     def clientRedy(self, datagram):
         id_, key = datagram.getSender(), datagram.getData()
@@ -129,14 +131,10 @@ class ZoneAI(ZoneBase):
         del datagram
 
     def clientTyping(self, datagram):
-        status = datagram.getData()
-
-        self.emitMessage(constants.CMD_TYPING, status, datagram.getSender())
+        self.emitMessage(datagram, datagram.getSender())
 
     def clientMsg(self, datagram):
-        text = datagram.getData()
-
-        self.emitMessage(constants.CMD_MSG, text)
+        self.emitMessage(datagram)
 
     def addUser(self, datagram):
         name = datagram.getData()

@@ -2,16 +2,22 @@ import json
 
 from src.base import utils
 
-
 class Datagram(object):
 
     def __init__(self):
+        self.__id = str()
         self.__command = int()
         self.__sender = int()
         self.__recipient = int()
         self.__data = str()
         self.__hmac = str()
         self.__ts = utils.getTimestamp()
+
+    def getId(self):
+        return self.__id
+
+    def _setId(self, id_): # TODO: Security against tampered IDs
+        self.__id = id_
 
     def getCommand(self):
         return self.__command
@@ -54,6 +60,7 @@ class Datagram(object):
         obj = json.loads(str_)
 
         datagram = Datagram()
+        datagram._setId(obj['id'])
         datagram.setCommand(obj['command'])
         datagram.setSender(obj['sender'])
         datagram.setRecipient(obj['recipient'])
@@ -65,6 +72,7 @@ class Datagram(object):
 
     def toJSON(self):
         return json.dumps({
+            'id': self.getId(),
             'command': self.getCommand(),
             'sender': self.getSender(),
             'recipient': self.getRecipient(),

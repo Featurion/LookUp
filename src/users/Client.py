@@ -92,7 +92,6 @@ class Client(ClientBase):
             elif recv == constants.BANNED:
                 return False
 
-
     def terminate(self):
         """Forcefully exit the client"""
         self.notify.info('failed to quit, force quitting')

@@ -3,7 +3,7 @@ import threading
 
 from src.base import utils
 from src.base.KeyHandler import KeyHandler
-
+from src.base.UniqueIDManager import UniqueIDManager
 
 class Node(KeyHandler):
 
@@ -115,6 +115,13 @@ class Node(KeyHandler):
         return self.__outbox.get_nowait()
 
     def sendDatagram(self, datagram):
+        """Send a new datagram"""
+        datagram._setId(str(UniqueIDManager().generateId())) # Generate a unique ID for the Datagram and then set it
+        self.__outbox.put(datagram)
+        del datagram
+
+    def emitDatagram(self, datagram):
+        """Emit a datagram (meant for relaying)"""
         self.__outbox.put(datagram)
         del datagram
 

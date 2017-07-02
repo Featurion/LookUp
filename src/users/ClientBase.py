@@ -7,7 +7,6 @@ from src.base import constants, utils
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 
-
 class ClientBase(Node):
 
     def __init__(self, address, port):
