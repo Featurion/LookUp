@@ -16,6 +16,7 @@ class ZoneBase(Node):
         self.__client = client
         self.__members = members
         self.__group = is_group
+        self.__cur_key = None
 
         self.setId(uuid.UUID(hex=zone_id))
         self.start() # zones start on creation
@@ -58,7 +59,9 @@ class ZoneBase(Node):
             return datagram
 
         if key and self.isSecure:
-            self.generateSecret(key)
+            if key != self.__cur_key:
+                self.__cur_key = key
+                self.generateSecret(key)
 
             data = Node.encrypt(self, datagram.toJSON())
             data = base64.b85encode(data).decode()
@@ -77,7 +80,9 @@ class ZoneBase(Node):
     def decrypt(self, datagram):
         key = self.getWorkingKey(datagram.getSender())
         if key:
-            self.generateSecret(key)
+            if key != self.__cur_key:
+                self.__cur_key = key
+                self.generateSecret(key)
 
             data = base64.b85decode(datagram.getData())
             data = Node.decrypt(self, data)
