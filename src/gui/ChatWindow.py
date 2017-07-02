@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QMenu, QAction, QToolButton, QToolBar
+from PyQt5.QtWidgets import QMainWindow, QMenu, QMessageBox, QAction, QToolButton, QToolBar
 from PyQt5.QtWidgets import QVBoxLayout, QSystemTrayIcon, QTabWidget, QWidget
 from PyQt5.QtWidgets import QStackedWidget
 
@@ -8,12 +8,15 @@ from src.base import constants, utils
 from src.gui.ChatTab import ChatTab
 from src.gui.ConnectionDialog import ConnectionDialog
 from src.gui.ConnectingWidget import ConnectingWidget
+from src.gui.SMPInitiateDialog import SMPInitiateDialog
+from src.gui.SMPRespondDialog import SMPRespondDialog
 from src.zones.Zone import Zone
 
 
 class ChatWindow(QMainWindow):
 
     new_client_signal = pyqtSignal(str, str, list, list, bool)
+    smp_request_signal = pyqtSignal(int, str, str, int)
 
     def __init__(self, interface):
         QMainWindow.__init__(self)
@@ -21,6 +24,7 @@ class ChatWindow(QMainWindow):
         self.interface = interface
 
         self.new_client_signal.connect(self.newClient)
+        self.smp_request_signal.connect(self.smpRequest)
 
         # window setup
 
@@ -181,7 +185,19 @@ class ChatWindow(QMainWindow):
         pass
 
     def __showAuthDialog(self):
-        pass
+        zone = self.interface.chat_tabs.currentWidget().getZone()
+
+        if zone is None:
+            QMessageBox.information(self, "Not Available", "You must be chatting with someone before you can authenticate the connection.")
+            return
+
+        try:
+            question, answer, clicked = QSMPInitiateDialog.getQuestionAndAnswer()
+        except AttributeError:
+            QMessageBox.information(self, "Not Available", "Encryption keys are not available until you are chatting with someone")
+
+        if clicked == constants.BUTTON_OKAY:
+            zone.initiateSMP(str(question), str(answer))
 
     @pyqtSlot(str, str, list, list, bool)
     def newClient(self, zone_id, key, member_ids, member_names, is_group):
@@ -202,3 +218,18 @@ class ChatWindow(QMainWindow):
             zone = Zone(tab, zone_id, int(key), member_ids, is_group)
             self.interface.getClient().enter(tab, zone)
             zone.sendRedy()
+
+    @pyqtSlot(int, str, str, int)
+    def smpRequest(self, callback_type, name, question='', errno=0):
+        if callback_type == constants.SMP_CALLBACK_REQUEST:
+            answer, clicked = QSMPRespondDialog.getAnswer(name, question)
+            if clicked == constants.BUTTON_OKAY:
+                self.interface.getClient().respondSMP(name, str(answer))
+        elif callback_type == constants.SMP_CALLBACK_COMPLETE:
+            QMessageBox.information(self, "%s Authenticated" % name,
+                "Your chat session with %s has been succesfully authenticated. The conversation is verfied as secure." % name)
+        elif callback_type == constants.SMP_CALLBACK_ERROR:
+            if errno == constants.SMP_CHECK:
+                QMessageBox.warning(self, constants.TITLE_PROTOCOL_ERROR, constants.PROTOCOL_ERROR % (name))
+            elif errno == constants.SMP_MATCH:
+                QMessageBox.critical(self, constants.TITLE_SMP_MATCH_FAILED, constants.SMP_MATCH_FAILED)

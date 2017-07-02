@@ -1,10 +1,10 @@
 import base64
 import queue
 
-from src.base import constants
+from src.base import constants, utils
 from src.base.Datagram import Datagram
 from src.zones.ZoneBase import ZoneBase
-from src.base import utils
+from src.base.SMP import SMP
 
 class Zone(ZoneBase):
 
@@ -14,6 +14,8 @@ class Zone(ZoneBase):
         self.id2member = {id_: tuple() for id_ in member_ids}
         self.__alt_key = key
         self.pending_messages = []
+        self.smp = None
+        self.smp_step_1 = None
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.doRedy,
@@ -43,6 +45,12 @@ class Zone(ZoneBase):
             return member[1]
         else:
             return None
+
+    def __checkSMP(self):
+        if not self.smp.match:
+            self.notify.error('SMPError', 'SMP match failed')
+        else:
+            return True
 
     def sendMessage(self, command, data=None):
         datagram = Datagram()
@@ -119,3 +127,13 @@ class Zone(ZoneBase):
         del text
         del name
         del datagram
+
+    def initiateSMP(self, question, answer):
+        self.sendMessage(constants.CMD_SMP_0, question)
+        self.smp = SMP(answer)
+        buffer_ = self.smp.step1()
+        self.sendMessage(constants.CMD_SMP_1, buffer_)
+
+    def respondSMP(self, answer):
+        self.smp = SMP(answer)
+        self.__doSMPStep1(self.smp_step_1)

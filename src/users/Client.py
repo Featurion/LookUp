@@ -304,3 +304,7 @@ class Client(ClientBase):
             self.notify.warning('received suspicious zone datagram')
 
         del datagram
+
+    def respondSMP(self, zone_id, answer):
+        zone = self.zm.getZoneById(zone_id)
+        zone.respondSMP(answer)

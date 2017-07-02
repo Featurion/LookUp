@@ -33,14 +33,6 @@ class KeyHandler(Notifier):
             converted += data[i] * (256 ** (length - i - 1))
         return converted
 
-    @staticmethod
-    def mapStringToInt(str_):
-        num = shift = 0
-        for char in reversed(str_):
-            num |= ord(char) << shift
-            shift += 8
-        return num
-
     def __init__(self):
         Notifier.__init__(self)
         self.__aes_mode = AES.MODE_CBC
@@ -64,6 +56,9 @@ class KeyHandler(Notifier):
         if self.__pub_key is None:
             self.generateKey()
         return self.__pub_key
+
+    def getRandomBytes(self, n_bytes=256):
+        return Random.get_random_bytes(n_bytes)
 
     def generateKey(self):
         if len(str(DEF_P)) < 1028:
@@ -127,3 +122,10 @@ class KeyHandler(Notifier):
         except Exception as e:
             self.notify.error('CryptoError', 'error decrypting data')
             del data
+
+    def mapStringToInt(self, str_):
+        num = shift = 0
+        for char in reversed(str_):
+            num |= ord(char) << shift
+            shift += 8
+        return num

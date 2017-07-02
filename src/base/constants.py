@@ -24,6 +24,12 @@ BANNED = b'banned'
 
 WANT_BLANK_GROUPS = settings['want-blank-groups']
 
+# GUI
+
+BUTTON_OKAY = 0
+BUTTON_CANCEL = 1
+BUTTON_FORGOT = 2
+
 # Logging
 
 DEBUG = 10
@@ -63,6 +69,11 @@ CMD_ZONE_MSG = 10
 CMD_ZONE_ADD = 11
 CMD_TYPING = 12
 CMD_MSG = 13
+CMD_SMP_0 = 14
+CMD_SMP_1 = 15
+CMD_SMP_2 = 16
+CMD_SMP_3 = 17
+CMD_SMP_4 = 18
 
 # Users
 
@@ -79,6 +90,8 @@ VALID_NAME = 0
 INVALID_EMPTY_NAME = 1
 INVALID_NAME_CONTENT = 2
 INVALID_NAME_LENGTH = 3
+SMP_CHECK = 16
+SMP_MATCH = 17
 
 TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
@@ -87,6 +100,8 @@ TITLE_NAME_IN_USE = 'Username is taken'
 TITLE_NAME_DOESNT_EXIST = "Username doesn't exist"
 TITLE_BANNED = "You have been banned"
 TITLE_INVALID_COMMAND = "Received invalid command"
+TITLE_SMP_MATCH_FAILED = "Eavesdropping detected"
+TITLE_PROTOCOL_ERROR = "Invalid response"
 
 CHOOSE = 'Please choose another'
 EMPTY_NAME = 'Please enter a username.'
@@ -97,6 +112,8 @@ NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
 NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
 CLIENT_BANNED = 'You have been IP banned.'
+SMP_MATCH_FAILED = "Chat authentication failed. Either your buddy provided the wrong answer to the question or someone may be attempting to eavesdrop on your conversation. Note that answers are case sensitive."
+SMP_MATCH_FAILED_SHORT = "Chat authentication failed. Note that answers are case sensitive."
 INVALID_COMMAND = 'A client has sent you an invalid command.'
 
 # Chatting
@@ -110,3 +127,9 @@ TYPING_TIMEOUT = 1500
 TYPING_START = 0
 TYPING_STOP_WITHOUT_TEXT = 1
 TYPING_STOP_WITH_TEXT = 2
+
+# SMP
+
+SMP_CALLBACK_REQUEST = 0
+SMP_CALLBACK_COMPLETE = 1
+SMP_CALLBACK_ERROR = 2
