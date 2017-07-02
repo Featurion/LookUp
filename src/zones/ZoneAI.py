@@ -160,4 +160,4 @@ class ZoneAI(ZoneBase):
         del datagram
 
     def clientSMP(self, datagram):
-        self.emitMessage(datagram)
+        self.emitMessage(datagram, datagram.getSender())
