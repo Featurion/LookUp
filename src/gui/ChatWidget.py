@@ -192,8 +192,6 @@ class ChatWidget(QWidget):
     def sendMessage(self):
         if self.disabled:
             return
-        else:
-            pass
 
         self.typing_timer.stop()
 
@@ -211,20 +209,17 @@ class ChatWidget(QWidget):
         text = self.__linkify(text)
 
         # Add the message to the message queue to be sent
-        _t = Thread(target=self.getTab().getZone().sendChatMessage,
-                    args=(text,),
-                    daemon=True).start()
-        del _t
+        self.getTab().getZone().sendChatMessage(text)
 
-        self.appendMessage(text, utils.getTimestamp(), constants.SENDER, self.getClient().getName())
+        self.appendMessage(text,
+                           utils.getTimestamp(),
+                           constants.SENDER,
+                           self.getClient().getName())
 
         del text
 
     def sendTypingStatus(self, status):
-        _t = Thread(target=self.getTab().getZone().sendTypingMessage,
-                    args=(status,),
-                    daemon=True).start()
-        del _t
+        self.getTab().getZone().sendTypingMessage(status)
 
     def disable(self):
         self.disabled = True
@@ -239,8 +234,11 @@ class ChatWidget(QWidget):
 
         timestamp = utils.formatTimestamp(timestamp)
 
-        timestamp = '<font style="opacity:.5" color="' + str(color) + '">(' + str(timestamp) + ') <strong>' + \
-                    name + ':</strong></font> '
+        timestamp = '<font style="opacity:.5" ' \
+                    + 'color="' + str(color) + '">' \
+                    + '(' + str(timestamp) + ')' \
+                    + ' <strong>' + name + ':</strong>' \
+                    + '</font> '
 
         message = timestamp + message
 
@@ -298,6 +296,7 @@ class ChatWidget(QWidget):
         if self.cleared:
             self.cleared = False
             return
+
         if str(self.chat_input.toPlainText())[-1:] == '\n':
             self.sendMessage()
         else:

@@ -59,7 +59,7 @@ class ZoneAI(ZoneBase):
                     continue
             datagram.setSender(self.getClient().getId())
             datagram.setRecipient(ai.getId())
-            self.emitDatagram(datagram)
+            self.sendDatagram(datagram)
             del datagram
 
         del sender
