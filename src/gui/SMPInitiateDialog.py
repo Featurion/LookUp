@@ -76,6 +76,6 @@ class SMPInitiateDialog(QDialog):
 
     @staticmethod
     def getQuestionAndAnswer():
-        dialog = QSMPInitiateDialog()
+        dialog = SMPInitiateDialog()
         dialog.exec_()
         return dialog.smp_question, dialog.smp_answer, dialog.clicked_button

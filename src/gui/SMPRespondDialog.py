@@ -74,6 +74,6 @@ class SMPRespondDialog(QDialog):
 
     @staticmethod
     def getAnswer(name, question):
-        dialog = QSMPRespondDialog(name, question)
+        dialog = SMPRespondDialog(name, question)
         dialog.exec_()
         return dialog.smp_answer, dialog.clicked_button

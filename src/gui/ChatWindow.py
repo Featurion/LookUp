@@ -188,16 +188,21 @@ class ChatWindow(QMainWindow):
         widget = self.chat_tabs.currentWidget()
 
         if widget is None:
-            QMessageBox.information(self, "Not Available", "You must be chatting with someone before you can authenticate the connection.")
+            QMessageBox.information(self, "Not Available", "You must have a tab open to use this.")
             return
+        else:
+            zone = widget.getZone()
+            if zone is None:
+                QMessageBox.information(self, "Not Available", "You must be chatting with someone before you can authenticate the connection.")
+                return
 
         try:
-            question, answer, clicked = QSMPInitiateDialog.getQuestionAndAnswer()
+            question, answer, clicked = SMPInitiateDialog.getQuestionAndAnswer()
+
+            if clicked == constants.BUTTON_OKAY:
+                zone.initiateSMP(str(question), str(answer))
         except AttributeError:
             QMessageBox.information(self, "Not Available", "Encryption keys are not available until you are chatting with someone")
-
-        if clicked == constants.BUTTON_OKAY:
-            zone.initiateSMP(str(question), str(answer))
 
     @pyqtSlot(str, str, list, list, bool)
     def newClient(self, zone_id, key, member_ids, member_names, is_group):
