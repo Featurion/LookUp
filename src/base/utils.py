@@ -15,7 +15,6 @@ def isNameInvalid(name):
     else:
         return VALID_NAME
 
-
 def getTimestamp():
     return datetime.datetime.now().timestamp()
 

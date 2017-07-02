@@ -2,9 +2,6 @@
 app-name: LookUp
 version: 'PROTOTYPE-DEV'
 
-# GUI
-want-light-theme: true
-
 # Logging
 log-path: /logs
 log-format: 'none'
