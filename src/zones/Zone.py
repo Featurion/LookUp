@@ -135,12 +135,12 @@ class Zone(ZoneBase):
 
     def doSMP(self, datagram):
         command = datagram.getCommand()
-        data = datagram.getData()
+        data = datagram.getData().encode('latin-1')
         name = self.getClientNameById(datagram.getSender())
 
         if command == constants.CMD_SMP_0:
             # SMP callback with the given question
-            self.tab.interface.getWindow().smp_request_signal(constants.SMP_CALLBACK_REQUEST, name, self.getId(), data)
+            self.tab.interface.getWindow().smp_request_signal.emit(constants.SMP_CALLBACK_REQUEST, name, self.getId(), data.decode('latin-1'), 0)
         elif command == constants.CMD_SMP_1:
             # If there's already an SMP object, go ahead to step 1.
             # Otherwise, save the data until we have an answer from the user to respond with
@@ -159,20 +159,20 @@ class Zone(ZoneBase):
 
     def __doSMPStep1(self, data):
         buffer_ = self.smp.step2(data)
-        self.sendMessage(COMMAND_SMP_2, buffer_)
+        self.sendMessage(constants.CMD_SMP_2, buffer_)
 
     def __doSMPStep2(self, data):
         buffer_ = self.smp.step3(data)
-        self.sendMessage(COMMAND_SMP_3, buffer_)
+        self.sendMessage(constants.CMD_SMP_3, buffer_)
 
     def __doSMPStep3(self, data):
         buffer_ = self.smp.step4(data)
-        self.sendMessage(COMMAND_SMP_4, buffer_)
+        self.sendMessage(constants.CMD_SMP_4, buffer_)
 
     def __doSMPStep4(self, data, name):
         self.smp.step5(data)
         if self.__checkSMP():
-            self.tab.interface.getWindow().smp_request_signal(constants.SMP_CALLBACK_COMPLETE, name)
+            self.tab.interface.getWindow().smp_request_signal.emit(constants.SMP_CALLBACK_COMPLETE, name, '', '', 0)
         self.smp = None
 
     def initiateSMP(self, question, answer):

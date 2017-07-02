@@ -203,7 +203,7 @@ class SMP(KeyHandler):
         return (val >= 2 and val <= self.mod-2)
 
     def hash(self, message):
-        return int(self.crypto.stringHash(message), 16)
+        return int(self.hashToString(message), 16)
 
 def packList(*items):
     buffer = b''

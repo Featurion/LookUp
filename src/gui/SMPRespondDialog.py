@@ -76,4 +76,4 @@ class SMPRespondDialog(QDialog):
     def getAnswer(name, question):
         dialog = SMPRespondDialog(name, question)
         dialog.exec_()
-        return dialog.smp_answer, dialog.clicked_button
+        return (dialog.smp_answer, dialog.clicked_button)

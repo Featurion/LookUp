@@ -71,12 +71,15 @@ class Datagram(object):
         return datagram
 
     def toJSON(self):
+        data = self.getData()
+        if isinstance(data, bytes):
+            data = data.decode('latin-1')
         return json.dumps({
             'id': self.getId(),
             'command': self.getCommand(),
             'sender': self.getSender(),
             'recipient': self.getRecipient(),
-            'data': self.getData(),
+            'data': data,
             'hmac': self.getHMAC(),
             'time': self.getTimestamp(),
         })

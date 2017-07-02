@@ -69,13 +69,13 @@ class SMPInitiateDialog(QDialog):
         self.setLayout(vbox)
 
     def buttonClicked(self, button):
-        self.smpQuestion = self.smp_question_input.text()
-        self.smpAnswer = self.smp_answer_input.text()
-        self.clickedButton = button
+        self.smp_question = self.smp_question_input.text()
+        self.smp_answer = self.smp_answer_input.text()
+        self.clicked_button = button
         self.close()
 
     @staticmethod
     def getQuestionAndAnswer():
         dialog = SMPInitiateDialog()
         dialog.exec_()
-        return dialog.smp_question, dialog.smp_answer, dialog.clicked_button
+        return (dialog.smp_question, dialog.smp_answer, dialog.clicked_button)

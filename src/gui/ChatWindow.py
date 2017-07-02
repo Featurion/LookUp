@@ -225,9 +225,9 @@ class ChatWindow(QMainWindow):
             zone.sendRedy()
 
     @pyqtSlot(int, str, str, str, int)
-    def smpRequest(self, callback_type, name, zone_id='', question='', errno=0):
+    def smpRequest(self, callback_type, name, zone_id, question, errno):
         if callback_type == constants.SMP_CALLBACK_REQUEST:
-            answer, clicked = QSMPRespondDialog.getAnswer(name, question)
+            answer, clicked = SMPRespondDialog.getAnswer(name, question)
             if clicked == constants.BUTTON_OKAY:
                 self.interface.getClient().respondSMP(zone_id, str(answer))
         elif callback_type == constants.SMP_CALLBACK_COMPLETE:
