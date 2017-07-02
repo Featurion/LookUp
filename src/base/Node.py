@@ -120,11 +120,6 @@ class Node(KeyHandler):
         self.__outbox.put(datagram)
         del datagram
 
-    def emitDatagram(self, datagram):
-        """Emit a datagram (meant for relaying)"""
-        self.__outbox.put(datagram)
-        del datagram
-
     def receiveDatagram(self, datagram):
         self.__inbox.put(datagram)
         del datagram

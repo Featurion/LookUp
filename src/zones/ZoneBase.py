@@ -48,6 +48,11 @@ class ZoneBase(Node):
         if self.isGroup:
             self.__members.append(ai)
 
+    def emitDatagram(self, datagram):
+        """Emit a datagram (meant for relaying)"""
+        self.__outbox.put(datagram)
+        del datagram
+
     @property
     def isGroup(self):
         return self.__group
