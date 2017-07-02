@@ -50,7 +50,7 @@ class ZoneBase(Node):
 
     def emitDatagram(self, datagram):
         """Emit a datagram (meant for relaying)"""
-        self.__outbox.put(datagram)
+        self.getOutbox().outbox.put(datagram)
         del datagram
 
     @property

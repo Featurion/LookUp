@@ -106,6 +106,10 @@ class Node(KeyHandler):
         else:
             return False
 
+    def getOutbox(self):
+        """Getter for datagram outbox"""
+        return self.__outbox
+
     def getDatagramFromInbox(self):
         """Getter for next datagram pending"""
         return self.__inbox.get_nowait()
