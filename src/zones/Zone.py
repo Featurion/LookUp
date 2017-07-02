@@ -21,6 +21,11 @@ class Zone(ZoneBase):
             constants.CMD_REDY: self.doRedy,
             constants.CMD_TYPING: self.doTyping,
             constants.CMD_MSG: self.doMsg,
+            constants.CMD_SMP_0: self.doSMP, # Anyway to make these 'not ugly'?
+            constants.CMD_SMP_1: self.doSMP,
+            constants.CMD_SMP_2: self.doSMP,
+            constants.CMD_SMP_3: self.doSMP,
+            constants.CMD_SMP_4: self.doSMP,
         })
 
     def cleanup(self):
@@ -127,6 +132,48 @@ class Zone(ZoneBase):
         del text
         del name
         del datagram
+
+    def doSMP(self, datagram):
+        command = datagram.getCommand()
+        data = datagram.getData()
+        name = self.getClientNameById(datagram.getSender())
+
+        if command == constants.CMD_SMP_0:
+            # SMP callback with the given question
+            self.tab.interface.getWindow().smp_request_signal(constants.SMP_CALLBACK_REQUEST, name, self.getId(), data)
+        elif command == constants.CMD_SMP_1:
+            # If there's already an SMP object, go ahead to step 1.
+            # Otherwise, save the data until we have an answer from the user to respond with
+            if self.smp:
+                self.__doSMPStep1(data)
+            else:
+                self.smp_step_1 = data
+        elif command == constants.CMD_SMP_2:
+            self.__doSMPStep2(data)
+        elif command == constants.CMD_SMP_3:
+            self.__doSMPStep3(data)
+        elif command == constants.CMD_SMP_4:
+            self.__doSMPStep4(data, name)
+        else:
+            self.notify.warning('suspicious invalid SMP command')
+
+    def __doSMPStep1(self, data):
+        buffer_ = self.smp.step2(data)
+        self.sendMessage(COMMAND_SMP_2, buffer_)
+
+    def __doSMPStep2(self, data):
+        buffer_ = self.smp.step3(data)
+        self.sendMessage(COMMAND_SMP_3, buffer_)
+
+    def __doSMPStep3(self, data):
+        buffer_ = self.smp.step4(data)
+        self.sendMessage(COMMAND_SMP_4, buffer_)
+
+    def __doSMPStep4(self, data, name):
+        self.smp.step5(data)
+        if self.__checkSMP():
+            self.tab.interface.getWindow().smp_request_signal(constants.SMP_CALLBACK_COMPLETE, name)
+        self.smp = None
 
     def initiateSMP(self, question, answer):
         self.sendMessage(constants.CMD_SMP_0, question)
