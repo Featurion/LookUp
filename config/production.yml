@@ -18,4 +18,4 @@ want-blank-groups: true
 # Security settings
 
 # TODO: Figure out a way to secure a key in production:
-hmac-key: 'aKMsOxxZA1s0usx2tZEoZA' # Do NOT use this key in production
+hmac-key: '614b4d734f78785a4131733075737832745a456f5a41' # Do NOT use this key in production
