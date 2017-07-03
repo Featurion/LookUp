@@ -22,25 +22,6 @@ class KeyHandler(Notifier):
     def _unpad(str_):
         return str_[:-ord(str_[len(str_)-1:])]
 
-    @staticmethod
-    def hashToString(hash_):
-        return hex(KeyHandler.octxToNum(hash_))[2:-1].upper()
-
-    @staticmethod
-    def octxToNum(data):
-        converted, length = 0, len(data)
-        for i in range(length):
-            converted += data[i] * (256 ** (length - i - 1))
-        return converted
-
-    @staticmethod
-    def mapStringToInt(str_):
-        num = shift = 0
-        for char in reversed(str_):
-            num |= ord(char) << shift
-            shift += 8
-        return num
-
     def __init__(self):
         Notifier.__init__(self)
         self.__aes_mode = AES.MODE_CBC
@@ -64,6 +45,19 @@ class KeyHandler(Notifier):
         if self.__pub_key is None:
             self.generateKey()
         return self.__pub_key
+
+    def getRandomBytes(self, n_bytes=256):
+        return Random.get_random_bytes(n_bytes)
+
+    def octxToNum(self, data):
+        converted, length = 0, len(data)
+        for i in range(length):
+            converted += data[i] * (256 ** (length - i - 1))
+        return converted
+
+    def hashToString(self, message):
+        digest = self.generateHash(message, True)
+        return hex(self.octxToNum(digest))[2:-1].upper()
 
     def generateKey(self):
         if len(str(DEF_P)) < 1028:
@@ -105,7 +99,9 @@ class KeyHandler(Notifier):
         else:
             return hmac.new(key, msg=message, digestmod=hashlib.sha512).hexdigest()
 
-    def generateHash(self, data):
+    def generateHash(self, data, encode=False):
+        if encode:
+            data = data.encode()
         return SHA256.new(data).digest()
 
     def encrypt(self, data: str):
@@ -127,3 +123,14 @@ class KeyHandler(Notifier):
         except Exception as e:
             self.notify.error('CryptoError', 'error decrypting data')
             del data
+
+    def mapStringToInt(self, str_):
+        num = shift = 0
+        for char in reversed(str_):
+            num |= ord(char) << shift
+            shift += 8
+        return num
+
+    def binToDec(self, binval):
+        import binascii
+        return int(binascii.hexlify(binval), 16)

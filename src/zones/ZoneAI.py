@@ -17,6 +17,11 @@ class ZoneAI(ZoneBase):
             constants.CMD_ZONE_ADD: self.addUser,
             constants.CMD_TYPING: self.clientTyping,
             constants.CMD_MSG: self.clientMsg,
+            constants.CMD_SMP_0: self.clientSMP, # Anyway to make these 'not ugly'?
+            constants.CMD_SMP_1: self.clientSMP,
+            constants.CMD_SMP_2: self.clientSMP,
+            constants.CMD_SMP_3: self.clientSMP,
+            constants.CMD_SMP_4: self.clientSMP,
         })
 
     def cleanup(self):
@@ -60,8 +65,8 @@ class ZoneAI(ZoneBase):
             datagram.setSender(self.getClient().getId())
             datagram.setRecipient(ai.getId())
             self.emitDatagram(datagram)
-            del datagram
 
+        del datagram
         del sender
 
     def _send(self):
@@ -153,3 +158,6 @@ class ZoneAI(ZoneBase):
         del name
         del ai
         del datagram
+
+    def clientSMP(self, datagram):
+        self.emitMessage(datagram, datagram.getSender())
