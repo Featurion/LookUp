@@ -56,7 +56,7 @@ class KeyHandler(Notifier):
         return converted
 
     def hashToString(self, message):
-        digest = self.generateHash(message, True)
+        digest = self.generateHash(message.decode())
         return hex(self.octxToNum(digest))[2:-1].upper()
 
     def generateKey(self):
@@ -78,7 +78,6 @@ class KeyHandler(Notifier):
 
     def generateSecret(self, key):
         if self.__priv_key:
-            self.notify.debug('generating DH secret')
             self.__dh_secret = long_to_bytes(pow(key, self.__priv_key, DEF_P))
             hash_ = self.generateHash(str(self.__dh_secret).encode())
             self.__aes_key = hash_[0:32]
@@ -99,9 +98,7 @@ class KeyHandler(Notifier):
         else:
             return hmac.new(key, msg=message, digestmod=hashlib.sha512).hexdigest()
 
-    def generateHash(self, data, encode=False):
-        if encode:
-            data = data.encode()
+    def generateHash(self, data):
         return SHA256.new(data).digest()
 
     def encrypt(self, data: str):

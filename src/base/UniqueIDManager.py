@@ -37,9 +37,8 @@ class UniqueIDManager(Notifier):
         scope = self.SCOPES.get(mode)
 
         if scope is None and seed is None:
-            self.notify.debug('generating random ID...')
             scope = self.SCOPES['default']
-            seed = base64.b64encode(os.urandom(32)).decode('utf-8')
+            seed = os.urandom(32).hex()
             id_ = uuid.uuid5(scope, seed)
             return id_
         elif scope is None and seed is not None:

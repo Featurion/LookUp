@@ -51,7 +51,7 @@ MsgLevel2Name = {
 
 # Crypto
 
-HMAC_KEY = settings['hmac-key'].encode()
+HMAC_KEY = bytes.fromhex(settings['hmac-key'])
 
 # Commands
 
