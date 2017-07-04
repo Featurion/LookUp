@@ -135,6 +135,8 @@ class ChatWidget(QWidget):
         self.typing_timer.setSingleShot(True)
         self.typing_timer.timeout.connect(self.stoppedTyping)
 
+        self.last_text_size = 0
+
         del font_metrics
         del hbox
         del input_wrapper
@@ -238,7 +240,7 @@ class ChatWidget(QWidget):
                     + 'color="' + str(color) + '">' \
                     + '(' + str(timestamp) + ')' \
                     + ' <strong>' + name + ':</strong>' \
-                    + '</font> '
+                    + '</font> ' # TODO: Fix opacity
 
         message = timestamp + message
 
@@ -288,16 +290,27 @@ class ChatWidget(QWidget):
             self.cleared = False
             return
 
-        if str(self.chat_input.toPlainText())[-1:] == '\n':
+        plain_text = str(self.chat_input.toPlainText())
+        size = len(plain_text)
+
+        if plain_text[-1:] == '\n':
             self.sendMessage()
+        elif size < self.last_text_size and self.last_text_size > 0:
+            # User must be deleting text
+            self.sendTypingStatus(constants.TYPING_DELETE_TEXT)
+        elif size == 0:
+            # Forget the timer, the user deleted all the text
+            self.stoppedTyping()
         else:
             # Start a timer to check for the user stopping typing
             self.typing_timer.start(constants.TYPING_TIMEOUT)
             self.sendTypingStatus(constants.TYPING_START)
 
+        self.last_text_size = size
+
     def stoppedTyping(self):
         self.typing_timer.stop()
         if str(self.chat_input.toPlainText()) == '':
-            self.sendTypingStatus(constants.TYPING_STOP_WITHOUT_TEXT)
+            self.sendTypingStatus(constants.TYPING_STOP)
         else:
             self.sendTypingStatus(constants.TYPING_STOP_WITH_TEXT)

@@ -153,11 +153,13 @@ class ChatTab(QWidget):
         if command == constants.CMD_TYPING:
             status = int(*data[0])
             if status == constants.TYPING_START:
-                self.interface.getWindow().status_bar.showMessage("%s is typing" % name)
-            elif status == constants.TYPING_STOP_WITHOUT_TEXT:
+                self.interface.getWindow().status_bar.showMessage("%s is typing..." % name)
+            elif status == constants.TYPING_STOP:
                 self.interface.getWindow().status_bar.showMessage('')
             elif status == constants.TYPING_STOP_WITH_TEXT:
                 self.interface.getWindow().status_bar.showMessage("%s has entered text" % name)
+            elif status == constants.TYPING_DELETE_TEXT:
+                self.interface.getWindow().status_bar.showMessage("%s is deleting text..." % name)
         elif command == constants.CMD_MSG:
             timestamp, text = data
             if not loop:
