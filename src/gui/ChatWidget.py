@@ -83,6 +83,9 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.cleared = False
 
+        self.deleting = False
+        self.typing = False
+
         self.chat_log = QTextBrowser()
         self.chat_log.setOpenExternalLinks(True)
 
@@ -293,20 +296,28 @@ class ChatWidget(QWidget):
         plain_text = str(self.chat_input.toPlainText())
         size = len(plain_text)
 
-        if plain_text[-1:] == '\n':
+        if plain_text[-1:] == '\n': # someone remove this. multiline messages are currently not possible
             self.sendMessage()
-        elif size < self.last_text_size and self.last_text_size > 0:
+        elif size < self.last_text_size and self.last_text_size > 0 and not self.deleting:
             # User must be deleting text
             self.sendTypingStatus(constants.TYPING_DELETE_TEXT)
+            self.deleting = True
+            return
         elif size == 0:
             # Forget the timer, the user deleted all the text
             self.stoppedTyping()
         else:
             # Start a timer to check for the user stopping typing
             self.typing_timer.start(constants.TYPING_TIMEOUT)
-            self.sendTypingStatus(constants.TYPING_START)
 
-        self.last_text_size = size
+            if not self.typing:
+                self.sendTypingStatus(constants.TYPING_START)
+                self.typing = True
+
+            return
+
+        self.deleting = False
+        self.typing = False
 
     def stoppedTyping(self):
         self.typing_timer.stop()
