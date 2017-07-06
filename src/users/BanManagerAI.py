@@ -14,13 +14,17 @@ class BanManagerAI(Notifier):
         else:
             return False
 
-    def ban(self, identifier):
-        ai = self.client_manager.getClient(identifier)
-        if ai:
-            self.client_manager.banClient(ai)
+    def ban(self, identifier, address_only=False):
+        if address_only:
+            self.client_manager.banClient(address=identifier)
             return True
         else:
-            return False
+            ai = self.client_manager.getClient(identifier)
+            if ai:
+                self.client_manager.banClient(ai)
+                return True
+            else:
+                return False
 
     def kill(self, ip):
         ais = self.client_manager.getClientsByAddress(ip)

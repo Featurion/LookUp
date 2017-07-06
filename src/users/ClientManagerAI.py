@@ -62,10 +62,15 @@ class ClientManagerAI(UniqueIDManager):
         # ai.cleanup() - TODO Zach: Fix cleanup()
         del ai
 
-    def banClient(self, ai):
+    def banClient(self, ai=None, address=None):
         """Kickban an existing client"""
-        self.removeClient(ai) # First, kick the client
-        self.banlist.append(ai.getAddress())
+        if ai:
+            self.removeClient(ai) # First, kick the client
+            self.banlist.append(ai.getAddress()) # Add the client to the banlist
+        else if address:
+            self.banlist.append(address) # Add the client to the banlist
+        else:
+            self.notify.error('BanError', 'no AI or address specified')
 
     def getClients(self):
         return self.clients

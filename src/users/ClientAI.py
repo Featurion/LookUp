@@ -77,6 +77,7 @@ class ClientAI(ClientBase):
         if server_hmac != client_hmac:
             self.notify.warning('received suspicious improper hmac')
             self.sendNo()
+            self.server.bm.ban(self.getAddress())
             return
         else: # valid hmac
             self.notify.debug('HMAC matches')
@@ -104,6 +105,7 @@ class ClientAI(ClientBase):
         if s is None or B is None:
             self.notify.warning('suspicious challenge failure')
             self.sendNo() # initial challenge response
+            self.server.bm.ban(self.getAddress())
             return
         else:
             self.notify.debug('challenge success')
@@ -127,6 +129,8 @@ class ClientAI(ClientBase):
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()
+                self.server.bm.ban(self.getAddress())
+                return
         else:
             HAMK = None
 
