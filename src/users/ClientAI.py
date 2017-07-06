@@ -122,10 +122,14 @@ class ClientAI(ClientBase):
         M = bytes.fromhex(datagram.getData())
         if M:
             HAMK = self.svr.verify_session(M)
-            if HAMK and self.svr.authenticated(): # authenticated
+
+            if HAMK and self.svr.authenticated(): # Authenticated
                 self.notify.debug('challenge verified')
                 self.server.cm.addClient(self)
                 self.sendResp(HAMK.hex())
+
+                hash_ = self.generateHash(str(self.svr.get_session_key()).encode()) # Generate new hash based off of the session key
+                self.setAltAES(hash_[0:32], hash_[16:32]) # Set alt AES key and iv
             else:
                 self.notify.warning('suspicious challenge failure')
                 self.sendNo()

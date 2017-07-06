@@ -27,6 +27,8 @@ class KeyHandler(Notifier):
         self.__aes_mode = AES.MODE_CBC
         self.__aes_key = None
         self.__aes_iv = None
+        self.__alt_aes_key = None
+        self.__alt_aes_iv = None
         self.__pub_key = None
         self.__priv_key = None
         self.__dh_secret = None
@@ -37,6 +39,8 @@ class KeyHandler(Notifier):
         self.__aes_mode = None
         self.__aes_key = None
         self.__aes_iv = None
+        self.__alt_aes_key = None
+        self.__alt_aes_iv = None
         self.__pub_key = None
         self.__priv_key = None
         self.__dh_secret = None
@@ -89,8 +93,21 @@ class KeyHandler(Notifier):
 
         del key
 
+    def setAltAES(self, key, iv):
+        self.__alt_aes_key = key
+        self.__alt_aes_iv = iv
+
+    def getAltAES(self):
+        if self.__alt_aes_key is None or self.__alt_aes_iv is None:
+            return False
+        else:
+            return True
+
     def __generateCipher(self):
         return AES.new(self.__aes_key, self.__aes_mode, self.__aes_iv)
+
+    def __generateAltCipher(self):
+        return AES.new(self.__alt_aes_key, self.__aes_mode, self.__alt_aes_iv)
 
     def generateHmac(self, message, key, hex_digest=False):
         if not hex_digest:
@@ -106,6 +123,8 @@ class KeyHandler(Notifier):
             data = base64.b85encode(data.encode())
             data = KeyHandler._pad(data, AES.block_size)
             data = self.__generateCipher().encrypt(data)
+            if self.getAltAES(): # If the challenge is done, the alt cipher should be available
+                data = self.__generateAltCipher().encrypt(data) # Encrypt the data using the alt cipher too for double security
             return data
         except Exception as e:
             self.notify.error('CryptoError', 'error encrypting data')
@@ -113,6 +132,8 @@ class KeyHandler(Notifier):
 
     def decrypt(self, data: bytes):
         try:
+            if self.getAltAES(): # If the challenge is done, the alt cipher should be available
+                data = self.__generateAltCipher().decrypt(data) # Decrypt the data using the alt cipher
             data = self.__generateCipher().decrypt(data)
             data = KeyHandler._unpad(data)
             data = base64.b85decode(data).decode()

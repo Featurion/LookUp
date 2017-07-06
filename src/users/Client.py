@@ -17,6 +17,7 @@ class Client(ClientBase):
     def __init__(self, interface, address, port):
         ClientBase.__init__(self, address, port)
         self.interface = interface
+        self.user = None
         self.zm = None
         self.__pending_tabs = {}
 
@@ -241,6 +242,9 @@ class Client(ClientBase):
 
         del M
         del HAMK
+
+        hash_ = self.generateHash(str(self.user.get_session_key()).encode()) # Generate new hash based off of the session key
+        self.setAltAES(hash_[0:32], hash_[16:32]) # Set alt AES key and iv
 
         if self.user.authenticated():
             self.setId(uuid.UUID(hex=resp.getRecipient()))
