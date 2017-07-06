@@ -94,7 +94,7 @@ class ClientAI(ClientBase):
     def doChallenge(self, datagram):
         self.notify.debug('challenging')
         salt, vkey = srp.create_salted_verification_key(self.getName().encode(),
-                                                        constants.HMAC_KEY)
+                                                        constants.CHALLENGE_PASSWORD)
 
         self.svr = srp.Verifier(self.getName().encode('latin-1'),
                                 salt,

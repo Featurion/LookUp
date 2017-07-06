@@ -52,6 +52,7 @@ MsgLevel2Name = {
 # Crypto
 
 HMAC_KEY = bytes.fromhex(settings['hmac-key'])
+CHALLENGE_PASSWORD = bytes.fromhex(settings['challenge-password'])
 
 # Commands
 

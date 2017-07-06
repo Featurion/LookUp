@@ -17,5 +17,8 @@ want-blank-groups: true
 
 # Security settings
 
-# TODO: Figure out a way to secure a key in production:
-hmac-key: '614b4d734f78785a4131733075737832745a456f5a41' # Do NOT use this key in production
+# TODO: Figure out a way to secure these settings
+# Do not use any of these defaults in production
+
+hmac-key: '614b4d734f78785a4131733075737832745a456f5a41'
+challenge-password: '76b8e2753d9ffc4b93111063d296a8729a3829caaeb3'

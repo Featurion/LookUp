@@ -188,8 +188,7 @@ class Client(ClientBase):
         # challenge
         M = self.initiateChallenge(name) # needed for verification
         if M is False:
-            self.notify.warning('AuthenticationError',
-                                'suspicious challenge failure')
+            self.notify.warning('suspicious challenge failure')
             callback('challenge failed')
             return
         else:
@@ -201,7 +200,7 @@ class Client(ClientBase):
             callback('') # start chatting
 
     def initiateChallenge(self, name):
-        self.user = srp.User(name.encode(), constants.HMAC_KEY)
+        self.user = srp.User(name.encode(), constants.CHALLENGE_PASSWORD)
         uname, A = self.user.start_authentication()
 
         datagram = Datagram()
@@ -220,6 +219,7 @@ class Client(ClientBase):
             s, B = map(bytes.fromhex, resp)
             M = self.user.process_challenge(s, B)
             if M is None:
+                self.notify.warning('suspicious challenge failure')
                 self.sendNo()
                 return False
             else:
@@ -247,7 +247,7 @@ class Client(ClientBase):
             self.notify.debug('challenge verified')
             return True
         else:
-            self.notify.critical('suspiciously challenge failure')
+            self.notify.warning('suspicious challenge failure')
             return False
 
     def initiateHelo(self, tab, member_names, is_group):
