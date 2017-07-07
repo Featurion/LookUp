@@ -103,12 +103,6 @@ class KeyHandler(Notifier):
         else:
             return True
 
-    def getAES(self):
-        if self.__aes_key is None or self.__aes_iv is None:
-            return False
-        else:
-            return True
-
     def __generateCipher(self):
         return AES.new(self.__aes_key, self.__aes_mode, self.__aes_iv)
 

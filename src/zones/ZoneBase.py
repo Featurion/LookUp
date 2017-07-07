@@ -104,12 +104,15 @@ class ZoneBase(Node):
                 datagram = self.decrypt(datagram)
 
             # HMAC verification
-            hmac = datagram.getHMAC()
-            if hmac: # Check if an HMAC exists
-                if not self.verifyHMAC(hmac, datagram.getData()): # Verify the HMAC
-                    self.notify.warning('suspicious HMAC failure')
-                    self.handleHMACFailure()
-                    return
+            if self.isSecure: # Check if this Zone is secure
+                hmac = datagram.getHMAC()
+                if hmac: # Check if the HMAC exists
+                    if not self.verifyHMAC(hmac, datagram.getData()): # Verify the HMAC
+                        self.notify.warning('suspicious HMAC failure')
+                        self.handleHMACFailure()
+                        return
+                    else:
+                        datagram.setHMAC('') # We're done with this HMAC
 
             self.handleReceivedDatagram(datagram)
             del datagram

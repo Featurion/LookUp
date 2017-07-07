@@ -63,8 +63,9 @@ class Zone(ZoneBase):
         datagram.setSender(self.getClient().getId())
         datagram.setRecipient(self.getId())
         datagram.setData(data)
-        if self.getAES():
-            datagram.setHMAC(base64.b64encode(self.generateHMAC(data))) # Generate and set the HMAC for the message
+        if self.isSecure:
+            hmac = self.generateHMAC(data)
+            datagram.setHMAC(base64.b85encode(hmac)) # Generate and set the HMAC for the message
 
         self.sendDatagram(datagram)
 
@@ -75,7 +76,7 @@ class Zone(ZoneBase):
         del datagram
 
     def sendChatMessage(self, text: str, id_: str):
-        self.sendMessage(constants.CMD_MSG, (text, id_))
+        self.sendMessage(constants.CMD_MSG, [text, id_])
 
     def sendTypingMessage(self, status):
         self.sendMessage(constants.CMD_TYPING, str(status))
@@ -125,13 +126,13 @@ class Zone(ZoneBase):
         del datagram
 
     def doMsg(self, datagram):
-        text, id_ = datagram.getData()
+        text, id_, timestamp = datagram.getData()
         name = self.getClientNameById(datagram.getSender())
 
         if datagram.getId() in self.pending_messages:
-            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text, id_), constants.RECEIVER, name, True)
+            self.tab.new_message_signal.emit(constants.CMD_MSG, (timestamp, text, id_), constants.RECEIVER, name, True)
         else:
-            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text, id_), constants.RECEIVER, name, False)
+            self.tab.new_message_signal.emit(constants.CMD_MSG, (timestamp, text, id_), constants.RECEIVER, name, False)
 
         del text
         del name

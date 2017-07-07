@@ -1,5 +1,6 @@
 import queue
 import threading
+import base64
 
 from src.base import utils
 from src.base.KeyHandler import KeyHandler
@@ -202,4 +203,4 @@ class Node(KeyHandler):
             generatedHMAC = self.generateHMAC(data)
         else:
             generatedHMAC = self.generateHMAC(data, key)
-        return utils.secureStrCmp(generatedHMAC, base64.b64decode(givenHMAC))
+        return utils.secureStrCmp(generatedHMAC, base64.b85decode(givenHMAC))

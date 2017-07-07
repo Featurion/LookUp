@@ -261,7 +261,6 @@ class ClientBase(Node):
         return data
 
     def sendDatagram(self, datagram):
-        datagram.setTimestamp(utils.getTimestamp())
         Node.sendDatagram(self, datagram)
 
         self.__waitForSendSuccess()

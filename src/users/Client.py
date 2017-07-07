@@ -167,7 +167,7 @@ class Client(ClientBase):
         self.setSecure(True)
 
     def initiateLogin(self, name, callback):
-        hmac = base64.b64encode(self.generateHMAC(name.encode(), constants.HMAC_KEY))
+        hmac = base64.b85encode(self.generateHMAC(name.encode(), constants.HMAC_KEY))
 
         # login
         datagram = Datagram()
