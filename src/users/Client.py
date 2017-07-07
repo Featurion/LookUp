@@ -3,6 +3,7 @@ import socket
 import srp
 import ssl
 import uuid
+import base64
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -166,7 +167,7 @@ class Client(ClientBase):
         self.setSecure(True)
 
     def initiateLogin(self, name, callback):
-        hmac = self.generateHmac(name.encode(), constants.HMAC_KEY, True)
+        hmac = base64.b64encode(self.generateHMAC(name.encode(), constants.HMAC_KEY))
 
         # login
         datagram = Datagram()

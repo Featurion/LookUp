@@ -103,6 +103,7 @@ TITLE_BANNED = "You have been banned"
 TITLE_INVALID_COMMAND = "Received invalid command"
 TITLE_SMP_MATCH_FAILED = "Eavesdropping detected"
 TITLE_PROTOCOL_ERROR = "Invalid response"
+TITLE_HMAC_ERROR = "Invalid HMAC"
 
 CHOOSE = 'Please choose another'
 EMPTY_NAME = 'Please enter a username.'
@@ -115,6 +116,7 @@ CLIENT_JOINED = '{0} is ready to chat.'
 CLIENT_BANNED = 'You have been IP banned.'
 SMP_MATCH_FAILED = "Chat authentication failed. Either your buddy provided the wrong answer to the question or someone may be attempting to eavesdrop on your conversation. Note that answers are case sensitive."
 SMP_MATCH_FAILED_SHORT = "Chat authentication failed. Note that answers are case sensitive."
+HMAC_ERROR = "You have been sent an invalid message. There may have been tampering."
 INVALID_COMMAND = 'A client has sent you an invalid command.'
 
 # Chatting

@@ -103,6 +103,13 @@ class ZoneBase(Node):
             if self.isSecure:
                 datagram = self.decrypt(datagram)
 
+            hmac = datagram.getHMAC()
+            if hmac: # Check if an HMAC exists
+                if not self.verifyHMAC(hmac, datagram.getData()): # Verify the HMAC
+                    self.notify.warning('suspicious HMAC failure')
+                    self.handleHMACFailure()
+                    return
+
             self.handleReceivedDatagram(datagram)
             del datagram
             return True # successful

@@ -161,3 +161,6 @@ class ZoneAI(ZoneBase):
 
     def clientSMP(self, datagram):
         self.emitMessage(datagram, datagram.getSender())
+
+    def handleHMACFailure(self):
+        self.getClient().sendError(constants.TITLE_HMAC_ERROR, constants.HMAC_ERROR)

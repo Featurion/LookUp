@@ -73,8 +73,7 @@ class ClientAI(ClientBase):
             self.notify.debug('name is valid')
 
         client_hmac = datagram.getHMAC()
-        server_hmac = self.generateHmac(name.encode(), constants.HMAC_KEY, True)
-        if server_hmac != client_hmac:
+        if not self.verifyHMAC(client_hmac, name.encode(), constants.HMAC_KEY):
             self.notify.warning('received suspicious improper hmac')
             self.sendNo()
             self.server.bm.ban(self.getAddress())

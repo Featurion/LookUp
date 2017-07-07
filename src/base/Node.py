@@ -195,3 +195,11 @@ class Node(KeyHandler):
             self.notify.warning('received suspicious datagram')
 
         del datagram
+
+    def verifyHMAC(self, givenHMAC, data, key=None):
+        """Verify an HMAC"""
+        if key is None:
+            generatedHMAC = self.generateHMAC(data)
+        else:
+            generatedHMAC = self.generateHMAC(data, key)
+        return utils.secureStrCmp(generatedHMAC, base64.b64decode(givenHMAC))

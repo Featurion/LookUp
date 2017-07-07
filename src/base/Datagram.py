@@ -11,6 +11,7 @@ class Datagram(object):
         self.__recipient = int()
         self.__data = str()
         self.__hmac = str()
+        self.__num = int()
         self.__ts = utils.getTimestamp()
 
     def getId(self):
@@ -49,6 +50,12 @@ class Datagram(object):
     def setHMAC(self, hmac):
         self.__hmac = hmac
 
+    def getNum(self):
+        return self.__num
+
+    def setNum(self, num):
+        self.__num = num
+
     def getTimestamp(self):
         return self.__ts
 
@@ -66,6 +73,7 @@ class Datagram(object):
         datagram.setRecipient(obj['recipient'])
         datagram.setData(obj['data'])
         datagram.setHMAC(obj['hmac'])
+        datagram.setNum(obj['num'])
         datagram.setTimestamp(obj['time'])
 
         return datagram
@@ -81,5 +89,6 @@ class Datagram(object):
             'recipient': self.getRecipient(),
             'data': data,
             'hmac': self.getHMAC(),
+            'num': self.getNum(),
             'time': self.getTimestamp(),
         })

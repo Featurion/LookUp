@@ -109,11 +109,10 @@ class KeyHandler(Notifier):
     def __generateAltCipher(self):
         return AES.new(self.__alt_aes_key, self.__aes_mode, self.__alt_aes_iv)
 
-    def generateHmac(self, message, key, hex_digest=False):
-        if not hex_digest:
-            return hmac.new(key, msg=message, digestmod=hashlib.sha512).digest()
-        else:
-            return hmac.new(key, msg=message, digestmod=hashlib.sha512).hexdigest()
+    def generateHMAC(self, message, key=None):
+        if key is None:
+            key = self.__aes_key
+        return hmac.new(key, msg=message, digestmod=hashlib.sha512).digest()
 
     def generateHash(self, data):
         return SHA256.new(data).digest()
