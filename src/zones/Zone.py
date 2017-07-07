@@ -21,11 +21,11 @@ class Zone(ZoneBase):
             constants.CMD_REDY: self.doRedy,
             constants.CMD_TYPING: self.doTyping,
             constants.CMD_MSG: self.doMsg,
-            constants.CMD_SMP_0: self.doSMP, # Anyway to make these 'not ugly'?
-            constants.CMD_SMP_1: self.doSMP,
-            constants.CMD_SMP_2: self.doSMP,
-            constants.CMD_SMP_3: self.doSMP,
-            constants.CMD_SMP_4: self.doSMP,
+            constants.CMD_SMP_0: self.doSMP0,
+            constants.CMD_SMP_1: self.doSMP1,
+            constants.CMD_SMP_2: self.doSMP2,
+            constants.CMD_SMP_3: self.doSMP3,
+            constants.CMD_SMP_4: self.doSMP4,
         })
 
     def cleanup(self):
@@ -133,43 +133,43 @@ class Zone(ZoneBase):
         del name
         del datagram
 
-    def doSMP(self, datagram):
-        command = datagram.getCommand()
-        data = datagram.getData().encode('latin-1')
+    def doSMP0(self, datagram):
+        data = datagram.getData()
         name = self.getClientNameById(datagram.getSender())
 
-        if command == constants.CMD_SMP_0:
-            # SMP callback with the given question
-            self.tab.interface.getWindow().smp_request_signal.emit(constants.SMP_CALLBACK_REQUEST, name, self.getId(), data.decode('latin-1'), 0)
-        elif command == constants.CMD_SMP_1:
-            # If there's already an SMP object, go ahead to step 1.
-            # Otherwise, save the data until we have an answer from the user to respond with
-            if self.smp:
-                self.__doSMPStep1(data)
-            else:
-                self.smp_step_1 = data
-        elif command == constants.CMD_SMP_2:
-            self.__doSMPStep2(data)
-        elif command == constants.CMD_SMP_3:
-            self.__doSMPStep3(data)
-        elif command == constants.CMD_SMP_4:
-            self.__doSMPStep4(data, name)
+        # SMP callback with the given question
+        self.tab.interface.getWindow().smp_request_signal.emit(constants.SMP_CALLBACK_REQUEST, name, self.getId(), data, 0)
+
+    def doSMP1(self, datagram):
+        if isinstance(datagram, bytes):
+            data = datagram
         else:
-            self.notify.warning('suspicious invalid SMP command')
+            data = datagram.getData().encode('latin-1')
 
-    def __doSMPStep1(self, data):
-        buffer_ = self.smp.step2(data)
-        self.sendMessage(constants.CMD_SMP_2, buffer_)
+        # If there's already an SMP object, go ahead to step 1.
+        # Otherwise, save the data until we have an answer from the user to respond with
+        if self.smp:
+            buffer_ = self.smp.step2(data)
+            self.sendMessage(constants.CMD_SMP_2, buffer_)
+        else:
+            self.smp_step_1 = data
 
-    def __doSMPStep2(self, data):
+    def doSMP2(self, datagram):
+        data = datagram.getData().encode('latin-1')
+
         buffer_ = self.smp.step3(data)
         self.sendMessage(constants.CMD_SMP_3, buffer_)
 
-    def __doSMPStep3(self, data):
+    def doSMP3(self, datagram):
+        data = datagram.getData().encode('latin-1')
+
         buffer_ = self.smp.step4(data)
         self.sendMessage(constants.CMD_SMP_4, buffer_)
 
-    def __doSMPStep4(self, data, name):
+    def doSMP4(self, datagram):
+        data = datagram.getData().encode('latin-1')
+        name = self.getClientNameById(datagram.getSender())
+
         self.smp.step5(data)
         if self.__checkSMP():
             self.tab.interface.getWindow().smp_request_signal.emit(constants.SMP_CALLBACK_COMPLETE, name, '', '', 0)
@@ -183,4 +183,4 @@ class Zone(ZoneBase):
 
     def respondSMP(self, answer):
         self.smp = SMP(answer)
-        self.__doSMPStep1(self.smp_step_1)
+        self.doSMP1(self.smp_step_1)
