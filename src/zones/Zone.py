@@ -71,8 +71,8 @@ class Zone(ZoneBase):
         del data
         del datagram
 
-    def sendChatMessage(self, text: str):
-        self.sendMessage(constants.CMD_MSG, text)
+    def sendChatMessage(self, text: str, id_: str):
+        self.sendMessage(constants.CMD_MSG, (text, id_))
 
     def sendTypingMessage(self, status):
         self.sendMessage(constants.CMD_TYPING, str(status))
@@ -121,13 +121,13 @@ class Zone(ZoneBase):
         del datagram
 
     def doMsg(self, datagram):
-        text = datagram.getData()
+        text, id_ = datagram.getData()
         name = self.getClientNameById(datagram.getSender())
 
         if datagram.getId() in self.pending_messages:
-            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name, True)
+            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text, id_), constants.RECEIVER, name, True)
         else:
-            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text), constants.RECEIVER, name, False)
+            self.tab.new_message_signal.emit(constants.CMD_MSG, (utils.getTimestamp(), text, id_), constants.RECEIVER, name, False)
 
         del text
         del name

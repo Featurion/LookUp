@@ -161,11 +161,11 @@ class ChatTab(QWidget):
             elif status == constants.TYPING_DELETE_TEXT:
                 self.interface.getWindow().status_bar.showMessage("%s is deleting text..." % name)
         elif command == constants.CMD_MSG:
-            timestamp, text = data
+            timestamp, text, id_ = data
             if not loop:
-                self.chat_widget.appendMessage(text, timestamp, src, name)
+                self.chat_widget.appendMessage(text, timestamp, src, name, id_)
             else:
-                self.chat_widget.confirmMessage(text, name)
+                self.chat_widget.confirmMessage(text, name, id_)
         else:
             self.notify.warning('received invalid command: {0}'.format(command))
             self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.INVALID_COMMAND)

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QSplitter
 
 from src.base import constants, utils
+from src.base.UniqueIDManager import UniqueIDManager
 from src.gui.MultipleInputWidget import MultipleInputWidget
 
 class ChatWidget(QWidget):
@@ -24,30 +25,28 @@ class ChatWidget(QWidget):
             except IndexError: # This can be (shouldn't be) caused by the only message in the chat being deleted, no harm done if it happens
                 pass
 
-        def addMessage(self, msg):
-            list.append(self, msg)
+        def addMessage(self, id_, msg):
+            list.append(self, [id_, msg])
             self.sort()
             self.update()
 
         def editMessage(self, msg, new_msg, text_only=False, delete=False):
+            full_text = ''.join(message[1] for message in self)
+
             if text_only:
-                full_text = '<br>'.join(message for message in self)
                 split = msg.rsplit(' ', 1)
                 split[1] = new_msg
                 new_msg = split[0] + split[1]
-                edit_text = full_text.replace(msg, new_msg)
-            else:
-                if delete:
-                    full_text = ''.join(message for message in self)
-                else:
-                    full_text = '<br>'.join(message for message in self)
-                edit_text = full_text.replace(msg, new_msg)
+
+            edit_text = full_text.replace(msg, new_msg)
 
             if delete:
                 self.remove(msg)
             else:
-                index = self.index(msg)
-                self[index] = edit_text
+                for message in self:
+                    if msg in message[1]:
+                        index = self.index(message)
+                self[index][1] = edit_text
 
             self.widget.chat_log.setText(edit_text)
 
@@ -62,13 +61,13 @@ class ChatWidget(QWidget):
 
             del msg
 
-        def getMessage(self, text, name):
+        def getMessage(self, id_: str):
             for message in self:
-                if text and name in message:
-                    return message
+                if message[0] == id_:
+                    return message[1]
 
         def update(self):
-            full_text = '<br>'.join(msg for msg in self)
+            full_text = '<br>'.join(msg[1] for msg in self)
             self.widget.chat_log.setText(full_text)
 
             del full_text
@@ -210,15 +209,18 @@ class ChatWidget(QWidget):
         # Convert URLs into clickable links
         text = self.__linkify(text)
 
-        # Add the message to the message queue to be sent
-        self.getTab().getZone().sendChatMessage(text)
+        # Append the message to the log and get the message ID
+        id_ = self.appendMessage(text,
+                                 utils.getTimestamp(),
+                                 constants.SENDER,
+                                 self.getClient().getName(),
+                                 '')
 
-        self.appendMessage(text,
-                           utils.getTimestamp(),
-                           constants.SENDER,
-                           self.getClient().getName())
+        # Add the message to the message queue to be sent
+        self.getTab().getZone().sendChatMessage(text, id_)
 
         del text
+        del id_
 
     def sendTypingStatus(self, status):
         self.getTab().getZone().sendTypingMessage(status)
@@ -231,10 +233,13 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.chat_input.setReadOnly(False)
 
-    def appendMessage(self, message: str, timestamp: float, source: int, name: str):
+    def appendMessage(self, message: str, timestamp: float, source: int, name: str, id_: str):
         color = self.__getColor(source, True)
 
         timestamp = utils.formatTimestamp(timestamp)
+
+        if not id_:
+            id_ = str(UniqueIDManager().generateId()) # Generate a unique ID for the message
 
         timestamp = '<font color="' + color + '">' \
                     + '(' + str(timestamp) + ')' \
@@ -250,16 +255,18 @@ class ChatWidget(QWidget):
         if scrollbar.value() != scrollbar.maximum() and source != constants.SENDER:
             should_scroll = False
 
-        self.log.addMessage(message)
+        self.log.addMessage(id_, message)
 
         # Move the vertical scrollbar to the bottom of the chat log
         if should_scroll:
             scrollbar.setValue(scrollbar.maximum())
 
-    def confirmMessage(self, text: str, name: str):
-        message = self.log.getMessage(text, name)
+        return id_
 
-        transparent_color = self.__getColor(constants.SENDER)
+    def confirmMessage(self, text: str, name: str, id_: str):
+        message = self.log.getMessage(id_)
+
+        transparent_color = self.__getColor(constants.SENDER, True)
         confirm_color = self.__getColor(constants.SENDER)
 
         new_message = message.replace(transparent_color, confirm_color, 1)
