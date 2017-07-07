@@ -87,7 +87,6 @@ class ClientAI(ClientBase):
         del name
         del mode
         del client_hmac
-        del server_hmac
         del datagram
 
     def doChallenge(self, datagram):

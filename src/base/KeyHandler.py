@@ -103,6 +103,12 @@ class KeyHandler(Notifier):
         else:
             return True
 
+    def getAES(self):
+        if self.__aes_key is None or self.__aes_iv is None:
+            return False
+        else:
+            return True
+
     def __generateCipher(self):
         return AES.new(self.__aes_key, self.__aes_mode, self.__aes_iv)
 
@@ -112,7 +118,7 @@ class KeyHandler(Notifier):
     def generateHMAC(self, message, key=None):
         if key is None:
             key = self.__aes_key
-        return hmac.new(key, msg=message, digestmod=hashlib.sha512).digest()
+        return hmac.new(key, msg=str(message).encode(), digestmod=hashlib.sha512).digest()
 
     def generateHash(self, data):
         return SHA256.new(data).digest()

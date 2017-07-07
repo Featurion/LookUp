@@ -1,4 +1,3 @@
-import base64
 import queue
 
 from src.base import constants
@@ -64,6 +63,7 @@ class ZoneAI(ZoneBase):
                     continue
             datagram.setSender(self.getClient().getId())
             datagram.setRecipient(ai.getId())
+
             self.emitDatagram(datagram)
 
         del datagram
@@ -72,6 +72,7 @@ class ZoneAI(ZoneBase):
     def _send(self):
         try:
             datagram = self.getDatagramFromOutbox()
+
             dg = self.encrypt(datagram)
 
             ai = self.getMemberById(datagram.getRecipient())

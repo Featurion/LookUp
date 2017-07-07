@@ -1,4 +1,3 @@
-import base64
 import os
 import uuid
 from src.base.Notifier import Notifier

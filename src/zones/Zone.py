@@ -63,7 +63,9 @@ class Zone(ZoneBase):
         datagram.setSender(self.getClient().getId())
         datagram.setRecipient(self.getId())
         datagram.setData(data)
-        datagram.setHMAC(base64.b64encode(self.generateHMAC(data))) # Generate and set the HMAC for the message
+        if self.getAES():
+            datagram.setHMAC(base64.b64encode(self.generateHMAC(data))) # Generate and set the HMAC for the message
+
         self.sendDatagram(datagram)
 
         self.pending_messages.append(datagram.getId())
@@ -81,6 +83,7 @@ class Zone(ZoneBase):
     def _send(self):
         try:
             datagram = self.getDatagramFromOutbox()
+
             dg = self.encrypt(datagram)
             self.getClient().sendDatagram(dg) # send through client
 

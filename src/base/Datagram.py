@@ -1,7 +1,5 @@
 import json
 
-from src.base import utils
-
 class Datagram(object):
 
     def __init__(self):
@@ -9,10 +7,8 @@ class Datagram(object):
         self.__command = int()
         self.__sender = int()
         self.__recipient = int()
-        self.__data = str()
+        self.__data = None
         self.__hmac = str()
-        self.__num = int()
-        self.__ts = utils.getTimestamp()
 
     def getId(self):
         return self.__id
@@ -50,18 +46,6 @@ class Datagram(object):
     def setHMAC(self, hmac):
         self.__hmac = hmac
 
-    def getNum(self):
-        return self.__num
-
-    def setNum(self, num):
-        self.__num = num
-
-    def getTimestamp(self):
-        return self.__ts
-
-    def setTimestamp(self, ts):
-        self.__ts = ts
-
     @staticmethod
     def fromJSON(str_):
         obj = json.loads(str_)
@@ -73,22 +57,21 @@ class Datagram(object):
         datagram.setRecipient(obj['recipient'])
         datagram.setData(obj['data'])
         datagram.setHMAC(obj['hmac'])
-        datagram.setNum(obj['num'])
-        datagram.setTimestamp(obj['time'])
 
         return datagram
 
     def toJSON(self):
         data = self.getData()
+        hmac = self.getHMAC()
         if isinstance(data, bytes):
             data = data.decode('latin-1')
+        if isinstance(hmac, bytes):
+            hmac = hmac.decode('latin-1')
         return json.dumps({
             'id': self.getId(),
             'command': self.getCommand(),
             'sender': self.getSender(),
             'recipient': self.getRecipient(),
             'data': data,
-            'hmac': self.getHMAC(),
-            'num': self.getNum(),
-            'time': self.getTimestamp(),
+            'hmac': hmac,
         })
