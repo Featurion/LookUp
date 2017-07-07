@@ -63,7 +63,7 @@ class Zone(ZoneBase):
         datagram.setSender(self.getClient().getId())
         datagram.setRecipient(self.getId())
         datagram.setData(data)
-        datagram.setHMAC(self.generateHMAC(data)) # Generate and set the HMAC for the message
+        datagram.setHMAC(base64.b64encode(self.generateHMAC(data))) # Generate and set the HMAC for the message
         self.sendDatagram(datagram)
 
         self.pending_messages.append(datagram.getId())
