@@ -232,15 +232,14 @@ class ChatWidget(QWidget):
         self.chat_input.setReadOnly(False)
 
     def appendMessage(self, message: str, timestamp: float, source: int, name: str):
-        color = self.__getColor(source)
+        color = self.__getColor(source, True)
 
         timestamp = utils.formatTimestamp(timestamp)
 
-        timestamp = '<font style="opacity:.5" ' \
-                    + 'color="' + str(color) + '">' \
+        timestamp = '<font color="' + color + '">' \
                     + '(' + str(timestamp) + ')' \
                     + ' <strong>' + name + ':</strong>' \
-                    + '</font> ' # TODO: Fix opacity
+                    + '</font> '
 
         message = timestamp + message
 
@@ -260,11 +259,11 @@ class ChatWidget(QWidget):
     def confirmMessage(self, text: str, name: str):
         message = self.log.getMessage(text, name)
 
-        message_list = list(message)
-        message_list[21] = ''
-        message_list[22] = '1'
+        transparent_color = self.__getColor(constants.SENDER)
+        confirm_color = self.__getColor(constants.SENDER)
 
-        new_message = "".join(message_list)
+        new_message = message.replace(transparent_color, confirm_color, 1)
+
         self.log.editMessage(message, new_message)
 
     def __linkify(self, text):
@@ -277,9 +276,12 @@ class ChatWidget(QWidget):
 
         return text
 
-    def __getColor(self, source):
+    def __getColor(self, source, transparent=False):
         if source == constants.SENDER:
-            return '#0000CC'
+            if not transparent:
+                return '#0000CC'
+            else:
+                return '#8787a8'
         elif source == constants.RECEIVER:
             return '#CC0000'
         else:
