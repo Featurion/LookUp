@@ -22,7 +22,7 @@ class Console(threading.Thread):
             },
             'datagram': {
                 'callback': self.datagram,
-                'help': 'datagram [identifier], [command], [data]\t\tsend a datagram (only if debug)'
+                'help': 'datagram [identifier], [command], [type], [data]\t\tsend a datagram (only if debug)'
             },
             'zombies': {
                 'callback': self.zombies,
@@ -60,11 +60,12 @@ class Console(threading.Thread):
                         cmd(command_input[1])
                     elif len(command_input) > 2 and command_input[0] == 'execute':
                         cmd(command_input[1:])
-                    elif len(command_input) == 4:
+                    elif len(command_input) == 5 and command_input[0] == 'datagram':
                         name = command_input[1]
                         command = command_input[2]
-                        data = command_input[3]
-                        cmd(name, command, data)
+                        type_ = command_input[3]
+                        data = command_input[4]
+                        cmd(name, command, type_, data)
                     else:
                         cmd(None)
                 else:
@@ -92,14 +93,22 @@ class Console(threading.Thread):
             else:
                 print("This command is too dangerous to use unless for debugging!")
 
-    def datagram(self, identifier, command, data):
-        if not identifier or not command or not data:
+    def datagram(self, identifier, command, type_, data):
+        if not identifier or not command or not type_ or not data:
             print("Datagram command requires identifier, command, and data")
         else:
             if __debug__:
                 try:
                     ai = self.client_manager.getClient(identifier)
                     if ai:
+                        # TODO: List, tuple, and float support
+                        if type_ == 'str':
+                            data = str(data)
+                        elif type_ == 'int':
+                            data = int(data)
+                        else:
+                            print("Invalid data type.")
+                            return
                         datagram = Datagram()
                         datagram.setCommand(int(command))
                         datagram.setData(data)
