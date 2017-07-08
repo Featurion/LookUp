@@ -26,6 +26,9 @@ class ClientAI(ClientBase):
         self.server.cm.removeClient(self)
         ClientBase.stop(self)
 
+    def temporaryStop(self): # TODO Zach: Remove this disgusting method when cleanup() is fixed
+        ClientBase.stop(self)
+
     def cleanup(self):
         ClientBase.cleanup(self)
         self.server = None
@@ -38,6 +41,16 @@ class ClientAI(ClientBase):
 
     def sendNo(self):
         self.sendResp(False)
+
+    def sendDisconnect(self, reason: int):
+        datagram = Datagram()
+        datagram.setCommand(constants.CMD_DISCONNECT)
+        datagram.setSender(self.getId())
+        datagram.setRecipient(self.getId())
+        datagram.setData(reason)
+
+        self.sendDatagram(datagram)
+        del datagram
 
     def sendError(self, title, err):
         datagram = Datagram()

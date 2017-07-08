@@ -59,6 +59,7 @@ class ClientManagerAI(UniqueIDManager):
         self.notify.debug('client {0}-{1} disconnected'.format(ai.getName(),
                                                                ai.getId()))
 
+        ai.temporaryStop() # Temporary until cleanup() is fixed
         # ai.cleanup() - TODO Zach: Fix cleanup()
         del ai
 
@@ -115,7 +116,7 @@ class ClientManagerAI(UniqueIDManager):
         ais = []
         for ai in self.getClients():
             if ai.getAddress() == ip:
-                ais.append(ip)
+                ais.append(ai)
                 return ais
         self.notify.debug('no client with ip {0} exists'.format(ip))
 

@@ -1,3 +1,4 @@
+from src.base import constants
 from src.base.Notifier import Notifier
 
 class BanManagerAI(Notifier):
@@ -9,6 +10,7 @@ class BanManagerAI(Notifier):
     def kick(self, identifier):
         ai = self.client_manager.getClient(identifier)
         if ai:
+            ai.sendDisconnect(constants.KICK)
             self.client_manager.removeClient(ai)
             return True
         else:
@@ -21,6 +23,7 @@ class BanManagerAI(Notifier):
         else:
             ai = self.client_manager.getClient(identifier)
             if ai:
+                ai.sendDisconnect(constants.BAN)
                 self.client_manager.banClient(ai)
                 return True
             else:
@@ -30,6 +33,7 @@ class BanManagerAI(Notifier):
         ais = self.client_manager.getClientsByAddress(ip)
         if ais:
             for ai in ais:
+                ai.sendDisconnect(constants.KILL)
                 self.client_manager.removeClient(ai)
             return True
         else:

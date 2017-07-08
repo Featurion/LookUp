@@ -173,7 +173,7 @@ class Node(KeyHandler):
                 return
 
         Node.stop(self)
-        self.notify.warning('done sending')
+        self.notify.debug('done sending')
 
     def recv(self):
         """Threaded function for message receiving"""
@@ -185,7 +185,7 @@ class Node(KeyHandler):
                 return
 
         Node.stop(self)
-        self.notify.warning('done handling messages')
+        self.notify.debug('done handling messages')
 
     def handleReceivedDatagram(self, datagram):
         """In-between function for Node reaction to messages received"""

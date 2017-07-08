@@ -227,7 +227,7 @@ class ClientBase(Node):
                 del data
                 del datagram
             except struct.error as e:
-                self.notify.warning('connection was closed unexpectedly')
+                self.notify.debug('connection was closed unexpectedly')
                 break
             except Exception as e:
                 self.notify.error('NetworkError', str(e))

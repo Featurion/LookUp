@@ -13,6 +13,7 @@ from src.users.Client import Client
 class ClientUI(QApplication, Notifier):
 
     error_signal = pyqtSignal(str, str)
+    critical_signal = pyqtSignal(str, str)
     stall_signal = pyqtSignal()
     connected_signal = pyqtSignal()
     login_signal = pyqtSignal(str)
@@ -26,6 +27,7 @@ class ClientUI(QApplication, Notifier):
         self.running = False
 
         self.error_signal.connect(self.__showError)
+        self.critical_signal.connect(self.__showCritical)
         self.stall_signal.connect(self.__showConnecting)
         self.connected_signal.connect(self.__connectingDone)
         self.login_signal.connect(self.__loginDone)
@@ -55,8 +57,18 @@ class ClientUI(QApplication, Notifier):
     def getWindow(self):
         return self.__window
 
+    @pyqtSlot(str, str)
     def __showError(self, title, err):
         QMessageBox.warning(QWidget(), title, err)
+
+    @pyqtSlot(str, str)
+    def __showCritical(self, title, err):
+        message_box = QMessageBox(QMessageBox.Critical, title, err, QMessageBox.Ok)
+        result = message_box.exec_()
+        if result == QMessageBox.Ok:
+            self.stop()
+        else:
+            self.stop()
 
     @pyqtSlot()
     def __showConnecting(self):

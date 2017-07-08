@@ -20,18 +20,21 @@ class Client(ClientBase):
         self.interface = interface
         self.user = None
         self.zm = None
+        self.__banned = None
         self.__pending_tabs = {}
 
         self.COMMAND_MAP.update({
             constants.CMD_ERR: self.doError,
+            constants.CMD_DISCONNECT: self.doDisconnect,
             constants.CMD_HELO: self.doHelo,
         })
 
     def start(self):
         """Handle startup of the client"""
         ClientBase.start(self)
-        self.initiateHandshake()
-        self.interface.connected_signal.emit()
+        if not self.__banned:
+            self.initiateHandshake()
+            self.interface.connected_signal.emit()
 
     def startManagers(self):
         """Start client managers"""
@@ -80,7 +83,7 @@ class Client(ClientBase):
         if self.waitForApproval():
             pass
         else:
-            self.interface.error_signal.emit(constants.TITLE_BANNED,
+            self.interface.critical_signal.emit(constants.TITLE_CLIENT_BANNED,
                                              constants.CLIENT_BANNED)
 
         del address
@@ -90,8 +93,10 @@ class Client(ClientBase):
         while True:
             recv = self.getSocket().recv(1024)
             if recv == constants.ACCEPTED:
+                self.__banned = False
                 return True
             elif recv == constants.BANNED:
+                self.__banned = True
                 return False
 
     def terminate(self):
@@ -142,6 +147,27 @@ class Client(ClientBase):
 
         del tab
         del zone
+
+    def doDisconnect(self, datagram):
+        reason = datagram.getData()
+        if reason == constants.BAN:
+            title = constants.TITLE_CLIENT_BANNED
+            err = constants.CLIENT_BANNED
+        elif reason == constants.KICK:
+            title = constants.TITLE_CLIENT_KICKED
+            err = constants.CLIENT_KICKED
+        elif reason == constants.KILL:
+            title = constants.TITLE_CLIENT_KILLED
+            err = constants.CLIENT_KILLED
+        else:
+            self.notify.warning('received suspicious disconnection notice')
+            return
+
+        self.interface.critical_signal.emit(title, err)
+
+        del reason
+        del title
+        del err
 
     def doError(self, datagram):
         title, err = datagram.getData()

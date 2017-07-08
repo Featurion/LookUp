@@ -145,7 +145,7 @@ class Console(threading.Thread):
         else:
             kick = self.ban_manager.ban(identifier)
             if kick:
-                print("{0} kicked from server".format(identifier))
+                print("{0} banned from server".format(identifier))
             else:
                 print("{0} is not a registered client".format(identifier))
 
