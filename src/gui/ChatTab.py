@@ -163,7 +163,7 @@ class ChatTab(QWidget):
         elif command == constants.CMD_MSG:
             timestamp, text, id_ = data
             if not loop:
-                self.chat_widget.appendMessage(text, timestamp, src, name, id_)
+                self.chat_widget.appendMessage(text, timestamp, src, name, id_, loop)
             else:
                 self.chat_widget.confirmMessage(text, name, id_)
         else:

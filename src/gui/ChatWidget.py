@@ -219,7 +219,8 @@ class ChatWidget(QWidget):
                                  utils.getTimestamp(),
                                  constants.SENDER,
                                  self.getClient().getName(),
-                                 '')
+                                 '',
+                                 True)
 
         # Add the message to the message queue to be sent
         self.getTab().getZone().sendChatMessage(text, id_)
@@ -238,8 +239,11 @@ class ChatWidget(QWidget):
         self.disabled = False
         self.chat_input.setReadOnly(False)
 
-    def appendMessage(self, message: str, timestamp: float, source: int, name: str, id_: str):
-        color = self.__getColor(source, True)
+    def appendMessage(self, message: str, timestamp: float, source: int, name: str, id_: str, loop: bool):
+        if loop:
+            color = self.__getColor(source, True)
+        else:
+            color = self.__getColor(source, False)
 
         formatted_timestamp = utils.formatTimestamp(timestamp)
 
@@ -286,9 +290,9 @@ class ChatWidget(QWidget):
 
         return text
 
-    def __getColor(self, source, transparent=False):
+    def __getColor(self, source, loop=False):
         if source == constants.SENDER:
-            if not transparent:
+            if not loop:
                 return '#0000CC'
             else:
                 return '#8787a8'
