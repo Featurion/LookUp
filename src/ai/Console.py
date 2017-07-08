@@ -81,10 +81,12 @@ class Console(threading.Thread):
             if __debug__:
                 try:
                     exp = ''
-                    for length in code:
-                        exp = exp + length
-                    d = dict(locals(), **globals())
-                    exec(exp, d, d)
+                    if isinstance(code, list):
+                        for length in code:
+                            exp += length + ' '
+                    else:
+                        exp = code
+                    exec(exp, globals(), globals()) # This allows you to execute anything as if it was a line of code in this class, as well as add it to globals()
                 except Exception as e:
                     print(str(e))
             else:
