@@ -201,7 +201,7 @@ class ChatWidget(QWidget):
 
         self.typing_timer.stop()
 
-        text = str(self.chat_input.toPlainText())[:-1]
+        text = str(self.chat_input.toPlainText()) + '\n'
 
         # Don't send empty messages
         if text == '':
