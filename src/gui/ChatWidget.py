@@ -1,10 +1,10 @@
 import re
 from threading import Thread
 
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget, QTextBrowser, QTextEdit, QPushButton
-from PyQt5.QtWidgets import QHBoxLayout, QSplitter
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QSplitter
 
 from src.base import constants, utils
 from src.base.UniqueIDManager import UniqueIDManager
@@ -93,6 +93,7 @@ class ChatWidget(QWidget):
 
         self.chat_input = QTextEdit()
         self.chat_input.textChanged.connect(self.chatInputTextChanged)
+        self.chat_input.installEventFilter(self)
 
         self.send_button = QPushButton("Send")
         self.send_button.clicked.connect(self.sendMessage)
@@ -296,6 +297,19 @@ class ChatWidget(QWidget):
         else:
             return '#000000'
 
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.KeyPress: # Check if this is a keypress
+            if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return: # Check if enter (both regular and keypad) is being pressed
+                modifiers = QApplication.keyboardModifiers()
+                if modifiers: # Check if someone is using a key combination (for example Shift+Enter)
+                    return QWidget.eventFilter(self, source, event)
+                else: # Must be trying to send a message!
+                    self.sendMessage()
+                    return True
+            else:
+                return QWidget.eventFilter(self, source, event)
+        return QWidget.eventFilter(self, source, event)
+
     def chatInputTextChanged(self):
         if self.cleared:
             self.cleared = False
@@ -304,9 +318,7 @@ class ChatWidget(QWidget):
         plain_text = str(self.chat_input.toPlainText())
         size = len(plain_text)
 
-        if plain_text[-1:] == '\n': # someone remove this. multiline messages are currently not possible
-            self.sendMessage()
-        elif size < self.last_text_size and self.last_text_size > 0 and not self.deleting:
+        if size < self.last_text_size and self.last_text_size > 0 and not self.deleting:
             # User must be deleting text
             self.sendTypingStatus(constants.TYPING_DELETE_TEXT)
             self.deleting = True
