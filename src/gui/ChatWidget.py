@@ -246,10 +246,10 @@ class ChatWidget(QWidget):
         if not id_:
             id_ = str(UniqueIDManager().generateId()) # Generate a unique ID for the message
 
-        message = '<font color="' + color + '">' \
+        message = '<body style="white-space: pre"><font color="' + color + '">' \
                   + '(' + formatted_timestamp + ')' \
                   + ' <strong>' + name + ':</strong>' \
-                  + '</font> ' + message
+                  + '</font> ' + message + '</body>'
 
         # If the user has scrolled up (current value != maximum), do not move the scrollbar
         # to the bottom after appending the message
