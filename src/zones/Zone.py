@@ -76,7 +76,7 @@ class Zone(ZoneBase):
         del datagram
 
     def sendChatMessage(self, text: str, id_: str):
-        self.sendMessage(constants.CMD_MSG, [text, id_])
+        self.sendMessage(constants.CMD_MSG, [text, id_, utils.getTimestamp()])
 
     def sendTypingMessage(self, status):
         self.sendMessage(constants.CMD_TYPING, str(status))

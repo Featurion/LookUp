@@ -1,6 +1,6 @@
 import queue
 
-from src.base import constants, utils
+from src.base import constants
 from src.base.Datagram import Datagram
 from src.zones.ZoneBase import ZoneBase
 
@@ -139,8 +139,6 @@ class ZoneAI(ZoneBase):
         self.emitMessage(datagram, datagram.getSender())
 
     def clientMsg(self, datagram):
-        data = datagram.getData()
-        data.append(utils.getTimestamp())
         self.emitMessage(datagram)
 
     def addUser(self, datagram):
