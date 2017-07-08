@@ -31,27 +31,27 @@ class ChatWidget(QWidget):
             self.update()
 
         def editMessage(self, msg, new_msg, text_only=False, delete=False):
-            full_text = ''.join(message[1] for message in self)
+            for message in self:
+                if msg in message[1]:
+                    index = self.index(message)
+            message_text = self[index][1]
 
             if text_only:
                 split = msg.rsplit(' ', 1)
                 split[1] = new_msg
                 new_msg = split[0] + split[1]
 
-            edit_text = full_text.replace(msg, new_msg)
+            edit_text = message_text.replace(msg, new_msg)
 
             if delete:
                 self.remove(msg)
             else:
-                for message in self:
-                    if msg in message[1]:
-                        index = self.index(message)
                 self[index][1] = edit_text
 
             self.sort()
             self.update()
 
-            del full_text
+            del message_text
             del delete
             del edit_text
             del msg
