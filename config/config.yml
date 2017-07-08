@@ -3,7 +3,7 @@ app-name: LookUp
 version: 'PROTOTYPE-DEV'
 
 # Debugging
-want-injector: true
+want-injector: false
 
 # Logging
 log-path: /logs
