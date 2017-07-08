@@ -2,6 +2,9 @@
 app-name: LookUp
 version: 'PROTOTYPE'
 
+# Debugging
+want-injector: false
+
 # Logging
 log-path: /logs
 log-format: 'none'

@@ -24,6 +24,10 @@ BANNED = b'banned'
 
 WANT_BLANK_GROUPS = settings['want-blank-groups']
 
+# Debugging
+
+WANT_INJECTOR = settings['want-injector']
+
 # GUI
 
 BUTTON_OKAY = 0

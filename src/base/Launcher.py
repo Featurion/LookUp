@@ -17,6 +17,9 @@ class Launcher(object):
 
         self.__startLogging()
 
+        if __debug__ and constants.WANT_INJECTOR:
+            self.__launchInjector()
+
         if info.server:
             self.__launchAIServer(info.address, info.port)
         else:
@@ -82,6 +85,41 @@ class Launcher(object):
     def setConfig(self, stream=None, filename=None, level=constants.INFO):
         constants.LOG_CONFIG = (stream, filename, level)
 
+    if __debug__:
+        def __launchInjector(self):
+            import threading
+
+            def runInjectorCode():
+                global text
+                exec(text.get(1.0, 'end'), globals(), globals())
+
+            def openInjector():
+                import tkinter
+
+                tk = tkinter.Tk()
+                tk.geometry('600x400')
+                tk.title('Python Injector')
+                tk.resizable(False, False)
+
+                frame = tkinter.Frame(tk)
+
+                global text
+                text = tkinter.Text(frame, width=70, height=20)
+                text.pack(side='left')
+
+                tkinter.Button(tk, text='Inject', command=runInjectorCode).pack()
+
+                scrollbar = tkinter.Scrollbar(frame)
+                scrollbar.pack(fill='y', side='right')
+                scrollbar.config(command=text.yview)
+
+                text.config(yscrollcommand=scrollbar.set)
+
+                frame.pack(fill='y')
+
+                tk.mainloop()
+
+            threading.Thread(target=openInjector).start()
 
 if __name__ == '__main__':
     Launcher()
