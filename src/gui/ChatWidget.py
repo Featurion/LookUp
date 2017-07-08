@@ -21,12 +21,12 @@ class ChatWidget(QWidget):
 
         def sort(self):
             try:
-                list.sort(self, key=lambda i: i[0])
+                list.sort(self, key=lambda i: i[2])
             except IndexError: # This can be (shouldn't be) caused by the only message in the chat being deleted, no harm done if it happens
                 pass
 
-        def addMessage(self, id_, msg):
-            list.append(self, [id_, msg])
+        def addMessage(self, id_, msg, ts):
+            list.append(self, [id_, msg, ts])
             self.sort()
             self.update()
 
@@ -48,7 +48,8 @@ class ChatWidget(QWidget):
                         index = self.index(message)
                 self[index][1] = edit_text
 
-            self.widget.chat_log.setText(edit_text)
+            self.sort()
+            self.update()
 
             del full_text
             del delete
@@ -239,17 +240,15 @@ class ChatWidget(QWidget):
     def appendMessage(self, message: str, timestamp: float, source: int, name: str, id_: str):
         color = self.__getColor(source, True)
 
-        timestamp = utils.formatTimestamp(timestamp)
+        formatted_timestamp = utils.formatTimestamp(timestamp)
 
         if not id_:
             id_ = str(UniqueIDManager().generateId()) # Generate a unique ID for the message
 
-        timestamp = '<font color="' + color + '">' \
-                    + '(' + str(timestamp) + ')' \
-                    + ' <strong>' + name + ':</strong>' \
-                    + '</font> '
-
-        message = timestamp + message
+        message = '<font color="' + color + '">' \
+                  + '(' + formatted_timestamp + ')' \
+                  + ' <strong>' + name + ':</strong>' \
+                  + '</font> ' + message
 
         # If the user has scrolled up (current value != maximum), do not move the scrollbar
         # to the bottom after appending the message
@@ -258,7 +257,7 @@ class ChatWidget(QWidget):
         if scrollbar.value() != scrollbar.maximum() and source != constants.SENDER:
             should_scroll = False
 
-        self.log.addMessage(id_, message)
+        self.log.addMessage(id_, message, timestamp)
 
         # Move the vertical scrollbar to the bottom of the chat log
         if should_scroll:

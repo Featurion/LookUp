@@ -25,7 +25,7 @@ def parseTimestampFromMessage(msg):
     return (msg, ts)
 
 def formatTimestamp(ts):
-    return datetime.datetime.fromtimestamp(float(ts)).strftime('%H:%M:%S')
+    return str(datetime.datetime.fromtimestamp(float(ts)).strftime('%H:%M:%S'))
 
 def getResourcePath(relative_path):
     try:
