@@ -2,10 +2,9 @@ import argparse
 import datetime
 import os
 import sys
+import builtins
+
 from src.base import constants
-
-from src.base.constants import DEFAULT_ADDRESS, DEFAULT_PORT, APP_TITLE, LOG_PATH, DEBUG, INFO
-
 
 class Launcher(object):
 
@@ -24,11 +23,11 @@ class Launcher(object):
             self.__launchClient(info.address, info.port)
 
     def getLogFilePath(self):
-        if not os.path.exists(LOG_PATH):
-            os.mkdir(LOG_PATH)
+        if not os.path.exists(constants.LOG_PATH):
+            os.mkdir(constants.LOG_PATH)
 
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        path = '{0}/{1} {2}.{3}.log'.format(LOG_PATH, APP_TITLE, now, self.type)
+        path = '{0}/{1} {2}.{3}.log'.format(constants.LOG_PATH, constants.APP_TITLE, now, self.type)
         return path
 
     def getLaunchInfo(self):
@@ -42,13 +41,13 @@ class Launcher(object):
                             dest='address',
                             type=str,
                             nargs='?',
-                            default=DEFAULT_ADDRESS,
+                            default=constants.DEFAULT_ADDRESS,
                             help='server address')
         parser.add_argument('-p', '--port',
                             dest='port',
                             type=int,
                             nargs='?',
-                            default=DEFAULT_PORT,
+                            default=constants.DEFAULT_PORT,
                             help='server port')
         args = parser.parse_args()
         return args
@@ -66,12 +65,19 @@ class Launcher(object):
         server = Server(address, port)
         console = Console(server.cm, server.bm)
 
+        builtins.ai = server # Make the Server a builtin class
+
         console.start()
         server.start()
 
     def __launchClient(self, address, port):
         from src.gui.ClientUI import ClientUI
-        ClientUI(address, port).start()
+
+        client = ClientUI(address, port)
+
+        builtins.client = client # Make the Client a builtin class
+
+        client.start()
 
     def setConfig(self, stream=None, filename=None, level=constants.INFO):
         constants.LOG_CONFIG = (stream, filename, level)
