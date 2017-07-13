@@ -140,7 +140,9 @@ class Node(KeyHandler):
         self.__id = None
         self.__stopping = False
         self.__secure = False
-        self.__threads = None
+        if self.__threads:
+            del self.__threads[:]
+            self.__threads = []
         if self.__inbox:
             with self.__inbox.mutex:
                 self.__inbox.queue.clear()

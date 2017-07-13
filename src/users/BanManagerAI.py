@@ -1,6 +1,7 @@
 from src.base import constants
 from src.base.Notifier import Notifier
 
+
 class BanManagerAI(Notifier):
 
     def __init__(self, server):

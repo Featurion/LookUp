@@ -65,15 +65,13 @@ class ClientManagerAI(UniqueIDManager):
 
     def banClient(self, ai=None, address=None):
         """Kickban an existing client"""
-        if ai and not address:
-            self.removeClient(ai) # First, kick the client
+        if ai:
+            ai.stop()
             self.banlist.append(ai.getAddress()) # Add the client to the banlist
-            return
-        if address and not ai:
+        elif address:
             self.banlist.append(address) # Add the client to the banlist
-            return
-
-        self.notify.error('BanError', 'no AI or address specified')
+        else:
+            self.notify.error('BanError', 'no AI or address specified')
 
     def getClients(self):
         return self.clients
@@ -83,8 +81,8 @@ class ClientManagerAI(UniqueIDManager):
         for ai in self.getClients():
             if ai.getId() == id_:
                 return ai
-        self.notify.debug('client with id {0} does not exist'.format(id_))
 
+        self.notify.debug('client with id {0} does not exist'.format(id_))
         del id_
 
         return None
