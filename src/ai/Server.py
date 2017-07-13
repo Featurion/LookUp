@@ -52,7 +52,7 @@ class Server(Notifier):
                                                 certfile='certs/pem.crt',
                                                 keyfile='certs/pem.key',
                                                 ssl_version=ssl.PROTOCOL_TLSv1_2,
-                                                ciphers='ECDHE-RSA-AES256-GCM-SHA384',
+                                                ciphers='ECDHE-EDDSA-AES256-GCM-SHA384',
                                                 do_handshake_on_connect=True)
             else:
                 self.notify.info('SSL is not enabled. Do not use this in production')
