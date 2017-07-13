@@ -115,7 +115,6 @@ class ClientBase(Node):
         while not self.isStopping and (self.__send_success_flag is None):
             pass
 
-        self.notify.debug('sent data successfully')
         self.__send_success_flag = None
 
     def setupSocket(self):
