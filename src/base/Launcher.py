@@ -66,7 +66,7 @@ class Launcher(object):
         from src.ai.Console import Console
 
         server = Server(address, port)
-        console = Console(server.cm, server.bm)
+        console = Console(server)
 
         builtins.ai = server # Make the Server a builtin class
 
@@ -77,10 +77,9 @@ class Launcher(object):
         from src.gui.ClientUI import ClientUI
 
         client = ClientUI(address, port)
+        client.start()
 
         builtins.client = client # Make the Client a builtin class
-
-        client.start()
 
     def setConfig(self, stream=None, filename=None, level=constants.INFO):
         constants.LOG_CONFIG = (stream, filename, level)
