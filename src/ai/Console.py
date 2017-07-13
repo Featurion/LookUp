@@ -1,5 +1,6 @@
 import os
 import signal
+import sys
 import threading
 
 from src.base.Datagram import Datagram
@@ -53,7 +54,7 @@ class Console(threading.Thread):
     def run(self):
         while True:
             try:
-                command_input = input("").split()
+                command_input = sys.stdin.readline().split()
                 if len(command_input) > 0:
                     cmd = self.commands[command_input[0]]['callback']
                     if len(command_input) == 2:
