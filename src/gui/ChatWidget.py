@@ -68,7 +68,7 @@ class ChatWidget(QWidget):
                     return message[1]
 
         def update(self):
-            full_text = '<br>'.join(msg[1] for msg in self)
+            full_text = ''.join(msg[1] for msg in self)
             self.widget.chat_log.setText(full_text)
 
             del full_text
