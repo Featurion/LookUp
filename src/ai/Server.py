@@ -1,13 +1,13 @@
 import socket
 import ssl
-import sys
+import threading
 
 from src.base.Notifier import Notifier
 from src.base.constants import TLS_ENABLED
 from src.users.BanManagerAI import BanManagerAI
 from src.users.ClientManagerAI import ClientManagerAI
 from src.zones.ZoneManagerAI import ZoneManagerAI
-from src.ai.Console import Console
+
 
 class Server(Notifier):
 
@@ -16,12 +16,23 @@ class Server(Notifier):
         self.__socket = None
         self.__address = address
         self.__port = port
-
-        self.startManagers()
+        self.__cleanup_thread = None
 
     def start(self):
         self.__connect()
+        self.startManagers()
+        self.startCleanup()
         self.waitForClients()
+
+    def startManagers(self):
+        self.cm = ClientManagerAI(self)
+        self.bm = BanManagerAI(self)
+        self.zm = ZoneManagerAI(self)
+
+    def startCleanup(self):
+        self.__cleanup_thread = threading.Thread(target=self.__clean,
+                                                 daemon=True)
+        self.__cleanup_thread.start()
 
     def stop(self):
         if self.__socket is not None:
@@ -35,7 +46,6 @@ class Server(Notifier):
                 self.__socket = None
 
         self.notify.info('server stopped')
-        sys.exit(0)
 
     def accept(self):
         return self.__socket.accept()
@@ -64,19 +74,19 @@ class Server(Notifier):
         except Exception as e:
             self.notify.critical(str(e))
 
-    def startManagers(self):
-        self.cm = ClientManagerAI(self)
-        self.bm = BanManagerAI(self.cm)
-        self.zm = ZoneManagerAI(self)
+    def __clean(self):
+        while True:
+            for ai in self.cm.getClients():
+                if not ai.isAlive:
+                    self.notify.debug('cleaning up client {0}'.format(ai.getId()))
+                    self.cm.removeClient(ai)
+                    del ai
 
     def waitForClients(self):
         while True:
             try:
                 ai = self.cm.acceptClient()
-                if ai == False:
-                    # This client has been banned
-                    continue
-                else:
+                if ai:
                     ai.start()
             except KeyboardInterrupt:
                 self.notify.error('KeyboardInterrupt',
