@@ -60,7 +60,6 @@ class ClientManagerAI(UniqueIDManager):
         self.notify.debug('client {0}-{1} disconnected'.format(ai.getName(),
                                                                ai.getId()))
 
-        ai.stop()
         ai.cleanup()
         del ai
 
