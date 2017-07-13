@@ -8,10 +8,10 @@ from src.base import constants
 
 class Console(threading.Thread):
 
-    def __init__(self, client_manager, ban_manager):
+    def __init__(self, server):
         threading.Thread.__init__(self, daemon=True)
-        self.client_manager = client_manager
-        self.ban_manager = ban_manager
+        self.server = server
+
         self.commands = {
             'list': {
                 'callback': self.list,
@@ -100,7 +100,7 @@ class Console(threading.Thread):
         else:
             if __debug__:
                 try:
-                    ai = self.client_manager.getClient(identifier)
+                    ai = self.server.cm.getClient(identifier)
                     if ai:
                         # TODO: List, tuple, and float support
                         if type_ == 'str':
@@ -128,12 +128,12 @@ class Console(threading.Thread):
 
     def list(self, arg):
         print("Registered users\n" + "=" * 16)
-        for ai in self.client_manager.getClients():
+        for ai in self.server.cm.getClients():
             print(str(ai.getName()) + '-' + str(ai.getId()) + '-' + str(ai.getAddress()) + ':' + str(ai.getPort()))
 
     def zombies(self, arg):
         print("Zombie Connections\n" + "=" * 18)
-        for ai in self.client_manager.getClients():
+        for ai in self.server.cm.getClients():
             if ai.getName() is None:
                 print(str(ai.getAddress()))
             else:
@@ -143,7 +143,7 @@ class Console(threading.Thread):
         if not identifier:
             print("Kick command requires an identifier")
         else:
-            kick = self.ban_manager.kick(identifier)
+            kick = self.server.bm.kick(identifier)
             if kick:
                 print("{0} kicked from server".format(identifier))
             else:
@@ -153,7 +153,7 @@ class Console(threading.Thread):
         if not identifier:
             print("Ban command requires an identifier")
         else:
-            kick = self.ban_manager.ban(identifier)
+            kick = self.server.bm.ban(identifier)
             if kick:
                 print("{0} banned from server".format(identifier))
             else:
@@ -164,7 +164,7 @@ class Console(threading.Thread):
             print("Kill command requires an IP")
         else:
             try:
-                kill = self.ban_manager.kill(ip)
+                kill = self.server.bm.kill(ip)
                 if kill:
                     print("{0} killed".format(ip))
                 else:
