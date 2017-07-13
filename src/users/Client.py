@@ -126,7 +126,7 @@ class Client(ClientBase):
                                                      socket.SOCK_STREAM),
                                        ca_certs="certs/pem.crt",
                                        cert_reqs=ssl.CERT_REQUIRED,
-                                       ssl_version=ssl.PROTOCOL_TLSv1_2,
+                                       ssl_version=ssl.PROTOCOL_TLSv1_3,
                                        ciphers='ECDHE-EDDSA-AES256-GCM-SHA384')
             else:
                 self.notify.info('connecting without SSL')
