@@ -7,6 +7,7 @@ from src.base import constants, utils
 from src.base.Datagram import Datagram
 from src.base.Node import Node
 
+
 class ClientBase(Node):
 
     def __init__(self, address, port):
@@ -19,7 +20,7 @@ class ClientBase(Node):
         self.__resp = None
 
         self.__socket_receiver = None
-        self.__send_success_flag = False
+        self.__send_success_flag = None
 
         self.COMMAND_MAP.update({
             constants.CMD_RESP: self.setResp,
@@ -27,26 +28,14 @@ class ClientBase(Node):
         })
 
     def start(self):
-        Node.start(self)
         self.setupSocket()
         self.startManagers()
+
+        Node.start(self)
         self.startThreads()
 
     def startManagers(self): # overwrite in subclass
         pass
-
-    def stop(self):
-        """Handle stopping of the client"""
-        try:
-            Node.stop(self)
-            self.joinThreads(constants.DISCONNECT_DELAY) # wait for clean disconnect
-        except OSError:
-            self.notify.debug('socket is closed')
-        except Exception as e:
-            self.notify.error('ExitError', str(e))
-            return False
-
-        return True
 
     def cleanup(self):
         Node.cleanup(self)
@@ -57,15 +46,10 @@ class ClientBase(Node):
         self.__resp = None
         self.send_success_flag = None
         if self.__socket:
-            self.__socket.shutdown(socket.SHUT_RDWR)
             self.__socket.close()
             del self.__socket
             self.__socket = None
-        if self.__socket_receiver:
-            if self.__socket_receiver.isAlive():
-                self.__socket_receiver.join()
-            del self.__socket_receiver
-            self.__socket_receiver = None
+        self.__socket_receiver = None
 
     def getSocket(self):
         """Getter for socket"""
@@ -120,7 +104,7 @@ class ClientBase(Node):
         """Stall while waiting for response"""
         self.notify.debug('waiting for a response')
 
-        while self.isRunning and self.__resp is None:
+        while not self.isStopping and self.__resp is None:
             pass
         resp = self.__resp
         self.__resp = None
@@ -128,11 +112,11 @@ class ClientBase(Node):
 
     def __waitForSendSuccess(self):
         """Stall while sending data"""
-        while self.isRunning and not self.__send_success_flag:
+        while not self.isStopping and (self.__send_success_flag is None):
             pass
 
         self.notify.debug('sent data successfully')
-        self.__send_success_flag = False
+        self.__send_success_flag = None
 
     def setupSocket(self):
         self.getSocket().settimeout(constants.SOCKET_TIMEOUT)
@@ -145,9 +129,7 @@ class ClientBase(Node):
     def _send(self):
         try:
             data = self.getDatagramFromOutbox().toJSON()
-            self.__send(data)
-            del data
-            return True # successful
+            return self.__send(data) # successful
         except queue.Empty:
             return True # successful
         except ValueError:
@@ -167,17 +149,19 @@ class ClientBase(Node):
             return
 
         size = len(data)
-        self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
-        self.__sendToSocket(data, size)
+        flag1 = self.__sendToSocket(struct.pack('I', socket.htonl(size)), 4)
+        flag2 = self.__sendToSocket(data, size)
 
-        self.__send_success_flag = True
+        self.__send_success_flag = (flag1 and flag2)
 
         del size
         del data
 
+        return self.__send_success_flag
+
     def __sendToSocket(self, data, size):
         """Send data through socket transfer"""
-        while self.isRunning and size > 0:
+        while not self.isStopping and size > 0:
             try:
                 size -= self.getSocket().send(data[:size])
             except OSError:
@@ -187,11 +171,8 @@ class ClientBase(Node):
                 self.notify.error('SocketError', str(e))
                 break
 
-        if size > 0:
-            Node.stop(self)
-
         del data
-        del size
+        return (size == 0)
 
     def _recv(self):
         try:
@@ -210,7 +191,7 @@ class ClientBase(Node):
 
     def __recv(self):
         """Receive data length and data"""
-        while self.isRunning:
+        while not self.isStopping:
             try:
                 size_indicator = self.__recvFromSocket(4)
                 size = socket.ntohl(struct.unpack('I', size_indicator)[0])
@@ -227,19 +208,19 @@ class ClientBase(Node):
                 del data
                 del datagram
             except struct.error as e:
-                self.notify.debug('connection was closed unexpectedly')
+                self.notify.warning('connection was closed unexpectedly')
                 break
             except Exception as e:
                 self.notify.error('NetworkError', str(e))
                 break
 
-        Node.stop(self)
-        self.notify.debug('done receiving')
+        self.notify.debug('done handling messages')
+        self.startStopping()
 
     def __recvFromSocket(self, size):
         """Receive data through socket transfer"""
         data = b''
-        while self.isRunning and size > 0:
+        while not self.isStopping and size > 0:
             try:
                 _data = self.getSocket().recv(size)
                 if _data:

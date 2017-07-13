@@ -21,14 +21,6 @@ class ClientAI(ClientBase):
             constants.CMD_REDY: self.forwardZoneDatagram,
         })
 
-    def stop(self):
-        """Handle stopping of the client"""
-        self.server.cm.removeClient(self)
-        ClientBase.stop(self)
-
-    def temporaryStop(self): # TODO Zach: Remove this disgusting method when cleanup() is fixed
-        ClientBase.stop(self)
-
     def cleanup(self):
         ClientBase.cleanup(self)
         self.server = None

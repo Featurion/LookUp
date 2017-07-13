@@ -2,18 +2,18 @@ import queue
 import threading
 import base64
 
-from src.base import utils
+from src.base import constants, utils
 from src.base.KeyHandler import KeyHandler
 from src.base.UniqueIDManager import UniqueIDManager
+
 
 class Node(KeyHandler):
 
     def __init__(self):
         KeyHandler.__init__(self)
         self.__id = None
-        self.__running = False
+        self.__stopping = False
         self.__secure = False
-        self.__new = False
 
         self.__inbox = None
         self.__outbox = None
@@ -22,33 +22,6 @@ class Node(KeyHandler):
         self.__threads = []
 
         self.COMMAND_MAP = {} # update in subclass
-
-    def setupMessagingThreads(self):
-        """Setup messaging threads"""
-        self.__inbox = queue.Queue()
-        self.__outbox = queue.Queue()
-
-        self.__running = True
-
-        self.__sender = self.addThread(target=self.send, daemon=True)
-        self.__receiver = self.addThread(target=self.recv, daemon=True)
-
-    def addThread(self, **kwargs):
-        _t = threading.Thread(**kwargs)
-        self.__threads.append(_t)
-        return _t
-
-    def startThreads(self):
-        for _t in self.__threads:
-            _t.start()
-
-        del _t
-
-    def joinThreads(self, timeout=5):
-        for _t in self.__threads:
-            _t.join(timeout)
-
-        del _t
 
     def getId(self):
         """Getter for Node ID"""
@@ -70,22 +43,16 @@ class Node(KeyHandler):
         self.__secure = status
         del status
 
-    def setNew(self, status):
-        self.__new = status
-        del status
+    def startStopping(self):
+        self.__stopping = True
 
     @property
     def isSecure(self):
         return self.__secure
 
     @property
-    def isNew(self):
-        return self.__new
-
-    @property
-    def isRunning(self):
-        """Getter for Node status"""
-        return self.__running
+    def isStopping(self):
+        return self.__stopping
 
     @property
     def isAlive(self):
@@ -106,6 +73,45 @@ class Node(KeyHandler):
             return self.__receiver.isAlive()
         else:
             return False
+
+    def start(self):
+        """Handle startup of the Node"""
+        self.setupMessagingThreads()
+
+    def stop(self):
+        """Handle stopping of the Node"""
+        if not self.isStopping:
+            self.startStopping()
+            self.joinThreads(constants.DISCONNECT_DELAY) # wait for clean disconnect
+        elif self.isAlive:
+            self.notify.warning('already stopping')
+        else:
+            pass
+
+    def setupMessagingThreads(self):
+        """Setup messaging threads"""
+        self.__inbox = queue.Queue()
+        self.__outbox = queue.Queue()
+
+        self.__sender = self.addThread(target=self.send, daemon=True)
+        self.__receiver = self.addThread(target=self.recv, daemon=True)
+
+    def addThread(self, **kwargs):
+        _t = threading.Thread(**kwargs)
+        self.__threads.append(_t)
+        return _t
+
+    def startThreads(self):
+        for _t in self.__threads:
+            _t.start()
+
+        del _t
+
+    def joinThreads(self, timeout=5):
+        for _t in self.__threads:
+            _t.join(timeout)
+
+        del self.__threads[:]
 
     def getOutbox(self):
         """Getter for datagram outbox"""
@@ -129,19 +135,11 @@ class Node(KeyHandler):
         self.__inbox.put(datagram)
         del datagram
 
-    def start(self):
-        """Handle startup of the Node"""
-        self.setupMessagingThreads()
-
-    def stop(self):
-        """Handle stopping of the Node"""
-        self.__running = False
-
     def cleanup(self):
         KeyHandler.cleanup(self)
         self.__id = None
-        self.__running = None
-        self.__secure = None
+        self.__stopping = False
+        self.__secure = False
         self.__threads = None
         if self.__inbox:
             with self.__inbox.mutex:
@@ -152,40 +150,24 @@ class Node(KeyHandler):
             with self.__outbox.mutex:
                 self.__outbox.queue.clear()
             del self.__outbox
-        if self.__sender:
-            if self.__sender.isAlive():
-                self.__sender.join()
-            del self.__sender
-            self.__sender = None
-        if self.__receiver:
-            if self.__receiver.isAlive():
-                self.__receiver.join()
-            del self.__receiver
-            self.__receiver = None
 
     def send(self):
         """Threaded function for message sending"""
-        while self.isRunning:
-            if self._send():
-                continue
-            else:
+        while not self.isStopping:
+            if not self._send():
                 self.notify.error('ThreadingError', 'sending thread broke')
                 return
 
-        Node.stop(self)
         self.notify.debug('done sending')
 
     def recv(self):
         """Threaded function for message receiving"""
-        while self.isRunning:
-            if self._recv():
-                continue
-            else:
+        while not self.isStopping:
+            if not self._recv():
                 self.notify.error('ThreadingError', 'receiving thread broke')
                 return
 
-        Node.stop(self)
-        self.notify.debug('done handling messages')
+        self.notify.debug('done receiving')
 
     def handleReceivedDatagram(self, datagram):
         """In-between function for Node reaction to messages received"""

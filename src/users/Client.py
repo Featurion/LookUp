@@ -43,7 +43,7 @@ class Client(ClientBase):
     def stop(self):
         """Handle stopping of the client"""
         self.notify.info('disconnecting from the server...')
-        ClientBase.stop(self)
+        super(Client, self).stop()
 
         if self.isSending:
             self.notify.error('ExitError', 'an error occurred while halting datagram sending')

@@ -4,6 +4,7 @@ from src.base import constants
 from src.base.UniqueIDManager import UniqueIDManager
 from src.users.ClientAI import ClientAI
 
+
 class ClientManagerAI(UniqueIDManager):
     """Manage connected clients"""
 
@@ -59,8 +60,7 @@ class ClientManagerAI(UniqueIDManager):
         self.notify.debug('client {0}-{1} disconnected'.format(ai.getName(),
                                                                ai.getId()))
 
-        ai.temporaryStop() # Temporary until cleanup() is fixed
-        # ai.cleanup() - TODO Zach: Fix cleanup()
+        ai.cleanup()
         del ai
 
     def banClient(self, ai=None, address=None):
@@ -135,12 +135,15 @@ class ClientManagerAI(UniqueIDManager):
 
     def getClient(self, identifier):
         ai = self.getClientById(identifier) # Assume it's an ID
-        if ai == None: # Not an ID
+
+        if not ai: # Not an ID
             ai = self.getClientByName(identifier) # Assume it's a name
-            if ai == None: # Not a name
-                ai = self.getClientByAddress(identifier) # Assume it's an IP
-                if ai == None: # Not an IP
-                    self.notify.debug('identifier is not a valid ID, name, or IP!')
-                    return None
+
+        if not ai: # Not a name
+            ai = self.getClientByAddress(identifier) # Assume it's an IP
+
+        if not ai: # Not an IP
+            ai = None
+            self.notify.debug('identifier is not a valid ID, name, or IP!')
 
         return ai
