@@ -3,38 +3,38 @@ from src.base.Notifier import Notifier
 
 class BanManagerAI(Notifier):
 
-    def __init__(self, client_manager):
+    def __init__(self, server):
         Notifier.__init__(self)
-        self.client_manager = client_manager
+        self.server = server
 
     def kick(self, identifier):
-        ai = self.client_manager.getClient(identifier)
+        ai = self.server.cm.getClient(identifier)
         if ai:
             ai.sendDisconnect(constants.KICK)
-            self.client_manager.removeClient(ai)
+            self.server.cm.removeClient(ai)
             return True
         else:
             return False
 
     def ban(self, identifier, address_only=False):
         if address_only:
-            self.client_manager.banClient(address=identifier)
+            self.server.cm.banClient(address=identifier)
             return True
         else:
-            ai = self.client_manager.getClient(identifier)
+            ai = self.server.cm.getClient(identifier)
             if ai:
                 ai.sendDisconnect(constants.BAN)
-                self.client_manager.banClient(ai)
+                self.server.cm.banClient(ai)
                 return True
             else:
                 return False
 
     def kill(self, ip):
-        ais = self.client_manager.getClientsByAddress(ip)
+        ais = self.server.cm.getClientsByAddress(ip)
         if ais:
             for ai in ais:
                 ai.sendDisconnect(constants.KILL)
-                self.client_manager.removeClient(ai)
+                self.server.cm.removeClient(ai)
             return True
         else:
             return False
