@@ -150,7 +150,7 @@ class ChatTab(QWidget):
 
     @pyqtSlot(int, tuple, int, str, bool)
     def newMessage(self, command, data, src, name, loop):
-        if command == constants.CMD_TYPING:
+        if command == constants.CMD_ZONE_TYPING:
             status = int(*data[0])
             if status == constants.TYPING_START:
                 self.interface.getWindow().status_bar.showMessage("%s is typing..." % name)

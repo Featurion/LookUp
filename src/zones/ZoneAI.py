@@ -13,8 +13,8 @@ class ZoneAI(ZoneBase):
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.clientRedy,
             constants.CMD_ZONE_ADD: self.addUser,
-            constants.CMD_TYPING: self.clientTyping,
-            constants.CMD_MSG: self.clientMsg,
+            constants.CMD_ZONE_TYPING: self.clientTyping,
+            constants.CMD_MSG: self.emitMessage,
             constants.CMD_SMP_0: self.clientSMP, # Anyway to make these 'not ugly'?
             constants.CMD_SMP_1: self.clientSMP,
             constants.CMD_SMP_2: self.clientSMP,
@@ -137,9 +137,6 @@ class ZoneAI(ZoneBase):
 
     def clientTyping(self, datagram):
         self.emitMessage(datagram, datagram.getSender())
-
-    def clientMsg(self, datagram):
-        self.emitMessage(datagram)
 
     def addUser(self, datagram):
         name = datagram.getData()

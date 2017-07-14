@@ -19,7 +19,7 @@ class Zone(ZoneBase):
 
         self.COMMAND_MAP.update({
             constants.CMD_REDY: self.doRedy,
-            constants.CMD_TYPING: self.doTyping,
+            constants.CMD_ZONE_TYPING: self.doTyping,
             constants.CMD_MSG: self.doMsg,
             constants.CMD_SMP_0: self.doSMP0,
             constants.CMD_SMP_1: self.doSMP1,
@@ -79,7 +79,7 @@ class Zone(ZoneBase):
         self.sendMessage(constants.CMD_MSG, [text, id_, utils.getTimestamp()])
 
     def sendTypingMessage(self, status):
-        self.sendMessage(constants.CMD_TYPING, str(status))
+        self.sendMessage(constants.CMD_ZONE_TYPING, str(status))
 
     def _send(self):
         try:
@@ -119,7 +119,7 @@ class Zone(ZoneBase):
         status = datagram.getData()
         name = self.getClientNameById(datagram.getSender())
 
-        self.tab.new_message_signal.emit(constants.CMD_TYPING, (status,), constants.RECEIVER, name, False)
+        self.tab.new_message_signal.emit(constants.CMD_ZONE_TYPING, (status,), constants.RECEIVER, name, False)
 
         del status
         del name
