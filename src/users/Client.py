@@ -149,16 +149,16 @@ class Client(ClientBase):
         del zone
 
     def doDisconnect(self, datagram):
-        reason = datagram.getData()
-        if reason == constants.BAN:
+        reason, action = datagram.getData()
+        if action == constants.BAN:
             title = constants.TITLE_CLIENT_BANNED
-            err = constants.CLIENT_BANNED
-        elif reason == constants.KICK:
+            err = constants.CLIENT_BANNED#.format(reason)
+        elif action == constants.KICK:
             title = constants.TITLE_CLIENT_KICKED
-            err = constants.CLIENT_KICKED
-        elif reason == constants.KILL:
+            err = constants.CLIENT_KICKED#.format(reason)
+        elif action == constants.KILL:
             title = constants.TITLE_CLIENT_KILLED
-            err = constants.CLIENT_KILLED
+            err = constants.CLIENT_KILLED#.format(reason)
         else:
             self.notify.warning('received suspicious disconnection notice')
             return
@@ -166,6 +166,7 @@ class Client(ClientBase):
         self.interface.critical_signal.emit(title, err)
 
         del reason
+        del action
         del title
         del err
 
@@ -335,6 +336,9 @@ class Client(ClientBase):
             self.notify.warning('received suspicious zone datagram')
 
         del datagram
+
+    def handleIDFailure(self):
+        self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.SUSPICIOUS_DATAGRAM)
 
     def respondSMP(self, zone_id, answer):
         zone = self.zm.getZoneById(zone_id)

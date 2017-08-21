@@ -127,11 +127,12 @@ class Node(KeyHandler):
 
     def sendDatagram(self, datagram):
         """Send a new datagram"""
-        datagram._setId(str(UniqueIDManager().generateId())) # Generate a unique ID for the Datagram and then set it
         self.__outbox.put(datagram)
+
         del datagram
 
     def receiveDatagram(self, datagram):
+        """Receive a datagram"""
         self.__inbox.put(datagram)
         del datagram
 
