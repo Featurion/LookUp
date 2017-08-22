@@ -11,7 +11,7 @@ class BanManagerAI(Notifier):
     def kick(self, identifier):
         ai = self.server.cm.getClient(identifier)
         if ai:
-            ai.sendDisconnect(constants.KICK)
+            ai.sendDisconnect(("TODO", constants.KICK))
             self.server.cm.removeClient(ai)
             return True
         else:
@@ -24,7 +24,7 @@ class BanManagerAI(Notifier):
         else:
             ai = self.server.cm.getClient(identifier)
             if ai:
-                ai.sendDisconnect(constants.BAN)
+                ai.sendDisconnect(("TODO", constants.BAN))
                 self.server.cm.banClient(ai)
                 return True
             else:
@@ -34,7 +34,7 @@ class BanManagerAI(Notifier):
         ais = self.server.cm.getClientsByAddress(ip)
         if ais:
             for ai in ais:
-                ai.sendDisconnect(constants.KILL)
+                ai.sendDisconnect(("TODO", constants.KILL))
                 self.server.cm.removeClient(ai)
             return True
         else:

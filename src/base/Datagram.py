@@ -1,9 +1,12 @@
 import json
 
 class Datagram(object):
+    CONTEXT = 0
 
     def __init__(self):
-        self.__id = str()
+        Datagram.CONTEXT += 1
+
+        self.__id = Datagram.CONTEXT
         self.__command = int()
         self.__sender = int()
         self.__recipient = int()
@@ -13,7 +16,7 @@ class Datagram(object):
     def getId(self):
         return self.__id
 
-    def _setId(self, id_): # TODO: Security against tampered IDs
+    def _setId(self, id_):
         self.__id = id_
 
     def getCommand(self):

@@ -103,6 +103,8 @@ UNEXPECTED = 7
 SMP_CHECK = 8
 SMP_MATCH = 9
 
+REASON_SUSPICIOUS_DATAGRAM = 'sending a suspicious datagram'
+
 TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
 TITLE_SELF_CONNECT = 'Tried connecting to self'
@@ -126,10 +128,12 @@ NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
 CLIENT_BANNED = 'You have been banned from LookUp. Should this be an improper ban, you may contact the developers.'
 CLIENT_KICKED = 'You have been kicked from LookUp. Should this be an improper kick, you may contact the developers. You can also log back into LookUp.'
+CLIENT_KICKED_FOR = 'You have been kicked from LookUp for {0}. Should this be an improper kick, you may contact the developers. You can also log back into LookUp.'
 CLIENT_KILLED = 'Your IP address has been disconnected from LookUp. Should this be improper, you may contact the developers. You can also log back into LookUp.'
 SMP_MATCH_FAILED = "Chat authentication failed. Either your buddy provided the wrong answer to the question or someone may be attempting to eavesdrop on your conversation. Note that answers are case sensitive."
 SMP_MATCH_FAILED_SHORT = "Chat authentication failed. Note that answers are case sensitive."
 HMAC_ERROR = "You have been sent an invalid message. There may have been tampering."
+SUSPICIOUS_DATAGRAM = "You have been sent a suspicious datagram. There may have been tampering."
 INVALID_COMMAND = 'A client has sent you an invalid command.'
 
 # Chatting

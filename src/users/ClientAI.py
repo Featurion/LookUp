@@ -34,12 +34,12 @@ class ClientAI(ClientBase):
     def sendNo(self):
         self.sendResp(False)
 
-    def sendDisconnect(self, reason: int):
+    def sendDisconnect(self, reason: str, action: int):
         datagram = Datagram()
         datagram.setCommand(constants.CMD_DISCONNECT)
         datagram.setSender(self.getId())
         datagram.setRecipient(self.getId())
-        datagram.setData(reason)
+        datagram.setData((reason, action))
 
         self.sendDatagram(datagram)
         del datagram
@@ -169,3 +169,7 @@ class ClientAI(ClientBase):
             self.notify.warning('received suspicious zone datagram')
 
         del datagram
+
+    def handleIDFailure(self):
+        self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
+        self.startStopping()
