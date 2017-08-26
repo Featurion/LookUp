@@ -337,9 +337,6 @@ class Client(ClientBase):
 
         del datagram
 
-    def handleIDFailure(self):
-        self.interface.error_signal.emit(constants.TITLE_INVALID_COMMAND, constants.SUSPICIOUS_DATAGRAM)
-
     def respondSMP(self, zone_id, answer):
         zone = self.zm.getZoneById(zone_id)
         zone.respondSMP(answer)

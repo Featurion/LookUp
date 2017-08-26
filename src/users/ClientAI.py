@@ -169,7 +169,3 @@ class ClientAI(ClientBase):
             self.notify.warning('received suspicious zone datagram')
 
         del datagram
-
-    def handleIDFailure(self):
-        self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
-        self.startStopping()

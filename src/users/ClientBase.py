@@ -259,18 +259,6 @@ class ClientBase(Node):
         del data
         del datagram
 
-    def handleReceivedDatagram(self, datagram):
-        id_ = datagram.getId()
-        if id_ > datagram.CONTEXT: # If the datagram ID is less than what we're expecting, the datagram is being replayed
-            self.handleIDFailure()
-            return
-
-        elif id_ < datagram.CONTEXT: # If the datagram ID is greater than what we're expecting, datagrams are being deleted
-            self.handleIDFailure()
-            return
-
-        Node.handleReceivedDatagram(self, datagram)
-
     def forwardZoneDatagram(self, datagram): # overwrite in subclass
         """Send datagram to the proper zone"""
         del datagram

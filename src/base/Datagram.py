@@ -1,12 +1,9 @@
 import json
 
 class Datagram(object):
-    CONTEXT = 0
 
     def __init__(self):
-        Datagram.CONTEXT += 1
-
-        self.__id = Datagram.CONTEXT
+        self.__id = str()
         self.__command = int()
         self.__sender = int()
         self.__recipient = int()
