@@ -4,6 +4,7 @@ import srp
 import ssl
 import uuid
 import base64
+import json
 
 from src.base import constants
 from src.base.Datagram import Datagram
@@ -80,24 +81,34 @@ class Client(ClientBase):
         except Exception as e:
             self.notify.critical(str(e))
 
-        if self.waitForApproval():
+        response = self.waitForApproval()
+
+        if response == None:
             pass
         else:
             self.interface.critical_signal.emit(constants.TITLE_CLIENT_BANNED,
-                                             constants.CLIENT_BANNED)
+                                             constants.CLIENT_BANNED.format(response))
 
         del address
         del port
 
     def waitForApproval(self):
         while True:
-            recv = self.getSocket().recv(1024)
-            if recv == constants.ACCEPTED:
-                self.__banned = False
-                return True
-            elif recv == constants.BANNED:
-                self.__banned = True
-                return False
+            recv = json.loads(self.getSocket().recv(1024).decode('latin-1'))
+            if isinstance(recv, list):
+                if recv[1] == constants.BANNED:
+                    self.__banned = True
+                    return str(recv[0])
+                else:
+                    self.notify.error('BanError', 'unexpected error')
+                    return 'an unknown reason'
+            elif isinstance(recv, str):
+                if recv == constants.ACCEPTED:
+                    self.__banned = False
+                    return None
+                else:
+                    self.notify.error('BanError', 'unexpected error')
+                    return 'an unknown reason'
 
     def terminate(self):
         """Forcefully exit the client"""
@@ -152,13 +163,13 @@ class Client(ClientBase):
         reason, action = datagram.getData()
         if action == constants.BAN:
             title = constants.TITLE_CLIENT_BANNED
-            err = constants.CLIENT_BANNED#.format(reason)
+            err = constants.CLIENT_BANNED.format(reason)
         elif action == constants.KICK:
             title = constants.TITLE_CLIENT_KICKED
-            err = constants.CLIENT_KICKED#.format(reason)
+            err = constants.CLIENT_KICKED.format(reason)
         elif action == constants.KILL:
             title = constants.TITLE_CLIENT_KILLED
-            err = constants.CLIENT_KILLED#.format(reason)
+            err = constants.CLIENT_KILLED.format(reason)
         else:
             self.notify.warning('received suspicious disconnection notice')
             return

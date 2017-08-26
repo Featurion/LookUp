@@ -31,15 +31,15 @@ class Console(threading.Thread):
             },
             'kick': {
                 'callback': self.kick,
-                'help': 'kick [identifier]\tkick the given user from the server'
+                'help': 'kick [identifier] [reason]\tkick the given user from the server'
             },
             'ban': {
                 'callback': self.ban,
-                'help': 'ban [identifier]\tban the given user from the server'
+                'help': 'ban [identifier] [reason]\tban the given user from the server'
             },
             'kill': {
                 'callback': self.kill,
-                'help': 'kill [ip]\tkill the zombie with the given IP'
+                'help': 'kill [ip] [reason]\tkill the zombie with the given IP'
             },
             'stop': {
                 'callback': self.stop,
@@ -61,6 +61,12 @@ class Console(threading.Thread):
                         cmd(command_input[1])
                     elif len(command_input) > 2 and command_input[0] == 'execute':
                         cmd(command_input[1:])
+                    elif len(command_input) > 1 and command_input[0] == 'kick':
+                        cmd(command_input[1], command_input[2:])
+                    elif len(command_input) > 1 and command_input[0] == 'ban':
+                        cmd(command_input[1], command_input[2:])
+                    elif len(command_input) > 1 and command_input[0] == 'kill':
+                        cmd(command_input[1], command_input[2:])
                     elif len(command_input) == 5 and command_input[0] == 'datagram':
                         name = command_input[1]
                         command = command_input[2]
@@ -75,6 +81,8 @@ class Console(threading.Thread):
                 self.stop()
             except KeyError:
                 print("Unrecognized command")
+            except TypeError as e:
+                print("Bad args")
 
     def execute(self, code):
         if not code:
@@ -139,32 +147,47 @@ class Console(threading.Thread):
             else:
                 pass
 
-    def kick(self, identifier):
-        if not identifier:
-            print("Kick command requires an identifier")
+    def kick(self, identifier, reason):
+        if not identifier or not reason:
+            print("Kick command requires identifier and reason")
         else:
-            kick = self.server.bm.kick(identifier)
+            exp = ''
+            if isinstance(reason, list):
+                for length in reason:
+                    exp += length + ' '
+                exp = exp[:-1]
+            kick = self.server.bm.kick(identifier, exp)
             if kick:
                 print("{0} kicked from server".format(identifier))
             else:
                 print("{0} is not a registered client".format(identifier))
 
-    def ban(self, identifier):
-        if not identifier:
-            print("Ban command requires an identifier")
+    def ban(self, identifier, reason):
+        if not identifier or not reason:
+            print("Ban command requires an identifier and reason")
         else:
-            kick = self.server.bm.ban(identifier)
+            exp = ''
+            if isinstance(reason, list):
+                for length in reason:
+                    exp += length + ' '
+                exp = exp[:-1]
+            kick = self.server.bm.ban(identifier, exp)
             if kick:
                 print("{0} banned from server".format(identifier))
             else:
                 print("{0} is not a registered client".format(identifier))
 
-    def kill(self, ip):
-        if not ip:
-            print("Kill command requires an IP")
+    def kill(self, ip, reason):
+        if not ip or not reason:
+            print("Kill command requires an IP and reason")
         else:
+            exp = ''
+            if isinstance(reason, list):
+                for length in reason:
+                    exp += length + ' '
+                exp = exp[:-1]
             try:
-                kill = self.server.bm.kill(ip)
+                kill = self.server.bm.kill(ip, exp)
                 if kill:
                     print("{0} killed".format(ip))
                 else:

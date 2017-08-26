@@ -42,6 +42,9 @@ class ClientAI(ClientBase):
         datagram.setData((reason, action))
 
         self.sendDatagram(datagram)
+
+        self.startStopping()
+
         del datagram
 
     def sendError(self, title, err):
@@ -179,7 +182,6 @@ class ClientAI(ClientBase):
             if sender == None: # This is suspicious... the sender should always exist
                 self.notify.warning('received suspicious datagram')
                 self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
-                self.startStopping()
                 return
 
             if recipient == None: # Fair enough... it could be a zone
@@ -188,7 +190,6 @@ class ClientAI(ClientBase):
                 if recipient == None: # Not a zone or client? Suspicious.
                     self.notify.warning('received suspicious datagram')
                     self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
-                    self.startStopping()
                     return
 
         ClientBase.handleReceivedDatagram(self, datagram)

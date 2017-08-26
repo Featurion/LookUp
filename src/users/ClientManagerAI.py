@@ -1,9 +1,10 @@
+import json
+
 from uuid import UUID
 
 from src.base import constants
 from src.base.UniqueIDManager import UniqueIDManager
 from src.users.ClientAI import ClientAI
-
 
 class ClientManagerAI(UniqueIDManager):
     """Manage connected clients"""
@@ -19,7 +20,7 @@ class ClientManagerAI(UniqueIDManager):
         UniqueIDManager.__init__(self)
         self.server = server
         self.clients = []
-        self.banlist = []
+        self.banlist = {}
 
     def acceptClient(self):
         """Accept a connecting client"""
@@ -28,12 +29,12 @@ class ClientManagerAI(UniqueIDManager):
         if address in self.banlist:
             # This client has been banned
             self.notify.debug('client banned!')
-            socket_.send(constants.BANNED)
+            socket_.send(json.dumps((self.banlist[address], constants.BANNED)).encode('latin-1'))
             socket_.close()
             return False
         else:
             # This client is not banned
-            socket_.send(constants.ACCEPTED)
+            socket_.send(json.dumps(constants.ACCEPTED).encode('latin-1'))
         ai = ClientAI(self.server, address, port)
         ai.setSocket(socket_)
         self.notify.debug('client connected at {0}'.format(ai.getAddress()))
@@ -63,13 +64,13 @@ class ClientManagerAI(UniqueIDManager):
         ai.cleanup()
         del ai
 
-    def banClient(self, ai=None, address=None):
+    def banClient(self, reason, ai=None, address=None):
         """Kickban an existing client"""
         if ai:
             ai.stop()
-            self.banlist.append(ai.getAddress()) # Add the client to the banlist
+            self.banlist[ai.getAddress()] = reason # Add the client to the banlist
         elif address:
-            self.banlist.append(address) # Add the client to the banlist
+            self.banlist[address] = reason # Add the client to the banlist
         else:
             self.notify.error('BanError', 'no AI or address specified')
 

@@ -19,8 +19,9 @@ MAX_NAME_LENGTH = 32
 TLS_ENABLED = settings['tls-enabled']
 SOCKET_TIMEOUT = 1
 DISCONNECT_DELAY = 2 # give threads time to wrap up
-ACCEPTED = b'accepted'
-BANNED = b'banned'
+
+ACCEPTED = 'accepted'
+BANNED = 'banned'
 
 WANT_BLANK_GROUPS = settings['want-blank-groups']
 
@@ -126,10 +127,9 @@ SELF_CONNECT = 'You cannot connect to yourself. {0} username.'.format(CHOOSE)
 NAME_IN_USE = 'That username is taken. {0}.'.format(CHOOSE)
 NAME_DOESNT_EXIST = "That username does not exist."
 CLIENT_JOINED = '{0} is ready to chat.'
-CLIENT_BANNED = 'You have been banned from LookUp. Should this be an improper ban, you may contact the developers.'
-CLIENT_KICKED = 'You have been kicked from LookUp. Should this be an improper kick, you may contact the developers. You can also log back into LookUp.'
-CLIENT_KICKED_FOR = 'You have been kicked from LookUp for {0}. Should this be an improper kick, you may contact the developers. You can also log back into LookUp.'
-CLIENT_KILLED = 'Your IP address has been disconnected from LookUp. Should this be improper, you may contact the developers. You can also log back into LookUp.'
+CLIENT_BANNED = 'You have been banned from LookUp for {0}. Should this be an improper ban, you may contact the developers.'
+CLIENT_KICKED = 'You have been kicked from LookUp for {0}. Should this be an improper kick, you may contact the developers. You can also log back into LookUp.'
+CLIENT_KILLED = 'Your IP address has been disconnected from LookUp for {0}. Should this be improper, you may contact the developers. You can also log back into LookUp.'
 SMP_MATCH_FAILED = "Chat authentication failed. Either your buddy provided the wrong answer to the question or someone may be attempting to eavesdrop on your conversation. Note that answers are case sensitive."
 SMP_MATCH_FAILED_SHORT = "Chat authentication failed. Note that answers are case sensitive."
 HMAC_ERROR = "You have been sent an invalid message. There may have been tampering."
