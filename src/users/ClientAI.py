@@ -169,3 +169,28 @@ class ClientAI(ClientBase):
             self.notify.warning('received suspicious zone datagram')
 
         del datagram
+
+    def handleReceivedDatagram(self, datagram):
+        """Server side of received datagrams for sanity checking"""
+        if self.getId() != None:
+            sender = self.server.cm.getClientById(datagram.getSender())
+            recipient = self.server.cm.getClientById(datagram.getRecipient())
+
+            if sender == None: # This is suspicious... the sender should always exist
+                self.notify.warning('received suspicious datagram')
+                self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
+                self.startStopping()
+                return
+
+            if recipient == None: # Fair enough... it could be a zone
+                recipient = self.server.zm.getZoneById(datagram.getRecipient())
+
+                if recipient == None: # Not a zone or client? Suspicious.
+                    self.notify.warning('received suspicious datagram')
+                    self.sendDisconnect(constants.REASON_SUSPICIOUS_DATAGRAM, constants.KICK)
+                    self.startStopping()
+                    return
+
+        ClientBase.handleReceivedDatagram(self, datagram)
+
+        del datagram

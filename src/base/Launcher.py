@@ -77,9 +77,10 @@ class Launcher(object):
         from src.gui.ClientUI import ClientUI
 
         client = ClientUI(address, port)
-        client.start()
 
         builtins.client = client # Make the Client a builtin class
+
+        client.start()
 
     def setConfig(self, stream=None, filename=None, level=constants.INFO):
         constants.LOG_CONFIG = (stream, filename, level)
