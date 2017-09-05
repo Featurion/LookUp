@@ -1,0 +1,3 @@
+[submodule "imposter"]
+	path = imposter
+	url = git@github.com:zachgates/imposter.git
