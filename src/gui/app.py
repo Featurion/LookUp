@@ -54,4 +54,6 @@ class LookUpInterface(QApplication):
 
     @pyqtSlot()
     def __logged_in(self):
-        self.stop()
+        self._window.close()
+        self._window = windows.ChatWindow(self)
+        self._window.show()

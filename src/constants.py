@@ -1,3 +1,6 @@
+from jugg.constants import *
+
+
 # System
 MAX_NAME_LENGTH = 32
 
@@ -9,6 +12,18 @@ CMD_READY = 4
 ERR_BANNED = 5
 ERR_KICKED = 6
 ERR_SMP = 7
+
+ERROR_CODES.update({
+    ERR_BANNED,
+    ERR_KICKED,
+    ERR_SMP,
+})
+
+ERROR_INFO_MAP.update({
+    ERR_BANNED: 'banned',
+    ERR_KICKED: 'kicked',
+    ERR_SMP: 'failed smp',
+})
 
 # GUI
 TITLE_INVALID_NAME = 'Invalid username'
