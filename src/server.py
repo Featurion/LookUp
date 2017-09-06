@@ -1,5 +1,6 @@
 import asyncio
 import jugg
+import pyarchy
 import socket
 import ssl
 
@@ -48,6 +49,14 @@ class LookUpServer(jugg.server.Server):
             socket_ = socket_,
             hmac_key = settings.HMAC_KEY,
             challenge_key = settings.CHALLENGE_KEY)
+
+        self._banned = pyarchy.data.ItemPool()
+
+    async def new_connection(self, stream_in, stream_out):
+        if stream_out.transport._sock.getpeername() in self._banned:
+            stream_out.close()
+        else:
+            await super().new_connection(stream_in, stream_out)
 
 
 __all__ = [
