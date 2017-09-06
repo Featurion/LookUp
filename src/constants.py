@@ -1,3 +1,6 @@
+# System
+MAX_NAME_LENGTH = 32
+
 # Commands
 CMD_HELLO = 3
 CMD_READY = 4

@@ -2,10 +2,9 @@ import os
 import yaml
 
 
-MAIN_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_PATH = 'config/dev.yml'
 
-APP_TITLE = 'LookUp'
+APP_NAME = 'LookUp'
 VERSION = ''
 
 HOST = '127.0.0.1'
@@ -17,11 +16,11 @@ CERT_PATH = ''
 HMAC_KEY = ''
 CHALLENGE_KEY = ''
 
-LOG_PATH = '../logs'
+LOG_PATH = 'logs/'
 
 
 if CONFIG_PATH:
-    with open(os.path.join(MAIN_DIR, CONFIG_PATH), 'r') as config:
+    with open(CONFIG_PATH, 'r') as config:
         data = yaml.load(config)
         for key, value in data.items():
             globals()[key.upper()] = value

@@ -51,6 +51,7 @@ class LookUpServer(jugg.server.Server):
             challenge_key = settings.CHALLENGE_KEY)
 
         self._banned = pyarchy.data.ItemPool()
+        self._banned.object_type = tuple
 
     async def new_connection(self, stream_in, stream_out):
         if stream_out.transport._sock.getpeername() in self._banned:
