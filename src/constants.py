@@ -26,6 +26,8 @@ ERROR_INFO_MAP.update({
 })
 
 # GUI
+BLANK_TAB_TITLE = 'New Chat'
+
 TITLE_INVALID_NAME = 'Invalid username'
 TITLE_EMPTY_NAME = 'No username provided'
 TITLE_SELF_CONNECT = 'Tried connecting to self'
@@ -58,9 +60,6 @@ INVALID_COMMAND = 'A client has sent you an invalid command.'
 
 # Chatting
 URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
-
-BLANK_TAB_TITLE = 'New Chat'
-BLANK_GROUP_TAB_TITLE = 'New Group Chat'
 
 TYPING_TIMEOUT = 1500
 TYPING_START = 0

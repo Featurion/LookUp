@@ -137,11 +137,33 @@ class ChatWindow(QMainWindow):
         utils.resize_window(self, 700, 400)
         utils.center_window(self)
 
-    def open_tab(self):
-        pass
+    def open_tab(self, member_names = None):
+        tab = widgets.ChatTab(self, member_names)
 
-    def close_tab(self):
-        pass
+        if member_names:
+            title = utils.oxford_comma(member_names)
+        else:
+            title = constants.BLANK_TAB_TITLE
+
+        self.chat_tabs.addTab(tab, title)
+        index = self.chat_tabs.indexOf(tab)
+        self.chat_tabs.setTabText(index, title)
+
+        tab.widget_stack.setCurrentIndex(2)
+        tab.widget_stack.currentWidget()._destination = title
+
+        self.chat_tabs.setCurrentWidget(tab)
+        tab.setFocus()
+        return tab
+
+    def close_tab(self, index):
+        tab = self.chat_tabs.widget(index)
+        tab.stop()
+
+        self.chat_tabs.removeTab(index)
+
+        if not self.chat_tabs.count():
+            self.open_tab()
 
     def _tab_changed(self):
         pass
