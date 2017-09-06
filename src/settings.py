@@ -17,7 +17,7 @@ CERT_PATH = ''
 HMAC_KEY = ''
 CHALLENGE_KEY = ''
 
-LOG_PATH = 'logs'
+LOG_PATH = '../logs'
 
 
 if CONFIG_PATH:
