@@ -3,7 +3,7 @@ import yaml
 
 
 MAIN_DIR = os.path.dirname(os.path.realpath(__file__))
-CONFIG_PATH = ''
+CONFIG_PATH = '../config/dev.yml'
 
 APP_TITLE = 'LookUp'
 VERSION = ''
@@ -23,7 +23,8 @@ LOG_PATH = 'logs'
 if CONFIG_PATH:
     with open(os.path.join(MAIN_DIR, CONFIG_PATH), 'r') as config:
         data = yaml.load(config)
-        globals().update(data)
+        for key, value in data.items():
+            globals()[key.upper()] = value
 
 
 __all__ = [
