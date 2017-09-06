@@ -148,9 +148,7 @@ class ChatWindow(QMainWindow):
         self.chat_tabs.addTab(tab, title)
         index = self.chat_tabs.indexOf(tab)
         self.chat_tabs.setTabText(index, title)
-
-        tab.widget_stack.setCurrentIndex(2)
-        tab.widget_stack.currentWidget()._destination = title
+        tab.widget_stack.currentWidget().title = title
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()

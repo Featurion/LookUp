@@ -110,7 +110,7 @@ class ChatWidget(QWidget):
         self.chat_input = QTextEdit()
         self.chat_input.installEventFilter(self)
 
-        self.send_button = QPushButton("Send")
+        self.send_button = QPushButton('Send')
         self.send_button.clicked.connect(self.send_message)
 
         font_metrics = QFontMetrics(self.chat_input.font())
@@ -148,7 +148,6 @@ class ChatTab(QWidget):
         else:
             self.__member_data = {}
 
-        self.__zone = None
         self.__unread = 0
 
         self.input_widget = Input(
@@ -168,16 +167,7 @@ class ChatTab(QWidget):
         _layout.addWidget(self.widget_stack)
         self.setLayout(_layout)
 
-    @property
-    def zone(self):
-        return self.__zone
-
-    @zone.setter
-    def zone(self, zone):
-        if self.__zone is None:
-            self.__zone = zone
-        else:
-            raise AttributeError('zone can only be set once')
-
     def connect(self, name):
-        print(name)
+        self.window()._interface.send(
+            command = constants.CMD_HELLO,
+            data = name)
