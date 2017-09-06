@@ -3,7 +3,7 @@ import yaml
 
 
 MAIN_DIR = os.path.dirname(os.path.realpath(__file__))
-CONFIG_PATH = ''
+CONFIG_PATH = 'config/dev.yml'
 
 APP_TITLE = 'LookUp'
 VERSION = ''

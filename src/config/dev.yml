@@ -1,0 +1,9 @@
+app_title: LookUp
+version: 'proto'
+
+want_tls: false
+key_path: ''
+cert_path: ''
+
+hmac_key: ''
+challenge_key: ''
