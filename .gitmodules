@@ -1,0 +1,3 @@
+[submodule "jugg"]
+	path = jugg
+	url = git@github.com:Featurion/jugg.git
