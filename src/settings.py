@@ -3,7 +3,7 @@ import yaml
 
 
 MAIN_DIR = os.path.dirname(os.path.realpath(__file__))
-CONFIG_PATH = '../config/dev.yml'
+CONFIG_PATH = ''
 
 APP_TITLE = 'LookUp'
 VERSION = ''
@@ -25,6 +25,10 @@ if CONFIG_PATH:
         data = yaml.load(config)
         for key, value in data.items():
             globals()[key.upper()] = value
+
+
+HMAC_KEY = HMAC_KEY.encode()
+CHALLENGE_KEY = CHALLENGE_KEY.encode()
 
 
 __all__ = [
