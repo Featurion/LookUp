@@ -9,8 +9,10 @@ from src import constants, settings
 
 class LookUpClientAI(jugg.server.ClientAI):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, server = None):
+        super().__init__(*args)
+
+        self._server = server
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_READY] = self.handle_ready
@@ -19,7 +21,17 @@ class LookUpClientAI(jugg.server.ClientAI):
         return super().verify_credentials(data)
 
     async def handle_hello(self, dg):
-        pass
+        for name in dg.data:
+            try:
+                client = self._server.clients.get(
+                    self._server.clients,
+                    lambda e: e.name == name)
+            except KeyError:
+                # Red light
+                pass
+        else:
+            # Green light
+            pass
 
     async def handle_ready(self, dg):
         pass
@@ -53,11 +65,13 @@ class LookUpServer(jugg.server.Server):
         self._banned = pyarchy.data.ItemPool()
         self._banned.object_type = tuple
 
-    async def new_connection(self, stream_in, stream_out):
-        if stream_out.transport._sock.getpeername() in self._banned:
-            stream_out.close()
+    async def new_connection(self, stream_reader, stream_writer):
+        if stream_writer.transport._sock.getpeername() in self._banned:
+            stream_writer.close()
         else:
-            await super().new_connection(stream_in, stream_out)
+            await super().new_connection(
+                stream_reader, stream_writer,
+                server = self)
 
 
 __all__ = [

@@ -168,7 +168,7 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        self.window()._interface._client.syncronous_send(
+        self.window().interface._client.syncronous_send(
             command = constants.CMD_HELLO,
             data = name)
         self.window().widget_stack.setCurrentIndex(0)

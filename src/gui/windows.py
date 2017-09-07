@@ -14,7 +14,7 @@ class LoginWindow(QDialog):
     def __init__(self, interface):
         super().__init__()
 
-        self._interface = interface
+        self.interface = interface
 
         self.widget_stack = QStackedWidget(self)
         self.widget_stack.addWidget(widgets.Connecting(self))
@@ -39,7 +39,7 @@ class LoginWindow(QDialog):
 
     def __connect(self, username):
         self.widget_stack.setCurrentIndex(0)
-        self._interface._client._username = username
+        self.interface._client._username = username
 
 
 class ChatWindow(QMainWindow):
@@ -47,7 +47,7 @@ class ChatWindow(QMainWindow):
     def __init__(self, interface):
         super().__init__()
 
-        self._interface = interface
+        self.interface = interface
 
         # window setup
         self.status_bar = self.statusBar()
