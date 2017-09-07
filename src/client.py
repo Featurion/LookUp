@@ -52,6 +52,14 @@ class LookUpClient(jugg.client.Client):
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
 
+    def syncronous_send(self, **kwargs):
+        kwargs.pop('sender', None)
+        asyncio.new_event_loop().run_until_complete(
+            self.send(
+                jugg.core.Datagram(
+                    sender = self.id,
+                    **kwargs)))
+
     def start(self):
         try:
             self._loop.run_until_complete(super().start())

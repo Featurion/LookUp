@@ -29,15 +29,6 @@ class LookUpInterface(QApplication):
 
         self.aboutToQuit.connect(self.stop)
 
-    def send(self, **kwargs):
-        kwargs['sender'] = self._client.id
-
-        asyncio.new_event_loop().run_until_complete(
-            self._client.send(
-                jugg.core.Datagram(**kwargs)))
-
-        self._window.widget_stack.setCurrentIndex(0)
-
     def start(self):
         self._client = client.LookUpClient(self, *self._address)
 
