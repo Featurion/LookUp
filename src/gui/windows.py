@@ -3,10 +3,45 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QDialog, QMessageBox, QAction
 from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QSystemTrayIcon
 from PyQt5.QtWidgets import QTabWidget, QToolButton, QToolBar, QMenu
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
 
 from src import constants, settings
 from src.gui import widgets, utils
+
+
+class ConnectionDialog(QMessageBox):
+
+    def __init__(self, parent, msg):
+        QMessageBox.__init__(self, parent)
+        self.accepted = False
+
+        self.setWindowTitle('Incoming Connection')
+        self.setText('Received connection request from ' + msg)
+        self.setIcon(QMessageBox.Question)
+
+        self.accept_button = QPushButton(
+            QIcon.fromTheme('dialog-ok'), 'Accept')
+        self.addButton(self.accept_button, QMessageBox.YesRole)
+
+        self.reject_button = QPushButton(
+            QIcon.fromTheme('dialog-cancel'), 'Reject')
+        self.addButton(self.reject_button, QMessageBox.NoRole)
+
+        self.buttonClicked.connect(self.answered)
+
+    def answered(self, button):
+        if button is self.accept_button:
+            self.accepted = True
+        else:
+            self.accepted = False
+
+        self.close()
+
+    @staticmethod
+    def getAnswer(parent, msg):
+        accept_dialog = ConnectionDialog(parent, msg)
+        accept_dialog.exec_()
+        return accept_dialog.accepted
 
 
 class LoginWindow(QDialog):
@@ -39,10 +74,14 @@ class LoginWindow(QDialog):
 
     def __connect(self, username):
         self.widget_stack.setCurrentIndex(0)
-        self.interface._client._username = username
+        self.interface._client.syncronous_send(
+            command = constants.CMD_LOGIN,
+            data = username)
 
 
 class ChatWindow(QMainWindow):
+
+    new_zone_signal = pyqtSignal(str)
 
     def __init__(self, interface):
         super().__init__()
@@ -137,6 +176,14 @@ class ChatWindow(QMainWindow):
         utils.resize_window(self, 700, 400)
         utils.center_window(self)
 
+    @pyqtSlot(str)
+    def new_zone(self, id_):
+        tab = self.open_tab()
+        client = self._interface._client
+
+        zone = client.LookUpZone(tab, client, id_)
+        client._zones.add(zone)
+
     def open_tab(self, member_names = None):
         tab = widgets.ChatTab(self, member_names)
 
@@ -146,9 +193,7 @@ class ChatWindow(QMainWindow):
             title = constants.BLANK_TAB_TITLE
 
         self.chat_tabs.addTab(tab, title)
-        index = self.chat_tabs.indexOf(tab)
-        self.chat_tabs.setTabText(index, title)
-        tab.widget_stack.currentWidget().title = title
+        tab._update_title(title)
 
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()

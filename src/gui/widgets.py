@@ -1,10 +1,10 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QMovie, QPixmap, QFontMetrics
 from PyQt5.QtWidgets import QLabel, QTextEdit, QLineEdit, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QTextBrowser
 from PyQt5.QtWidgets import QStackedWidget, QWidget, QSplitter
 
-from src import constants
+from src import constants, client
 from src.gui import utils
 
 
@@ -140,8 +140,12 @@ class ChatWidget(QWidget):
 
 class ChatTab(QWidget):
 
+    update_title_signal = pyqtSignal(str)
+
     def __init__(self, parent, member_names):
         super().__init__(parent)
+
+        self.update_title_signal.connect(self._update_title)
 
         if member_names:
             self.__member_data = {name: None for name in member_names}
@@ -160,7 +164,6 @@ class ChatTab(QWidget):
 
         self.widget_stack = QStackedWidget(self)
         self.widget_stack.addWidget(self.input_widget)
-        self.widget_stack.addWidget(Connecting(self))
         self.widget_stack.addWidget(self.chat_widget)
 
         _layout = QHBoxLayout()
@@ -168,7 +171,19 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        self.window().interface._client.syncronous_send(
+        cli = self.window().interface._client
+
+        zone = client.LookUpZone(self, cli)
+        cli._zones.add(zone)
+
+        cli.syncronous_send(
             command = constants.CMD_HELLO,
-            data = name)
-        self.window().widget_stack.setCurrentIndex(0)
+            recipient = zone.id,
+            data = [name])
+        self.widget_stack.setCurrentIndex(1)
+
+    @pyqtSlot(str)
+    def _update_title(self, title):
+        index = self.window().chat_tabs.indexOf(self)
+        self.window().chat_tabs.setTabText(index, title)
+        self.widget_stack.currentWidget().title = title

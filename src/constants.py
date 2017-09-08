@@ -7,6 +7,29 @@ MAX_NAME_LENGTH = 32
 # Commands
 CMD_HELLO = 3
 CMD_READY = 4
+CMD_REJECT = 5
+CMD_UPDATE = 6
+CMD_MSG = 7
+
+# Zone updates
+UPDATE_UNAVAILABLE = 0
+UPDATE_JOINED = 1
+UPDATE_LEFT = 2
+UPDATE_REJECTED = 3
+
+UPDATE_CODES = {
+    UPDATE_UNAVAILABLE,
+    UPDATE_JOINED,
+    UPDATE_LEFT,
+    UPDATE_REJECTED,
+}
+
+UPDATE_INFO_MAP = {
+    UPDATE_UNAVAILABLE: '{0} is unavailable',
+    UPDATE_JOINED: '{0} has joined',
+    UPDATE_LEFT: '{0} has left',
+    UPDATE_REJECTED: '{0} has rejected their invitation',
+}
 
 # Users
 ERR_BANNED = 5
