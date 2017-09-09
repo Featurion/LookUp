@@ -25,7 +25,7 @@ class Connecting(QWidget):
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.connecting_image, alignment = Qt.AlignCenter)
-        hbox.addSpacing(10)
+        hbox.addSpacing(1)
         hbox.addWidget(self.connecting_label, alignment = Qt.AlignCenter)
         hbox.addStretch(1)
         self.setLayout(hbox)
@@ -104,6 +104,8 @@ class ChatWidget(QWidget):
     def __init__(self, tab):
         QWidget.__init__(self, tab)
 
+        self._tab = tab
+
         self.chat_log = QTextBrowser()
         self.chat_log.setOpenExternalLinks(True)
 
@@ -113,13 +115,23 @@ class ChatWidget(QWidget):
         self.send_button = QPushButton('Send')
         self.send_button.clicked.connect(self.send_message)
 
+        self.invite_button = QPushButton('Invite')
+        self.invite_button.clicked.connect(self.send_invite)
+
         font_metrics = QFontMetrics(self.chat_input.font())
         self.chat_input.setMinimumHeight(font_metrics.lineSpacing() * 3)
-        self.send_button.setFixedHeight(font_metrics.lineSpacing() * 3)
+        self.send_button.setFixedHeight(font_metrics.lineSpacing() * 2)
+        self.invite_button.setFixedHeight(font_metrics.lineSpacing() * 2)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.chat_input)
-        hbox.addWidget(self.send_button)
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addWidget(self.send_button)
+        vbox.addStretch(1)
+        vbox.addWidget(self.invite_button)
+        vbox.addStretch(1)
+        hbox.addLayout(vbox)
 
         input_wrapper = QWidget()
         input_wrapper.setLayout(hbox)
@@ -137,6 +149,10 @@ class ChatWidget(QWidget):
     def send_message(self):
         pass
 
+    def send_invite(self):
+        self._tab.input_widget.text = ''
+        self._tab.widget_stack.setCurrentIndex(0)
+
 
 class ChatTab(QWidget):
 
@@ -152,6 +168,7 @@ class ChatTab(QWidget):
         else:
             self.__member_data = {}
 
+        self._zone = None
         self.__unread = 0
 
         self.input_widget = Input(
@@ -171,12 +188,10 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        cli = self.window().interface._client
+        self._zone = client.LookUpZone(self, cli)
+        self.window().interface._client._zones.add(zone)
 
-        zone = client.LookUpZone(self, cli)
-        cli._zones.add(zone)
-
-        cli.synchronous_send(
+        self.window().interface._client.synchronous_send(
             command = constants.CMD_HELLO,
             recipient = zone.id,
             data = [name])
