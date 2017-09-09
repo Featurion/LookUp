@@ -37,7 +37,7 @@ class LookUpClient(jugg.client.Client):
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_MSG] = self.handle_message
 
-    def syncronous_send(self, **kwargs):
+    def synchronous_send(self, **kwargs):
         kwargs.pop('sender', None)
         asyncio.new_event_loop().run_until_complete(
             self.send(

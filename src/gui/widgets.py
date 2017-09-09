@@ -176,7 +176,7 @@ class ChatTab(QWidget):
         zone = client.LookUpZone(self, cli)
         cli._zones.add(zone)
 
-        cli.syncronous_send(
+        cli.synchronous_send(
             command = constants.CMD_HELLO,
             recipient = zone.id,
             data = [name])

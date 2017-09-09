@@ -81,13 +81,13 @@ class LookUpInterface(QApplication):
             self._window, utils.oxford_comma(member_names))
 
         if action:
-            self._client.syncronous_send(
+            self._client.synchronous_send(
                 command = constants.CMD_READY,
                 recipient = id_)
 
             self._window.open_tab(member_names)
             self._window.widget_stack.setCurrentIndex(1)
         else:
-            self._client.syncronous_send(
+            self._client.synchronous_send(
                 command = constants.CMD_REJECT,
                 recipient = id_)

@@ -74,7 +74,7 @@ class LoginWindow(QDialog):
 
     def __connect(self, username):
         self.widget_stack.setCurrentIndex(0)
-        self.interface._client.syncronous_send(
+        self.interface._client.synchronous_send(
             command = constants.CMD_LOGIN,
             data = username)
 
