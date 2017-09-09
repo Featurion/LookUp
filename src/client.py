@@ -38,12 +38,8 @@ class LookUpClient(jugg.client.Client):
         self._commands[constants.CMD_MSG] = self.handle_message
 
     def synchronous_send(self, **kwargs):
-        kwargs.pop('sender', None)
         asyncio.new_event_loop().run_until_complete(
-            self.send(
-                jugg.core.Datagram(
-                    sender = self.id,
-                    **kwargs)))
+            self.send_message(**kwargs))
 
     async def stop(self):
         await super().stop()
@@ -62,6 +58,16 @@ class LookUpClient(jugg.client.Client):
 
     async def handle_hello(self, dg):
         self._interface.hello_signal.emit(dg.sender, dg.data)
+
+    async def send_message(self, **kwargs):
+        kwargs.pop('sender', None)
+        dg = jugg.core.Datagram(sender = self.id, **kwargs)
+
+        for zone in self._zones:
+            if zone.id == dg.recipient:
+                await zone.send(dg)
+        else:
+            await self.send(dg)
 
     async def handle_message(self, dg):
         try:

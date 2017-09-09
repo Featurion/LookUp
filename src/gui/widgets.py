@@ -147,7 +147,14 @@ class ChatWidget(QWidget):
         self.setLayout(hbox)
 
     def send_message(self):
-        pass
+        if self._tab._zone:
+            self.window().interface._client.synchronous_send(
+                command = constants.CMD_MSG,
+                recipient = self._tab._zone.id,
+                data = self.chat_input.toPlainText())
+        else:
+            # Can't send message without zone
+            pass
 
     def send_invite(self):
         self._tab.input_widget.text = ''
@@ -188,12 +195,13 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        self._zone = client.LookUpZone(self, cli)
-        self.window().interface._client._zones.add(zone)
+        self._zone = client.LookUpZone(
+            self, self.window().interface._client)
+        self.window().interface._client._zones.add(self._zone)
 
         self.window().interface._client.synchronous_send(
             command = constants.CMD_HELLO,
-            recipient = zone.id,
+            recipient = self._zone.id,
             data = [name])
         self.widget_stack.setCurrentIndex(1)
 
