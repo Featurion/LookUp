@@ -19,7 +19,6 @@ class LookUpClientAI(jugg.server.ClientAI):
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_READY] = self.handle_ready
-        self._commands[constants.CMD_REJECT] = self.handle_reject
         self._commands[constants.CMD_MSG] = self.handle_message
 
     def verify_credentials(self, data):
@@ -28,9 +27,9 @@ class LookUpClientAI(jugg.server.ClientAI):
     async def start(self):
         await super().start()
 
-        # Cleanup
         for zone in self._zones:
-            await zone.send_update(constants.UPDATE_LEFT, self.name)
+            zone.remove(self)
+            await zone.send_update()
 
     async def send_hello(self, zone):
         await self.send(
@@ -38,7 +37,7 @@ class LookUpClientAI(jugg.server.ClientAI):
                 command = constants.CMD_HELLO,
                 sender = zone.id,
                 recipient = self.id,
-                data = [client.name for client in zone]))
+                data = zone.participants))
 
     async def handle_hello(self, dg):
         try:
@@ -58,7 +57,7 @@ class LookUpClientAI(jugg.server.ClientAI):
                     lambda e: e.name == name)
                 await client.send_hello(zone)
             except KeyError:
-                await zone.send_update(constants.UPDATE_UNAVAILABLE, name)
+                pass
 
     async def handle_ready(self, dg):
         zone = self._server._zones.get(
@@ -68,14 +67,7 @@ class LookUpClientAI(jugg.server.ClientAI):
         self._zones.add(zone)
         zone.add(self)
 
-        await zone.send_update(constants.UPDATE_JOINED, self.name)
-
-    async def handle_reject(self, dg):
-        zone = self._server._zones.get(
-            self._server._zones,
-            lambda e: e.id == dg.recipient)
-
-        await zone.send_update(constants.UPDATE_REJECTED, self.name)
+        await zone.send_update()
 
     async def handle_message(self, dg):
         try:
@@ -84,15 +76,12 @@ class LookUpClientAI(jugg.server.ClientAI):
                 lambda e: e.id == dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
-            await zone.handle_datagram(dg)
+            await zone.send(dg)
         except KeyError:
             pass
 
 
-class LookUpZoneAI(
-    pyarchy.data.ItemPool,
-    pyarchy.core.IdentifiedObject,
-    jugg.core.Node):
+class LookUpZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
 
     object_type = LookUpClientAI
 
@@ -102,9 +91,9 @@ class LookUpZoneAI(
 
         self.id = pyarchy.core.Identity(id_)
 
-        self._commands = {
-            constants.CMD_READY: self.send,
-        }
+    @property
+    def participants(self):
+        return {client.name: client.id for client in self}
 
     async def send(self, dg):
         for client in self:
@@ -115,13 +104,13 @@ class LookUpZoneAI(
                     recipient = client.id,
                     data = str(dg)))
 
-    async def send_update(self, code, name):
+    async def send_update(self):
         await self.send(
             jugg.core.Datagram(
                 command = constants.CMD_UPDATE,
                 sender = self.id,
                 recipient = self.id,
-                data = (code, name)))
+                data = self.participants))
 
 
 class LookUpServer(jugg.server.Server):

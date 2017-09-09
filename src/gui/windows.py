@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QSystemTrayIcon
 from PyQt5.QtWidgets import QTabWidget, QToolButton, QToolBar, QMenu
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
 
-from src import constants, settings
+from src import client, constants, settings
 from src.gui import widgets, utils
 
 
@@ -80,8 +80,6 @@ class LoginWindow(QDialog):
 
 
 class ChatWindow(QMainWindow):
-
-    new_zone_signal = pyqtSignal(str)
 
     def __init__(self, interface):
         super().__init__()
@@ -176,25 +174,19 @@ class ChatWindow(QMainWindow):
         utils.resize_window(self, 700, 400)
         utils.center_window(self)
 
-    @pyqtSlot(str)
-    def new_zone(self, id_):
+    def new_zone(self, id_, participants):
         tab = self.open_tab()
-        client = self._interface._client
+        zone = client.LookUpZone(tab, self.interface._client, id_)
+        zone._participants = participants
 
-        zone = client.LookUpZone(tab, client, id_)
-        client._zones.add(zone)
+        self.interface._client._zones.add(zone)
+        tab._zone = zone
+        tab.update_title()
+        tab.widget_stack.setCurrentIndex(1)
 
-    def open_tab(self, member_names = None):
-        tab = widgets.ChatTab(self, member_names)
-
-        if member_names:
-            title = utils.oxford_comma(member_names)
-        else:
-            title = constants.BLANK_TAB_TITLE
-
-        self.chat_tabs.addTab(tab, title)
-        tab._update_title(title)
-
+    def open_tab(self):
+        tab = widgets.ChatTab(self)
+        self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
         self.chat_tabs.setCurrentWidget(tab)
         tab.setFocus()
         return tab
@@ -202,11 +194,7 @@ class ChatWindow(QMainWindow):
     def close_tab(self, index):
         tab = self.chat_tabs.widget(index)
         tab.stop()
-
         self.chat_tabs.removeTab(index)
-
-        if not self.chat_tabs.count():
-            self.open_tab()
 
     def _tab_changed(self):
         pass

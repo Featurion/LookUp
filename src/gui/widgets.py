@@ -163,17 +163,12 @@ class ChatWidget(QWidget):
 
 class ChatTab(QWidget):
 
-    update_title_signal = pyqtSignal(str)
+    update_title_signal = pyqtSignal()
 
-    def __init__(self, parent, member_names):
+    def __init__(self, parent):
         super().__init__(parent)
 
-        self.update_title_signal.connect(self._update_title)
-
-        if member_names:
-            self.__member_data = {name: None for name in member_names}
-        else:
-            self.__member_data = {}
+        self.update_title_signal.connect(self.update_title)
 
         self._zone = None
         self.__unread = 0
@@ -195,18 +190,22 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        self._zone = client.LookUpZone(
-            self, self.window().interface._client)
-        self.window().interface._client._zones.add(self._zone)
+        c = self.window().interface._client
 
-        self.window().interface._client.synchronous_send(
+        if not self._zone:
+            self._zone = client.LookUpZone(self, c)
+            c._zones.add(self._zone)
+            self.update_title()
+
+        c.synchronous_send(
             command = constants.CMD_HELLO,
             recipient = self._zone.id,
             data = [name])
         self.widget_stack.setCurrentIndex(1)
 
-    @pyqtSlot(str)
-    def _update_title(self, title):
+    @pyqtSlot()
+    def update_title(self):
+        title = utils.oxford_comma(list(self._zone._participants.keys()))
         index = self.window().chat_tabs.indexOf(self)
         self.window().chat_tabs.setTabText(index, title)
         self.widget_stack.currentWidget().title = title

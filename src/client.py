@@ -5,7 +5,6 @@ import socket
 import ssl
 
 from src import constants
-from src.gui import utils
 
 
 class LookUpClient(jugg.client.Client):
@@ -70,15 +69,12 @@ class LookUpClient(jugg.client.Client):
             await self.send(dg)
 
     async def handle_message(self, dg):
-        try:
-            zone = self._zones.get(
-                self._zones,
-                lambda e: e.id == dg.sender)
+        zone = self._zones.get(
+            self._zones,
+            lambda e: e.id == dg.sender)
 
-            dg = jugg.core.Datagram.from_string(dg.data)
-            await zone.handle_datagram(dg)
-        except KeyError:
-            self._interface._window.new_zone_signal.emit(dg.sender)
+        dg = jugg.core.Datagram.from_string(dg.data)
+        await zone.handle_datagram(dg)
 
 
 class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
@@ -96,7 +92,7 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
 
         self._client = client
         self._tab = tab
-        self._members = []
+        self._participants = {client.name: client.id}
 
         self._commands = {
             constants.CMD_UPDATE: self.handle_update,
@@ -111,26 +107,17 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
                 data = str(dg)))
 
     async def handle_update(self, dg):
-        code, name = dg.data
-        info = constants.UPDATE_INFO_MAP.get(code).format(name)
+        # TODO: improve this logic
+        for name in self._participants:
+            if name not in dg.data:
+                print(name, 'left')
 
-        if code == constants.UPDATE_JOINED:
-            # User joined
-            self._members.append(name)
-        else:
-            try:
-                # User left
-                self._members.remove(name)
-            except ValueError:
-                # User rejected invitation or is offline
-                pass
+        for name in dg.data:
+            if name not in self._participants:
+                print(name, 'joined')
 
-        if self._members:
-            title = utils.oxford_comma(self._members)
-        else:
-            title = constants.BLANK_TAB_TITLE
-
-        self._tab.update_title_signal.emit(title)
+        self._participants = dg.data
+        self._tab.update_title_signal.emit()
 
 
 __all__ = [

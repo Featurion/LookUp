@@ -15,7 +15,7 @@ class LookUpInterface(QApplication):
     error_signal = pyqtSignal(int)
     connected_signal = pyqtSignal()
     login_signal = pyqtSignal()
-    hello_signal = pyqtSignal(str, list)
+    hello_signal = pyqtSignal(str, dict)
 
     def __init__(self, host: str, port: int):
         QApplication.__init__(self, [])
@@ -75,19 +75,19 @@ class LookUpInterface(QApplication):
         self._window = windows.ChatWindow(self)
         self._window.show()
 
-    @pyqtSlot(str, list)
-    def __hello(self, id_, member_names):
+    @pyqtSlot(str, dict)
+    def __hello(self, id_, participants):
         action = windows.ConnectionDialog.getAnswer(
-            self._window, utils.oxford_comma(member_names))
+            self._window, utils.oxford_comma(list(participants.keys())))
 
         if action:
             self._client.synchronous_send(
                 command = constants.CMD_READY,
                 recipient = id_)
 
-            self._window.open_tab(member_names)
+            participants[self._client.name] = self._client.id
+
+            self._window.new_zone(id_, participants)
             self._window.widget_stack.setCurrentIndex(1)
         else:
-            self._client.synchronous_send(
-                command = constants.CMD_REJECT,
-                recipient = id_)
+            pass
