@@ -1,9 +1,28 @@
-app_title: LookUp
-version: 'proto'
+# Basic settings
+app-name: LookUp
+version: 'PROTOTYPE-DEV'
 
-want_tls: false
-key_path: ''
-cert_path: ''
+# Debugging
+want-injector: false
 
-hmac_key: ''
-challenge_key: ''
+# Logging
+log-path: /logs
+log-format: 'none'
+want-log-formatting: true
+
+# Connection settings
+host: '127.0.0.1'
+port: 1492
+
+# TLS settings
+want-tls: false
+key-path: ''
+cert-path: ''
+
+# Security settings
+
+# TODO: Figure out a way to secure these settings
+# Do not use any of these defaults in production
+
+hmac-key: '614b4d734f78785a4131733075737832745a456f5a41'
+challenge-key: '76b8e2753d9ffc4b93111063d296a8729a3829caaeb3'

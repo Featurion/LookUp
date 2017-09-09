@@ -3,16 +3,13 @@ import sys
 
 from PyQt5.QtWidgets import QDesktopWidget
 
-
-def center_window(window):
+def centerWindow(window):
     geo = window.frameGeometry()
     geo.moveCenter(QDesktopWidget().availableGeometry().center())
     window.move(geo.topLeft())
 
-
-def resize_window(window, width, height):
+def resizeWindow(window, width, height):
     window.setGeometry(0, 0, width, height)
-
 
 def oxford_comma(strings : list):
     len_ = len(strings)

@@ -1,5 +1,21 @@
 from jugg.constants import *
 
+# Logging
+
+DEBUG = 10
+INFO = 20
+WARNING = 30
+EXCEPTION = 40
+
+LOG_CONFIG = (None, None, INFO)
+LOG_LEVEL = INFO
+
+MsgLevel2Name = {
+    DEBUG: 'DEBUG',
+    INFO: 'INFO',
+    WARNING: 'WARNING',
+    EXCEPTION: 'ERROR',
+}
 
 # System
 MAX_NAME_LENGTH = 32

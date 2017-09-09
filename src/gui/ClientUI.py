@@ -6,11 +6,14 @@ import threading
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 
-from src import client, constants
-from src.gui import utils, windows
+from src.base import constants
+from src.gui import utils
 
+from src.gui.ChatWindow import ChatWindow
+from src.gui.LoginWindow import LoginWindow
+from src.node.Client import LookUpClient
 
-class LookUpInterface(QApplication):
+class ClientUI(QApplication):
 
     error_signal = pyqtSignal(int)
     connected_signal = pyqtSignal()
@@ -32,7 +35,7 @@ class LookUpInterface(QApplication):
         self.aboutToQuit.connect(self.stop)
 
     def start(self):
-        self._window = windows.LoginWindow(self)
+        self._window = LoginWindow(self)
         self._window.show()
 
         connection = threading.Thread(
@@ -47,7 +50,7 @@ class LookUpInterface(QApplication):
         asyncio.set_event_loop(loop)
 
         try:
-            self._client = client.LookUpClient(self, *self._address)
+            self._client = LookUpClient(self, *self._address)
         except ConnectionRefusedError:
             self.error_signal.emit(constants.ERR_NO_CONNECTION)
             return
@@ -72,7 +75,7 @@ class LookUpInterface(QApplication):
     @pyqtSlot()
     def __logged_in(self):
         self._window.close()
-        self._window = windows.ChatWindow(self)
+        self._window = ChatWindow(self)
         self._window.show()
 
     @pyqtSlot(str, list)
@@ -81,13 +84,13 @@ class LookUpInterface(QApplication):
             self._window, utils.oxford_comma(member_names))
 
         if action:
-            self._client.syncronous_send(
+            self._client.synchronousSend(
                 command = constants.CMD_READY,
                 recipient = id_)
 
             self._window.open_tab(member_names)
             self._window.widget_stack.setCurrentIndex(1)
         else:
-            self._client.syncronous_send(
+            self._client.synchronousSend(
                 command = constants.CMD_REJECT,
                 recipient = id_)
