@@ -36,13 +36,25 @@ class LookUpClient(jugg.client.Client):
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_MSG] = self.handle_message
 
-    def synchronous_send(self, **kwargs):
-        asyncio.new_event_loop().run_until_complete(
-            self.send_message(**kwargs))
-
     async def stop(self):
         await super().stop()
         self._interface.stop()
+
+    def synchronous_send(self, **kwargs):
+        asyncio.new_event_loop().run_until_complete(
+            self.send_datagram(**kwargs))
+
+    async def send_datagram(self, **kwargs):
+        kwargs.pop('sender', None)
+        dg = jugg.core.Datagram(sender = self.id, **kwargs)
+
+        # Commands > CMD_MSG go to their zone
+        if dg.command > 5:
+            for zone in self._zones:
+                if zone.id == dg.recipient:
+                    await zone.send(dg)
+        else:
+            await self.send(dg)
 
     async def handle_handshake(self, dg):
         await super().handle_handshake(dg)
@@ -57,16 +69,6 @@ class LookUpClient(jugg.client.Client):
 
     async def handle_hello(self, dg):
         self._interface.hello_signal.emit(dg.sender, dg.data)
-
-    async def send_message(self, **kwargs):
-        kwargs.pop('sender', None)
-        dg = jugg.core.Datagram(sender = self.id, **kwargs)
-
-        for zone in self._zones:
-            if zone.id == dg.recipient:
-                await zone.send(dg)
-        else:
-            await self.send(dg)
 
     async def handle_message(self, dg):
         zone = self._zones.get(
@@ -110,11 +112,13 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
         # TODO: improve this logic
         for name in self._participants:
             if name not in dg.data:
-                print(name, 'left')
+                # print(name, 'left')
+                pass
 
         for name in dg.data:
             if name not in self._participants:
-                print(name, 'joined')
+                # print(name, 'joined')
+                pass
 
         self._participants = dg.data
         self._tab.update_title_signal.emit()
