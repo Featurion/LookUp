@@ -48,8 +48,8 @@ class LookUpClient(jugg.client.Client):
         kwargs.pop('sender', None)
         dg = jugg.core.Datagram(sender = self.id, **kwargs)
 
-        # Commands > CMD_MSG go to their zone
-        if dg.command > 5:
+        # Commands >= CMD_MSG go to their zone
+        if dg.command >= 5:
             for zone in self._zones:
                 if zone.id == dg.recipient:
                     await zone.send(dg)
@@ -97,6 +97,7 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
         self._participants = {client.name: client.id}
 
         self._commands = {
+            constants.CMD_MSG: self.handle_message,
             constants.CMD_UPDATE: self.handle_update,
         }
 
@@ -107,6 +108,9 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
                 sender = self._client.id,
                 recipient = self.id,
                 data = str(dg)))
+
+    async def handle_message(self, dg):
+        self._tab.new_message_signal.emit(*dg.data)
 
     async def handle_update(self, dg):
         # TODO: improve this logic

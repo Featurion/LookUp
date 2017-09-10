@@ -1,3 +1,5 @@
+import time
+
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QMovie, QPixmap, QFontMetrics
 from PyQt5.QtWidgets import QLabel, QTextEdit, QLineEdit, QPushButton
@@ -106,8 +108,8 @@ class ChatWidget(QWidget):
 
         self._tab = tab
 
-        self.chat_log = QTextBrowser()
-        self.chat_log.setOpenExternalLinks(True)
+        self.chat_browser = QTextBrowser()
+        self.chat_browser.setOpenExternalLinks(True)
 
         self.chat_input = QTextEdit()
         self.chat_input.installEventFilter(self)
@@ -138,7 +140,7 @@ class ChatWidget(QWidget):
         input_wrapper.setMinimumHeight(font_metrics.lineSpacing() * 3.7)
 
         splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.chat_log)
+        splitter.addWidget(self.chat_browser)
         splitter.addWidget(input_wrapper)
         splitter.setSizes([int(self.parent().height()), 1])
 
@@ -151,7 +153,11 @@ class ChatWidget(QWidget):
             self.window().interface._client.synchronous_send(
                 command = constants.CMD_MSG,
                 recipient = self._tab._zone.id,
-                data = self.chat_input.toPlainText())
+                data = [
+                    time.time(),
+                    self.window().interface._client.name,
+                    self.chat_input.toPlainText(),
+                ])
         else:
             # Can't send message without zone
             pass
@@ -160,17 +166,49 @@ class ChatWidget(QWidget):
         self._tab.input_widget.text = ''
         self._tab.widget_stack.setCurrentIndex(0)
 
+    def update_chat(self, log):
+        full_log = ''
+
+        for message in sorted(log, key = lambda e: e[0]):
+            ts, sender, message = message
+            full_log += (
+                '<body style="white-space: pre">'
+                '<font color="#000000">'
+                '({0}) '
+                '<strong>{1}:</strong>'
+                '</font> '
+                '{2}</body>').format(
+                    time.strftime('%H:%M:%S', time.localtime(ts)),
+                    sender,
+                    message)
+
+        scrollbar = self.chat_browser.verticalScrollBar()
+
+        if scrollbar.value() != scrollbar.maximum() \
+           and sender != self.window().interface._client.name:
+            should_scroll = False
+        else:
+            should_scroll = True
+
+        self.chat_browser.setText(full_log)
+
+        if should_scroll:
+            scrollbar.setValue(scrollbar.maximum())
+
 
 class ChatTab(QWidget):
 
     update_title_signal = pyqtSignal()
+    new_message_signal = pyqtSignal(float, str, str)
 
     def __init__(self, parent):
         super().__init__(parent)
 
         self.update_title_signal.connect(self.update_title)
+        self.new_message_signal.connect(self.new_message)
 
         self._zone = None
+        self.__chat_log = []
         self.__unread = 0
 
         self.input_widget = Input(
@@ -209,3 +247,8 @@ class ChatTab(QWidget):
         index = self.window().chat_tabs.indexOf(self)
         self.window().chat_tabs.setTabText(index, title)
         self.widget_stack.currentWidget().title = title
+
+    @pyqtSlot(float, str, str)
+    def new_message(self, ts, sender, msg):
+        self.__chat_log.append((ts, sender, msg))
+        self.chat_widget.update_chat(self.__chat_log)
