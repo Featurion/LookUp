@@ -84,13 +84,13 @@ class LookUpInterface(QApplication):
             self._window, utils.oxford_comma(list(participants.keys())))
 
         if action:
-            self._client.synchronous_send(
-                command = constants.CMD_READY,
-                recipient = id_)
-
             participants[self._client.name] = self._client.id
 
             self._window.new_zone(id_, participants)
             self._window.widget_stack.setCurrentIndex(1)
+
+            self._client.synchronous_send(
+                command = constants.CMD_READY,
+                recipient = id_)
         else:
             pass

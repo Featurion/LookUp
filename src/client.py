@@ -82,7 +82,7 @@ class LookUpClient(jugg.client.Client):
         await zone.handle_datagram(dg)
 
 
-class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
+class LookUpZone(jugg.core.Node):
 
     def __init__(self, tab, client, id_ = None):
         jugg.core.Node.__init__(
@@ -90,10 +90,9 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
             client._stream_reader, client._stream_writer)
 
         if id_:
-            pyarchy.core.IdentifiedObject.__init__(self, False)
             self.id = pyarchy.core.Identity(id_)
         else:
-            pyarchy.core.IdentifiedObject.__init__(self)
+            self.id = pyarchy.core.Identity()
 
         self._client = client
         self._tab = tab
@@ -116,18 +115,24 @@ class LookUpZone(pyarchy.core.IdentifiedObject, jugg.core.Node):
         self._tab.new_message_signal.emit(*dg.data)
 
     async def handle_update(self, dg):
-        # TODO: improve this logic
+        ts, participants = dg.data
+        template = '<strong>{0}</strong> {1}'
+
         for name in self._participants:
-            if name not in dg.data:
-                # print(name, 'left')
-                pass
+            if name not in participants:
+                self._tab.new_message_signal.emit(
+                    ts,
+                    'server',
+                    template.format(name, 'left'))
 
-        for name in dg.data:
+        for name in participants:
             if name not in self._participants:
-                # print(name, 'joined')
-                pass
+                self._tab.new_message_signal.emit(
+                    ts,
+                    'server',
+                    template.format(name, 'joined'))
 
-        self._participants = dg.data
+        self._participants = participants
         self._tab.update_title_signal.emit()
 
 

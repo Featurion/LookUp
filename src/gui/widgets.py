@@ -175,8 +175,8 @@ class ChatWidget(QWidget):
                 '<body style="white-space: pre">'
                 '<font color="#000000">'
                 '({0}) '
-                '<strong>{1}:</strong>'
-                '</font> '
+                '<strong>{1}</strong>: '
+                '</font>'
                 '{2}</body>').format(
                     time.strftime('%H:%M:%S', time.localtime(ts)),
                     sender,

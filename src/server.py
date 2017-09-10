@@ -3,6 +3,7 @@ import jugg
 import pyarchy
 import socket
 import ssl
+import time
 
 from src import constants, settings
 
@@ -121,7 +122,10 @@ class LookUpZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
                 command = constants.CMD_UPDATE,
                 sender = self.id,
                 recipient = self.id,
-                data = self.participants))
+                data = [
+                    time.time(),
+                    self.participants,
+                ]))
 
 
 class LookUpServer(jugg.server.Server):
