@@ -1,4 +1,5 @@
 import asyncio
+import builtins
 import jugg
 import sys
 import threading
@@ -21,7 +22,6 @@ class LookUpInterface(QApplication):
         QApplication.__init__(self, [])
 
         self._args = (args, kwargs)
-        self._client = None
         self._window = None
 
         self.error_signal.connect(self.__error)
@@ -35,10 +35,9 @@ class LookUpInterface(QApplication):
         self._window = windows.LoginWindow(self)
         self._window.show()
 
-        connection = threading.Thread(
+        threading.Thread(
             target = self.open_connection,
-            daemon = True)
-        connection.start()
+            daemon = True).start()
 
         self.exec_()
 
@@ -47,7 +46,8 @@ class LookUpInterface(QApplication):
         asyncio.set_event_loop(loop)
 
         try:
-            self._client = client.LookUpClient(
+            # Much easier than finding the window -> interface -> client, etc.
+            builtins.conn = client.LookUpClient(
                 self,
                 *self._args[0],
                 **self._args[1])
@@ -57,7 +57,7 @@ class LookUpInterface(QApplication):
 
         jugg.utils.reactive_event_loop(
             loop,
-            self._client.start(), self._client.stop())
+            conn.start(), conn.stop())
 
     def stop(self):
         self._window.close()
@@ -84,12 +84,12 @@ class LookUpInterface(QApplication):
             self._window, utils.oxford_comma(list(participants.keys())))
 
         if action:
-            participants[self._client.name] = self._client.id
+            participants[conn.name] = conn.id
 
             self._window.new_zone(id_, participants)
             self._window.widget_stack.setCurrentIndex(1)
 
-            self._client.synchronous_send(
+            conn.synchronous_send(
                 command = constants.CMD_READY,
                 recipient = id_)
         else:

@@ -150,12 +150,12 @@ class ChatWidget(QWidget):
 
     def send_message(self):
         if self._tab._zone:
-            self.window().interface._client.synchronous_send(
+            conn.synchronous_send(
                 command = constants.CMD_MSG,
                 recipient = self._tab._zone.id,
                 data = [
                     time.time(),
-                    self.window().interface._client.name,
+                    conn.name,
                     self.chat_input.toPlainText(),
                 ])
         else:
@@ -185,7 +185,7 @@ class ChatWidget(QWidget):
         scrollbar = self.chat_browser.verticalScrollBar()
 
         if scrollbar.value() != scrollbar.maximum() \
-           and sender != self.window().interface._client.name:
+           and sender != conn.name:
             should_scroll = False
         else:
             should_scroll = True
@@ -228,14 +228,12 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
-        c = self.window().interface._client
-
         if not self._zone:
-            self._zone = client.LookUpZone(self, c)
-            c._zones.add(self._zone)
+            self._zone = client.LookUpZone(self, conn)
+            conn._zones.add(self._zone)
             self.update_title()
 
-        c.synchronous_send(
+        conn.synchronous_send(
             command = constants.CMD_HELLO,
             recipient = self._zone.id,
             data = [name])

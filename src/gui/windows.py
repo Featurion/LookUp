@@ -74,7 +74,7 @@ class LoginWindow(QDialog):
 
     def __connect(self, username):
         self.widget_stack.setCurrentIndex(0)
-        self.interface._client.synchronous_send(
+        conn.synchronous_send(
             command = constants.CMD_LOGIN,
             data = username)
 
@@ -176,10 +176,10 @@ class ChatWindow(QMainWindow):
 
     def new_zone(self, id_, participants):
         tab = self.open_tab()
-        zone = client.LookUpZone(tab, self.interface._client, id_)
+        zone = client.LookUpZone(tab, conn, id_)
         zone._participants = participants
 
-        self.interface._client._zones.add(zone)
+        conn._zones.add(zone)
         tab._zone = zone
         tab.update_title()
         tab.widget_stack.setCurrentIndex(1)
@@ -194,7 +194,7 @@ class ChatWindow(QMainWindow):
     def close_tab(self, index):
         tab = self.chat_tabs.widget(index)
 
-        self.interface._client.synchronous_send(
+        conn.synchronous_send(
             command = constants.CMD_LEAVE,
             recipient = tab._zone.id)
 
