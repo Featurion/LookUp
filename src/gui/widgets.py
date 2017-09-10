@@ -149,15 +149,13 @@ class ChatWidget(QWidget):
         self.setLayout(hbox)
 
     def send_message(self):
-        if self._tab._zone:
+        msg = self.chat_input.toPlainText()
+
+        if msg and self._tab._zone:
             conn.synchronous_send(
                 command = constants.CMD_MSG,
                 recipient = self._tab._zone.id,
-                data = [
-                    time.time(),
-                    conn.name,
-                    self.chat_input.toPlainText(),
-                ])
+                data = [time.time(), conn.name, msg])
         else:
             # Can't send message without zone
             pass
