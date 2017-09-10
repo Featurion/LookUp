@@ -5,5 +5,5 @@ want_tls: false
 key_path: ''
 cert_path: ''
 
-hmac_key: ''
-challenge_key: ''
+hmac_key: '614b4d734f78785a4131733075737832745a456f5a41'
+challenge_key: '76b8e2753d9ffc4b93111063d296a8729a3829caaeb3'

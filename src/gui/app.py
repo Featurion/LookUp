@@ -17,10 +17,10 @@ class LookUpInterface(QApplication):
     login_signal = pyqtSignal()
     hello_signal = pyqtSignal(str, dict)
 
-    def __init__(self, host: str, port: int):
+    def __init__(self, *args, **kwargs):
         QApplication.__init__(self, [])
 
-        self._address = (host, port)
+        self._args = (args, kwargs)
         self._client = None
         self._window = None
 
@@ -47,7 +47,10 @@ class LookUpInterface(QApplication):
         asyncio.set_event_loop(loop)
 
         try:
-            self._client = client.LookUpClient(self, *self._address)
+            self._client = client.LookUpClient(
+                self,
+                *self._args[0],
+                **self._args[1])
         except ConnectionRefusedError:
             self.error_signal.emit(constants.ERR_NO_CONNECTION)
             return

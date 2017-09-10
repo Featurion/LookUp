@@ -12,7 +12,8 @@ class LookUpClient(jugg.client.Client):
     def __init__(self,
                  interface,
                  host : str, port : int,
-                 certificate : str = None):
+                 certificate : str = None,
+                 *args, **kwargs):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         if certificate:
@@ -25,7 +26,9 @@ class LookUpClient(jugg.client.Client):
 
         socket_.connect((host, port))
 
-        super().__init__(socket_ = socket_)
+        super().__init__(
+            socket_ = socket_,
+            *args, **kwargs)
 
         self._interface = interface
         self._username = None
