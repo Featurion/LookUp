@@ -49,7 +49,7 @@ class LookUpClient(jugg.client.Client):
         dg = jugg.core.Datagram(sender = self.id, **kwargs)
 
         # Commands >= CMD_MSG go to their zone
-        if dg.command >= 5:
+        if dg.command >= constants.CMD_MSG:
             for zone in self._zones:
                 if zone.id == dg.recipient:
                     await zone.send(dg)

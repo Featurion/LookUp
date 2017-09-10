@@ -19,6 +19,7 @@ class LookUpClientAI(jugg.server.ClientAI):
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_READY] = self.handle_ready
+        self._commands[constants.CMD_LEAVE] = self.handle_leave
         self._commands[constants.CMD_MSG] = self.handle_message
 
     def verify_credentials(self, data):
@@ -66,6 +67,16 @@ class LookUpClientAI(jugg.server.ClientAI):
 
         self._zones.add(zone)
         zone.add(self)
+
+        await zone.send_update()
+
+    async def handle_leave(self, dg):
+        zone = self._server._zones.get(
+            self._server._zones,
+            lambda e: e.id == dg.recipient)
+
+        self._zones.remove(zone)
+        zone.remove(self)
 
         await zone.send_update()
 
