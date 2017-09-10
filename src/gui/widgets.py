@@ -171,13 +171,22 @@ class ChatWidget(QWidget):
 
         for message in sorted(log, key = lambda e: e[0]):
             ts, sender, message = message
+
+            if sender == 'server':
+                color = '#000000'
+            elif sender == conn.name:
+                color = '#0000CC'
+            else:
+                color = '#CC0000'
+
             full_log += (
                 '<body style="white-space: pre">'
-                '<font color="#000000">'
-                '({0}) '
-                '<strong>{1}</strong>: '
+                '<font color="{0}">'
+                '({1}) '
+                '<strong>{2}</strong>: '
                 '</font>'
-                '{2}</body>').format(
+                '{3}</body>').format(
+                    color,
                     time.strftime('%H:%M:%S', time.localtime(ts)),
                     sender,
                     message)
