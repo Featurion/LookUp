@@ -118,7 +118,7 @@ class ChatWidget(QWidget):
         self.send_button.clicked.connect(self.send_message)
 
         self.invite_button = QPushButton('Invite')
-        self.invite_button.clicked.connect(self.send_invite)
+        self.invite_button.clicked.connect(self.goto_invite)
 
         font_metrics = QFontMetrics(self.chat_input.font())
         self.chat_input.setMinimumHeight(font_metrics.lineSpacing() * 3)
@@ -162,7 +162,9 @@ class ChatWidget(QWidget):
             # Can't send message without zone
             pass
 
-    def send_invite(self):
+        self.chat_input.clear()
+
+    def goto_invite(self):
         self._tab.input_widget.text = ''
         self._tab.widget_stack.setCurrentIndex(0)
 
@@ -237,6 +239,12 @@ class ChatTab(QWidget):
         self.setLayout(_layout)
 
     def connect(self, name):
+        self.widget_stack.setCurrentIndex(1)
+
+        if name == conn.name:
+            # Cannot invite yourself
+            return
+
         if not self._zone:
             self._zone = client.LookUpZone(self, conn)
             conn._zones.add(self._zone)
@@ -246,7 +254,6 @@ class ChatTab(QWidget):
             command = constants.CMD_HELLO,
             recipient = self._zone.id,
             data = [name])
-        self.widget_stack.setCurrentIndex(1)
 
     @pyqtSlot()
     def update_title(self):

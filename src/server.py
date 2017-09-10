@@ -31,7 +31,12 @@ class LookUpClientAI(jugg.server.ClientAI):
 
         for zone in self._zones:
             zone.remove(self)
-            await zone.send_update()
+            if len(zone) > 0:
+                await zone.send_update()
+            else:
+                self._server._zones.remove(zone)
+
+        self._zones.clear()
 
     async def send_hello(self, zone):
         await self.send(
@@ -52,7 +57,11 @@ class LookUpClientAI(jugg.server.ClientAI):
             self._zones.add(zone)
             zone.add(self)
 
-        for name in dg.data:
+        # If we sent the CMD_HELLO, we don't need it back.
+        participants = set(dg.data)
+        participants.discard(self.name)
+
+        for name in participants:
             try:
                 client = self._server.clients.get(
                     self._server.clients,
@@ -163,12 +172,9 @@ class LookUpServer(jugg.server.Server):
         if stream_writer.transport._sock.getpeername() in self._banned:
             stream_writer.close()
         else:
-            try:
-                await super().new_connection(
-                    stream_reader, stream_writer,
-                    server = self)
-            except ConnectionResetError:
-                pass
+            await super().new_connection(
+                stream_reader, stream_writer,
+                server = self)
 
 
 __all__ = [
