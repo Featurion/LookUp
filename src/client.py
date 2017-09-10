@@ -7,7 +7,7 @@ import ssl
 from src import constants
 
 
-class LookUpClient(jugg.client.Client):
+class Client(jugg.client.Client):
 
     def __init__(self,
                  interface,
@@ -34,7 +34,7 @@ class LookUpClient(jugg.client.Client):
         self._username = None
 
         self._zones = pyarchy.data.ItemPool()
-        self._zones.object_type = LookUpZone
+        self._zones.object_type = Zone
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_MSG] = self.handle_message
@@ -82,7 +82,7 @@ class LookUpClient(jugg.client.Client):
         await zone.handle_datagram(dg)
 
 
-class LookUpZone(jugg.core.Node):
+class Zone(jugg.core.Node):
 
     def __init__(self, tab, client, id_ = None):
         jugg.core.Node.__init__(
@@ -137,5 +137,6 @@ class LookUpZone(jugg.core.Node):
 
 
 __all__ = [
-    LookUpClient,
+    Client,
+    Zone,
 ]

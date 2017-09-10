@@ -246,7 +246,7 @@ class ChatTab(QWidget):
             return
 
         if not self._zone:
-            self._zone = client.LookUpZone(self, conn)
+            self._zone = client.Zone(self, conn)
             conn._zones.add(self._zone)
             self.update_title()
 

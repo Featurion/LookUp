@@ -11,7 +11,7 @@ from src import client, constants
 from src.gui import utils, windows
 
 
-class LookUpInterface(QApplication):
+class Interface(QApplication):
 
     error_signal = pyqtSignal(int)
     connected_signal = pyqtSignal()
@@ -47,7 +47,7 @@ class LookUpInterface(QApplication):
 
         try:
             # Much easier than finding the window -> interface -> client, etc.
-            builtins.conn = client.LookUpClient(
+            builtins.conn = client.Client(
                 self,
                 *self._args[0],
                 **self._args[1])

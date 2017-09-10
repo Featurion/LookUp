@@ -8,7 +8,7 @@ import time
 from src import constants, settings
 
 
-class LookUpClientAI(jugg.server.ClientAI):
+class ClientAI(jugg.server.ClientAI):
 
     def __init__(self, *args, server = None):
         super().__init__(*args)
@@ -16,7 +16,7 @@ class LookUpClientAI(jugg.server.ClientAI):
         self._server = server
 
         self._zones = pyarchy.data.ItemPool()
-        self._zones.object_type = LookUpZoneAI
+        self._zones.object_type = ZoneAI
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_READY] = self.handle_ready
@@ -52,7 +52,7 @@ class LookUpClientAI(jugg.server.ClientAI):
                 self._server._zones,
                 lambda e: e.id == dg.recipient)
         except KeyError:
-            zone = LookUpZoneAI(dg.recipient)
+            zone = ZoneAI(dg.recipient)
             self._server._zones.add(zone)
             self._zones.add(zone)
             zone.add(self)
@@ -102,9 +102,9 @@ class LookUpClientAI(jugg.server.ClientAI):
             pass
 
 
-class LookUpZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
+class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
 
-    object_type = LookUpClientAI
+    object_type = ClientAI
 
     def __init__(self, id_):
         pyarchy.data.ItemPool.__init__(self)
@@ -137,9 +137,9 @@ class LookUpZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
                 ]))
 
 
-class LookUpServer(jugg.server.Server):
+class Server(jugg.server.Server):
 
-    client_handler = LookUpClientAI
+    client_handler = ClientAI
 
     def __init__(self):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -166,7 +166,7 @@ class LookUpServer(jugg.server.Server):
         self._banned.object_type = tuple
 
         self._zones = pyarchy.data.ItemPool()
-        self._zones.object_type = LookUpZoneAI
+        self._zones.object_type = ZoneAI
 
     async def new_connection(self, stream_reader, stream_writer):
         if stream_writer.transport._sock.getpeername() in self._banned:
@@ -178,6 +178,7 @@ class LookUpServer(jugg.server.Server):
 
 
 __all__ = [
-    LookUpClientAI,
-    LookUpServer,
+    ClientAI,
+    ZoneAI,
+    Server,
 ]

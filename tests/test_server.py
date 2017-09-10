@@ -1,5 +1,5 @@
 from src import server
 
 
-sv = server.LookUpServer()
+sv = server.Server()
 sv.start()

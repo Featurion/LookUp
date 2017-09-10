@@ -176,7 +176,7 @@ class ChatWindow(QMainWindow):
 
     def new_zone(self, id_, participants):
         tab = self.open_tab()
-        zone = client.LookUpZone(tab, conn, id_)
+        zone = client.Zone(tab, conn, id_)
         zone._participants = participants
 
         conn._zones.add(zone)
