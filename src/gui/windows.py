@@ -199,6 +199,7 @@ class ChatWindow(QMainWindow):
             recipient = tab._zone.id)
 
         self.chat_tabs.removeTab(index)
+        conn._zones.remove(tab._zone)
 
     def _tab_changed(self):
         pass

@@ -10,7 +10,6 @@ from src import constants
 class Client(jugg.client.Client):
 
     def __init__(self,
-                 interface,
                  host : str, port : int,
                  certificate : str = None,
                  *args, **kwargs):
@@ -30,7 +29,6 @@ class Client(jugg.client.Client):
             socket_ = socket_,
             *args, **kwargs)
 
-        self._interface = interface
         self._username = None
 
         self._zones = pyarchy.data.ItemPool()
@@ -41,7 +39,7 @@ class Client(jugg.client.Client):
 
     async def stop(self):
         await super().stop()
-        self._interface.stop()
+        interface.stop()
 
     def synchronous_send(self, **kwargs):
         asyncio.new_event_loop().run_until_complete(
@@ -61,22 +59,20 @@ class Client(jugg.client.Client):
 
     async def handle_handshake(self, dg):
         await super().handle_handshake(dg)
-        self._interface.connected_signal.emit()
+        interface.connected_signal.emit()
 
     async def handle_login(self, dg):
         await super().handle_login(dg)
-        self._interface.login_signal.emit()
+        interface.login_signal.emit()
 
     async def do_error(self, errno):
-        self._interface.error_signal.emit(errno)
+        interface.error_signal.emit(errno)
 
     async def handle_hello(self, dg):
-        self._interface.hello_signal.emit(dg.sender, dg.data)
+        interface.hello_signal.emit(dg.sender, dg.data)
 
     async def handle_message(self, dg):
-        zone = self._zones.get(
-            self._zones,
-            lambda e: e.id == dg.sender)
+        zone = self._zones.get(id = dg.sender)
 
         dg = jugg.core.Datagram.from_string(dg.data)
         await zone.handle_datagram(dg)

@@ -1,4 +1,5 @@
 import asyncio
+import builtins
 import jugg
 import pyarchy
 import socket
@@ -13,10 +14,8 @@ class ClientAI(jugg.server.ClientAI):
     def __init__(self, *args, server = None):
         super().__init__(*args)
 
-        self._server = server
-
-        self._zones = pyarchy.data.ItemPool()
-        self._zones.object_type = ZoneAI
+        self.zones = pyarchy.data.ItemPool()
+        self.zones.object_type = ZoneAI
 
         self._commands[constants.CMD_HELLO] = self.handle_hello
         self._commands[constants.CMD_READY] = self.handle_ready
@@ -29,14 +28,15 @@ class ClientAI(jugg.server.ClientAI):
     async def start(self):
         await super().start()
 
-        for zone in self._zones:
+        for zone in self.zones:
             zone.remove(self)
+
             if len(zone) > 0:
                 await zone.send_update()
             else:
-                self._server._zones.remove(zone)
+                server.zones.remove(zone)
 
-        self._zones.clear()
+        self.zones.clear()
 
     async def send_hello(self, zone):
         await self.send(
@@ -48,13 +48,11 @@ class ClientAI(jugg.server.ClientAI):
 
     async def handle_hello(self, dg):
         try:
-            zone = self._server._zones.get(
-                self._server._zones,
-                lambda e: e.id == dg.recipient)
+            zone = server.zones.get(id = dg.recipient)
         except KeyError:
             zone = ZoneAI(dg.recipient)
-            self._server._zones.add(zone)
-            self._zones.add(zone)
+            server.zones.add(zone)
+            self.zones.add(zone)
             zone.add(self)
 
         # If we sent the CMD_HELLO, we don't need it back.
@@ -63,38 +61,36 @@ class ClientAI(jugg.server.ClientAI):
 
         for name in participants:
             try:
-                client = self._server.clients.get(
-                    self._server.clients,
-                    lambda e: e.name == name)
-                await client.send_hello(zone)
+                client = server.clients.get(name = name)
+
+                if client not in zone:
+                    await client.send_hello(zone)
+                else:
+                    # This client is already in the zone, so we don't need
+                    # to send out another invite.
+                    pass
             except KeyError:
                 pass
 
     async def handle_ready(self, dg):
-        zone = self._server._zones.get(
-            self._server._zones,
-            lambda e: e.id == dg.recipient)
+        zone = server.zones.get(id = dg.recipient)
 
-        self._zones.add(zone)
+        self.zones.add(zone)
         zone.add(self)
 
         await zone.send_update()
 
     async def handle_leave(self, dg):
-        zone = self._server._zones.get(
-            self._server._zones,
-            lambda e: e.id == dg.recipient)
+        zone = server.zones.get(id = dg.recipient)
 
-        self._zones.remove(zone)
+        self.zones.remove(zone)
         zone.remove(self)
 
         await zone.send_update()
 
     async def handle_message(self, dg):
         try:
-            zone = self._server._zones.get(
-                self._server._zones,
-                lambda e: e.id == dg.recipient)
+            zone = server.zones.get(id = dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
             await zone.send(dg)
@@ -131,15 +127,16 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
                 command = constants.CMD_UPDATE,
                 sender = self.id,
                 recipient = self.id,
-                data = [
-                    time.time(),
-                    self.participants,
-                ]))
+                data = [time.time(), self.participants]))
 
 
-class Server(jugg.server.Server):
+class Server(jugg.server.Server, metaclass = pyarchy.meta.MetaSingleton):
 
     client_handler = ClientAI
+
+    def __new__(cls):
+        builtins.server = super().__new__(cls)
+        return builtins.server
 
     def __init__(self):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -162,14 +159,14 @@ class Server(jugg.server.Server):
             hmac_key = settings.HMAC_KEY,
             challenge_key = settings.CHALLENGE_KEY)
 
-        self._banned = pyarchy.data.ItemPool()
-        self._banned.object_type = tuple
+        self.banned = pyarchy.data.ItemPool()
+        self.banned.object_type = tuple
 
-        self._zones = pyarchy.data.ItemPool()
-        self._zones.object_type = ZoneAI
+        self.zones = pyarchy.data.ItemPool()
+        self.zones.object_type = ZoneAI
 
     async def new_connection(self, stream_reader, stream_writer):
-        if stream_writer.transport._sock.getpeername() in self._banned:
+        if stream_writer.transport._sock.getpeername() in self.banned:
             stream_writer.close()
         else:
             await super().new_connection(

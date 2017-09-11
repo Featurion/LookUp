@@ -18,6 +18,10 @@ class Interface(QApplication):
     login_signal = pyqtSignal()
     hello_signal = pyqtSignal(str, dict)
 
+    def __new__(cls, *args, **kwargs):
+        builtins.interface = super().__new__(cls, *args, **kwargs)
+        return builtins.interface
+
     def __init__(self, *args, **kwargs):
         QApplication.__init__(self, [])
 
@@ -46,11 +50,7 @@ class Interface(QApplication):
         asyncio.set_event_loop(loop)
 
         try:
-            # Much easier than finding the window -> interface -> client, etc.
-            builtins.conn = client.Client(
-                self,
-                *self._args[0],
-                **self._args[1])
+            builtins.conn = client.Client(*self._args[0], **self._args[1])
         except ConnectionRefusedError:
             self.error_signal.emit(constants.ERR_NO_CONNECTION)
             return
