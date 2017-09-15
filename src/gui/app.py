@@ -16,7 +16,7 @@ class Interface(QApplication):
     error_signal = pyqtSignal(int)
     connected_signal = pyqtSignal()
     login_signal = pyqtSignal()
-    hello_signal = pyqtSignal(str, dict)
+    hello_signal = pyqtSignal(str, bool, list)
 
     def __new__(cls, *args, **kwargs):
         builtins.interface = super().__new__(cls, *args, **kwargs)
@@ -78,19 +78,26 @@ class Interface(QApplication):
         self._window = windows.ChatWindow(self)
         self._window.show()
 
-    @pyqtSlot(str, dict)
-    def __hello(self, id_, participants):
-        action = windows.ConnectionDialog.getAnswer(
-            self._window, utils.oxford_comma(list(participants.keys())))
+    @pyqtSlot(str, bool, list)
+    def __hello(self, id_, is_group, participants):
+        if not is_group:
+            if conn.name not in participants:
+                if not windows.ConnectionDialog.getAnswer(
+                    self._window,
+                    utils.oxford_comma(participants)):
+                    return
 
-        if action:
-            participants[conn.name] = conn.id
-
-            self._window.new_zone(id_, participants)
-            self._window.widget_stack.setCurrentIndex(1)
-
-            conn.synchronous_send(
-                command = constants.CMD_READY,
-                recipient = id_)
+                # New private chat
+                zone = self._window.new_zone(id_)
+                zone._participants[conn.name] = conn.id
         else:
-            pass
+            # New group chat
+            zone = self._window.new_zone(id_)
+            zone._participants = dict(participants)
+            zone._participants[conn.name] = conn.id
+
+        self._window.widget_stack.setCurrentIndex(1)
+
+        conn.synchronous_send(
+            command = constants.CMD_READY,
+            recipient = id_)

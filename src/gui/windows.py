@@ -174,15 +174,16 @@ class ChatWindow(QMainWindow):
         utils.resize_window(self, 700, 400)
         utils.center_window(self)
 
-    def new_zone(self, id_, participants):
+    def new_zone(self, id_):
         tab = self.open_tab()
         zone = client.Zone(tab, conn, id_)
-        zone._participants = participants
 
         conn._zones.add(zone)
         tab._zone = zone
         tab.update_title()
         tab.widget_stack.setCurrentIndex(1)
+
+        return zone
 
     def open_tab(self):
         tab = widgets.ChatTab(self)

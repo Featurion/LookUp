@@ -47,7 +47,7 @@ class Client(jugg.client.Client):
 
     async def send_datagram(self, **kwargs):
         kwargs.pop('sender', None)
-        dg = jugg.core.Datagram(sender = self.id, **kwargs)
+        dg = jugg.core.Datagram(sender=self.id, **kwargs)
 
         # Commands >= CMD_MSG go to their zone
         if dg.command >= constants.CMD_MSG:
@@ -69,10 +69,10 @@ class Client(jugg.client.Client):
         interface.error_signal.emit(errno)
 
     async def handle_hello(self, dg):
-        interface.hello_signal.emit(dg.sender, dg.data)
+        interface.hello_signal.emit(dg.sender, *dg.data)
 
     async def handle_message(self, dg):
-        zone = self._zones.get(id = dg.sender)
+        zone = self._zones.get(id=dg.sender)
 
         dg = jugg.core.Datagram.from_string(dg.data)
         await zone.handle_datagram(dg)
@@ -80,7 +80,7 @@ class Client(jugg.client.Client):
 
 class Zone(jugg.core.Node):
 
-    def __init__(self, tab, client, id_ = None):
+    def __init__(self, tab, client, id_=None):
         jugg.core.Node.__init__(
             self,
             client._stream_reader, client._stream_writer)
@@ -112,6 +112,8 @@ class Zone(jugg.core.Node):
 
     async def handle_update(self, dg):
         ts, participants = dg.data
+        participants = dict(participants)
+
         template = '<strong>{0}</strong> {1}'
 
         for name in self._participants:

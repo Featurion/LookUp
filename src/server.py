@@ -38,42 +38,54 @@ class ClientAI(jugg.server.ClientAI):
 
         self.zones.clear()
 
-    async def send_hello(self, zone):
+    async def send_hello(self, zone, participants):
         await self.send(
             jugg.core.Datagram(
                 command = constants.CMD_HELLO,
                 sender = zone.id,
                 recipient = self.id,
-                data = zone.participants))
+                data = [zone.is_group, participants]))
 
     async def handle_hello(self, dg):
+        names = set(dg.data)
+
+        # If we sent the CMD_HELLO, we don't need it back
         try:
-            zone = server.zones.get(id = dg.recipient)
+            zone = server.zones.get(id=dg.recipient)
+            names.update(client.name for client in zone)
+
+            if zone.is_group:
+                # The zone exists as a group
+                names.discard(self.name)
+            else:
+                # The zone exists, but is becoming a group
+                zone = server.new_zone(is_group=True)
         except KeyError:
-            zone = ZoneAI(dg.recipient)
-            server.zones.add(zone)
-            self.zones.add(zone)
-            zone.add(self)
+            # The client is opening a new zone
+            zone = server.new_zone(dg.recipient)
+            names.add(self.name)
 
-        # If we sent the CMD_HELLO, we don't need it back.
-        participants = set(dg.data)
-        participants.discard(self.name)
-
-        for name in participants:
+        for name in names:
             try:
-                client = server.clients.get(name = name)
+                client = server.clients.get(name=name)
 
                 if client not in zone:
-                    await client.send_hello(zone)
+                    if zone.is_group:
+                        # Send a HELLO for the group chat
+                        await client.send_hello(zone, zone.participants)
+                    else:
+                        # Send a HELLO for the new private chat
+                        await client.send_hello(zone, [self.name])
                 else:
                     # This client is already in the zone, so we don't need
                     # to send out another invite.
                     pass
             except KeyError:
+                # This client is not online.
                 pass
 
     async def handle_ready(self, dg):
-        zone = server.zones.get(id = dg.recipient)
+        zone = server.zones.get(id=dg.recipient)
 
         self.zones.add(zone)
         zone.add(self)
@@ -81,7 +93,7 @@ class ClientAI(jugg.server.ClientAI):
         await zone.send_update()
 
     async def handle_leave(self, dg):
-        zone = server.zones.get(id = dg.recipient)
+        zone = server.zones.get(id=dg.recipient)
 
         self.zones.remove(zone)
         zone.remove(self)
@@ -90,7 +102,7 @@ class ClientAI(jugg.server.ClientAI):
 
     async def handle_message(self, dg):
         try:
-            zone = server.zones.get(id = dg.recipient)
+            zone = server.zones.get(id=dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
             await zone.send(dg)
@@ -102,15 +114,16 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
 
     object_type = ClientAI
 
-    def __init__(self, id_):
+    def __init__(self, id_, is_group=False):
         pyarchy.data.ItemPool.__init__(self)
         pyarchy.core.IdentifiedObject.__init__(self, False)
 
         self.id = pyarchy.core.Identity(id_)
+        self.is_group = is_group
 
     @property
     def participants(self):
-        return {client.name: client.id for client in self}
+        return [(client.name, client.id) for client in self]
 
     async def send(self, dg):
         for client in self:
@@ -172,6 +185,11 @@ class Server(jugg.server.Server, metaclass = pyarchy.meta.MetaSingleton):
             await super().new_connection(
                 stream_reader, stream_writer,
                 server = self)
+
+    def new_zone(self, id_=None, is_group=False):
+        zone = ZoneAI(id_, is_group)
+        self.zones.add(zone)
+        return zone
 
 
 __all__ = [
