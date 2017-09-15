@@ -26,9 +26,9 @@ class Connecting(QWidget):
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
-        hbox.addWidget(self.connecting_image, alignment = Qt.AlignCenter)
+        hbox.addWidget(self.connecting_image, alignment=Qt.AlignCenter)
         hbox.addSpacing(1)
-        hbox.addWidget(self.connecting_label, alignment = Qt.AlignCenter)
+        hbox.addWidget(self.connecting_label, alignment=Qt.AlignCenter)
         hbox.addStretch(1)
         self.setLayout(hbox)
 
@@ -37,7 +37,7 @@ class Connecting(QWidget):
         return self._title
 
     @title.setter
-    def title(self, name : str):
+    def title(self, name: str):
         self._title = name
 
         if self._title:
@@ -169,7 +169,7 @@ class ChatWidget(QWidget):
     def update_chat(self, log):
         full_log = ''
 
-        for message in sorted(log, key = lambda e: e[0]):
+        for message in sorted(log, key=lambda e: e[0]):
             ts, sender, message = message
 
             if sender == 'server':

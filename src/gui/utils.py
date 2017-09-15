@@ -14,7 +14,7 @@ def resize_window(window, width, height):
     window.setGeometry(0, 0, width, height)
 
 
-def oxford_comma(strings : list):
+def oxford_comma(strings: list):
     len_ = len(strings)
 
     if len_ == 0:

@@ -96,8 +96,8 @@ class ChatWindow(QMainWindow):
         self.tray_menu = QMenu()
         _stop = QAction(
             'Exit', self,
-            shortcut = 'Ctrl+Q', statusTip = 'Exit',
-            triggered = self.close)
+            shortcut='Ctrl+Q', statusTip='Exit',
+            triggered=self.close)
         _stop.setIcon(QIcon('images/exit.png'))
         self.tray_menu.addAction(_stop)
 

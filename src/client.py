@@ -10,8 +10,8 @@ from src import constants
 class Client(jugg.client.Client):
 
     def __init__(self,
-                 host : str, port : int,
-                 certificate : str = None,
+                 host: str, port: int,
+                 certificate: str = None,
                  *args, **kwargs):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -25,9 +25,7 @@ class Client(jugg.client.Client):
 
         socket_.connect((host, port))
 
-        super().__init__(
-            socket_ = socket_,
-            *args, **kwargs)
+        super().__init__(socket_=socket_, *args, **kwargs)
 
         self._username = None
 
