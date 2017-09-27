@@ -79,6 +79,7 @@ class ClientAI(jugg.server.ClientAI):
             # If no one else is online, the chat becomes an empty group.
             zone.is_group = True
             zone.add(self)
+            self.zones.add(zone)
             return
 
         for client in clients:
