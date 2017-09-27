@@ -116,7 +116,13 @@ class ClientAI(jugg.server.ClientAI):
             zone = server.zones.get(id=dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
-            await zone.send(dg)
+            ts, sender, msg = dg.data
+
+            # Verify timestamp and message origin
+            if ts >= time.time() or sender != self.name:
+                return
+            else:
+                await zone.send(dg)
         except KeyError:
             pass
 
