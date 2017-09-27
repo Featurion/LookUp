@@ -40,6 +40,11 @@ class Client(jugg.client.Client):
         await super().stop()
         interface.stop()
 
+    def new_zone(self, tab, id_=None):
+        tab._zone = Zone(tab, id_)
+        self._zones.add(zone)
+        return tab._zone
+
     def synchronous_send(self, **kwargs):
         asyncio.new_event_loop().run_until_complete(
             self.send_datagram(**kwargs))
@@ -79,25 +84,30 @@ class Client(jugg.client.Client):
 
 class Zone(jugg.core.Node):
 
-    def __init__(self, tab, client, id_=None):
+    def __init__(self, tab, id_):
         jugg.core.Node.__init__(
             self,
-            client._stream_reader, client._stream_writer)
+            conn._stream_reader, conn._stream_writer)
 
-        if id_:
-            self.id = pyarchy.core.Identity(id_)
-        else:
-            self.id = pyarchy.core.Identity()
+        self.id = pyarchy.core.Identity(id_)
 
-        self._client = client
         self._tab = tab
-        self._participants = {client.id: client.name}
+        self.__participants = {conn.id: conn.name}
+
+    @property
+    def participants(self):
+        return dict(**self.__participants)
+
+    @participants.setter
+    def participants(self, participants):
+        self.__participants = participants
+        self.__participants.update({conn.id: conn.name})
 
     async def send(self, dg):
-        await self._client.send(
+        await conn.send(
             jugg.core.Datagram(
                 command = constants.CMD_MSG,
-                sender = self._client.id,
+                sender = conn.id,
                 recipient = self.id,
                 data = str(dg)))
 
@@ -107,11 +117,11 @@ class Zone(jugg.core.Node):
     async def handle_message(self, dg):
         await self.do_message(
             dg.timestamp,
-            self._participants[dg.sender],
+            self.participants[dg.sender],
             dg.data)
 
     async def handle_update(self, dg):
-        for id_, name in self._participants.items():
+        for id_, name in self.participants.items():
             if id_ not in dg.data:
                 await self.do_message(
                     dg.timestamp,
@@ -119,25 +129,25 @@ class Zone(jugg.core.Node):
                     name + ' left')
 
         for id_, name in dg.data.items():
-            if id_ not in self._participants:
+            if id_ not in self.participants:
                 await self.do_message(
                     dg.timestamp,
                     'server',
                     name + ' joined')
 
-        self._participants = dg.data
+        self.participants = dg.data
         self._tab.update_title_signal.emit()
 
     async def handle_message_delete(self, dg):
         self._tab.del_message_signal.emit(
             dg.timestamp,
-            self._participants[dg.sender])
+            self.participants[dg.sender])
 
     async def handle_message_edit(self, dg):
         await self.do_message(dg.timestamp, *dg.data)
 
     async def handle_message_typing(self, dg):
-        self._tab.typing_message_signal.emit(dg.timestamp, dg.data)
+        self._tab.typing_message_signal.emit(dg.data)
 
 
 __all__ = [

@@ -87,16 +87,12 @@ class Interface(QApplication):
                     utils.oxford_comma(participants.values())):
                     return
 
-                # New private chat
-                zone = self._window.new_zone(id_)
-                zone._participants[conn.name] = conn.id
-        else:
-            # New group chat
-            zone = self._window.new_zone(id_)
-            zone._participants = dict(participants)
-            zone._participants[conn.name] = conn.id
+        tab = self._window.open_tab()
+        zone = conn.new_zone(tab, id_)
+        zone.participants = dict(participants)
 
-        self._window.widget_stack.setCurrentIndex(1)
+        tab.update_title()
+        tab.widget_stack.setCurrentIndex(1)
 
         conn.synchronous_send(
             command = constants.CMD_READY,

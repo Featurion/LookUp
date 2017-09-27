@@ -145,7 +145,7 @@ class ChatWindow(QMainWindow):
         exit_button = QToolButton()
 
         new_chat_button.clicked.connect(self.open_tab)
-        exit_button.clicked.connect(self.close)
+        exit_button.clicked.connect(self.interface.stop)
 
         options_menu_button.setIcon(menu_icon)
         new_chat_button.setIcon(new_chat_icon)
@@ -174,21 +174,13 @@ class ChatWindow(QMainWindow):
         utils.resize_window(self, 700, 400)
         utils.center_window(self)
 
-    def new_zone(self, id_):
-        tab = self.open_tab()
-        zone = client.Zone(tab, conn, id_)
-
-        conn._zones.add(zone)
-        tab._zone = zone
-        tab.update_title()
-        tab.widget_stack.setCurrentIndex(1)
-
-        return zone
-
-    def open_tab(self):
+    def open_tab(self, zone=None):
         tab = widgets.ChatTab(self)
+        tab._zone = zone
+
         self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)
         self.chat_tabs.setCurrentWidget(tab)
+
         tab.setFocus()
         return tab
 
@@ -203,7 +195,7 @@ class ChatWindow(QMainWindow):
         conn._zones.remove(tab._zone)
 
     def _tab_changed(self):
-        pass
+        self.status_bar.showMessage('')
 
     def _show_auth_dialog(self):
         pass

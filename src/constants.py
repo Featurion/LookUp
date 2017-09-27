@@ -48,11 +48,6 @@ ERROR_INFO_MAP.update({
 BLANK_TAB_TITLE = 'New Chat'
 MSG_DELETED_TEXT = '<font color="#BBBBBB">&lt;deleted&gt;</font>'
 
-# Chatting
-URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
+TYPING_TIMEOUT = 10
 
-TYPING_TIMEOUT = 1500
-TYPING_START = 0
-TYPING_STOP = 1
-TYPING_STOP_WITH_TEXT = 2
-TYPING_DELETE_TEXT = 3
+URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"

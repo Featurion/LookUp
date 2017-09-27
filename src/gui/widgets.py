@@ -113,6 +113,8 @@ class ChatWidget(QWidget):
 
         self.chat_input = QTextEdit()
         self.chat_input.installEventFilter(self)
+        self.chat_input.textChanged.connect(self.send_typing_message)
+        self.typing_stamp = -1
 
         self.send_button = QPushButton('Send')
         self.send_button.clicked.connect(self.send_message)
@@ -148,6 +150,36 @@ class ChatWidget(QWidget):
         hbox.addWidget(splitter)
         self.setLayout(hbox)
 
+    def send_typing_message(self):
+        is_typing = bool(self.chat_input.toPlainText())
+        timer = time.time() - self.typing_stamp
+
+        if is_typing:
+            if not self.typing_stamp:
+                # Exceeded timer, don't notify
+                return
+            if self.typing_stamp == -1:
+                # Started typing
+                self.typing_stamp = time.time()
+            elif timer > constants.TYPING_TIMEOUT:
+                # Done notifying
+                self.typing_stamp = 0
+            else:
+                # Still typing
+                return
+        else:
+            # Not typing
+            self.typing_stamp = -1
+
+        if self._tab._zone:
+            conn.synchronous_send(
+                command = constants.CMD_MSG_TYPING,
+                recipient = self._tab._zone.id,
+                timestamp = self.typing_stamp)
+        else:
+            # Can't send message without zone
+            pass
+
     def send_message(self, ts = None):
         msg = self.chat_input.toPlainText()
 
@@ -156,7 +188,7 @@ class ChatWidget(QWidget):
                 command = constants.CMD_MSG,
                 recipient = self._tab._zone.id,
                 data = msg,
-                timestamp = ts)
+                timestamp = ts or None)
         else:
             # Can't send message without zone
             pass
@@ -257,8 +289,7 @@ class ChatTab(QWidget):
             return
 
         if not self._zone:
-            self._zone = client.Zone(self, conn)
-            conn._zones.add(self._zone)
+            self._zone = conn.new_zone(self)
             self.update_title()
 
         conn.synchronous_send(
@@ -268,20 +299,32 @@ class ChatTab(QWidget):
 
     @pyqtSlot()
     def update_title(self):
-        title = utils.oxford_comma(self._zone._participants.values())
+        title = utils.oxford_comma(self._zone.participants.values())
         index = self.window().chat_tabs.indexOf(self)
         self.window().chat_tabs.setTabText(index, title)
         self.widget_stack.currentWidget().title = title
 
     @pyqtSlot(dict)
     def update_typing(self, typing):
-        if typing:
-            text = utils.oxford_comma(typing)
+        # Only show typing for the current tab
+        if self is not self.window().chat_tabs.currentWidget():
+            return
+
+        # Remove ourself from the notification
+        typing.pop(conn.id, None)
+
+        names = []
+        for id_, ts in typing.items():
+            if (time.time() - ts) < constants.TYPING_TIMEOUT:
+                names.append(self._zone.participants[id_])
+
+        if names:
+            text = utils.oxford_comma(names)
             text += ' '
-            text += 'is' if len(typing) == 1 else 'are'
+            text += 'is' if len(names) == 1 else 'are'
             text += ' typing'
         else:
-            curr = ''
+            text = ''
 
         self.window().status_bar.showMessage(text)
 

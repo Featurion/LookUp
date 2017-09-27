@@ -46,30 +46,9 @@ class ClientAI(jugg.server.ClientAI):
                 data = [zone.is_group, zone.participants]))
 
     async def handle_hello(self, dg):
-        names = set(dg.data)
-
-        # If we sent the CMD_HELLO, we don't need it back
-        try:
-            zone = server.zones.get(id=dg.recipient)
-            names.update(client.name for client in zone)
-
-            if zone.is_group:
-                # The zone exists as a group
-                names.discard(self.name)
-            else:
-                # The zone exists, but is becoming a group
-                zone = server.new_zone(is_group=True)
-        except KeyError:
-            # The client is opening a new zone
-            zone = server.new_zone(dg.recipient)
-
-        # Add ourself to the zone
-        zone.add(self)
-        self.zones.add(zone)
-
         # Find the invitees
         clients = set()
-        for name in names:
+        for name in dg.data:
             try:
                 client = server.clients.get(name=name)
                 clients.add(client)
@@ -77,18 +56,30 @@ class ClientAI(jugg.server.ClientAI):
                 # This client is not online.
                 pass
 
+        try:
+            zone = server.zones.get(id=dg.recipient)
+        except KeyError:
+            # The client is opening a new zone
+            zone = server.new_zone(dg.recipient)
+            # Add ourself to the zone
+            self.zones.add(zone)
+            zone.add(self)
+        else:
+            # We don't need to say hello to clients already in the zone
+            clients -= set(zone)
+
+            if not zone.is_group:
+                # The zone is becoming a group
+                zone = server.new_zone(is_group=True)
+
         if len(clients) == 0:
-            # No invitees are online, so the chat becomes an empty group.
+            # No invitees are online, so the chat becomes an empty group
             zone.is_group = True
             return
 
+        # Say hello
         for client in clients:
-            if client not in zone:
-                await client.send_hello(zone)
-            else:
-                # This client is already in the zone, so we don't need
-                # to send out another invite.
-                pass
+            await client.send_hello(zone)
 
     async def handle_ready(self, dg):
         zone = server.zones.get(id=dg.recipient)
@@ -111,7 +102,7 @@ class ClientAI(jugg.server.ClientAI):
             zone = server.zones.get(id=dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
-            await zone.send(dg)
+            await zone.handle_datagram(dg)
         except KeyError:
             pass
 
@@ -126,10 +117,25 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
 
         self.id = pyarchy.core.Identity(id_)
         self.is_group = is_group
+        self._typing_status = {}
 
     @property
     def participants(self):
         return {client.id: client.name for client in self}
+
+    async def handle_datagram(self, dg):
+        if dg.command == constants.CMD_MSG_TYPING:
+            if dg.timestamp > 0:
+                # Client is still typing
+                self._typing_status[dg.sender] = dg.timestamp
+            else:
+                # Client is no longer typing, remove if possible
+                # dict.pop is used because the notification may have expired
+                self._typing_status.pop(dg.sender, None)
+
+            dg.data = self._typing_status
+
+        await self.send(dg)
 
     async def send(self, dg):
         for client in self:
