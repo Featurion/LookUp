@@ -66,23 +66,32 @@ class ClientAI(jugg.server.ClientAI):
             zone = server.new_zone(dg.recipient)
             names.add(self.name)
 
+        clients = set()
         for name in names:
             try:
                 client = server.clients.get(name=name)
-
-                if client not in zone:
-                    if zone.is_group:
-                        # Send a HELLO for the group chat
-                        await client.send_hello(zone, zone.participants)
-                    else:
-                        # Send a HELLO for the new private chat
-                        await client.send_hello(zone, [self.name])
-                else:
-                    # This client is already in the zone, so we don't need
-                    # to send out another invite.
-                    pass
+                clients.add(client)
             except KeyError:
                 # This client is not online.
+                pass
+
+        if clients == {self}:
+            # If no one else is online, the chat becomes an empty group.
+            zone.is_group = True
+            zone.add(self)
+            return
+
+        for client in clients:
+            if client not in zone:
+                if zone.is_group:
+                    # Send a HELLO for the group chat
+                    await client.send_hello(zone, zone.participants)
+                else:
+                    # Send a HELLO for the new private chat
+                    await client.send_hello(zone, [self.name])
+            else:
+                # This client is already in the zone, so we don't need
+                # to send out another invite.
                 pass
 
     async def handle_ready(self, dg):
