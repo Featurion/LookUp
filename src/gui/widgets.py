@@ -148,14 +148,15 @@ class ChatWidget(QWidget):
         hbox.addWidget(splitter)
         self.setLayout(hbox)
 
-    def send_message(self):
+    def send_message(self, ts = None):
         msg = self.chat_input.toPlainText()
 
         if msg and self._tab._zone:
             conn.synchronous_send(
                 command = constants.CMD_MSG,
                 recipient = self._tab._zone.id,
-                data = [time.time(), conn.name, msg])
+                data = msg,
+                timestamp = ts)
         else:
             # Can't send message without zone
             pass
@@ -167,7 +168,7 @@ class ChatWidget(QWidget):
             conn.synchronous_send(
                 command = constants.CMD_MSG_DEL,
                 recipient = self._tab._zone.id,
-                data = [ts, conn.name])
+                timestamp = ts)
         else:
             # Can't delete message without zone
             pass
@@ -218,6 +219,7 @@ class ChatTab(QWidget):
     update_title_signal = pyqtSignal()
     add_message_signal = pyqtSignal(float, str, str)
     del_message_signal = pyqtSignal(float, str)
+    typing_message_signal = pyqtSignal(dict)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -225,6 +227,7 @@ class ChatTab(QWidget):
         self.update_title_signal.connect(self.update_title)
         self.add_message_signal.connect(self.add_message)
         self.del_message_signal.connect(self.del_message)
+        self.typing_message_signal.connect(self.update_typing)
 
         self._zone = None
         self._chat_log = {}
@@ -265,10 +268,22 @@ class ChatTab(QWidget):
 
     @pyqtSlot()
     def update_title(self):
-        title = utils.oxford_comma(list(self._zone._participants.keys()))
+        title = utils.oxford_comma(self._zone._participants.values())
         index = self.window().chat_tabs.indexOf(self)
         self.window().chat_tabs.setTabText(index, title)
         self.widget_stack.currentWidget().title = title
+
+    @pyqtSlot(dict)
+    def update_typing(self, typing):
+        if typing:
+            text = utils.oxford_comma(typing)
+            text += ' '
+            text += 'is' if len(typing) == 1 else 'are'
+            text += ' typing'
+        else:
+            curr = ''
+
+        self.window().status_bar.showMessage(text)
 
     @pyqtSlot(float, str, str)
     def add_message(self, ts, sender, msg):

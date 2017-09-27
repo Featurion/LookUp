@@ -14,16 +14,17 @@ def resize_window(window, width, height):
     window.setGeometry(0, 0, width, height)
 
 
-def oxford_comma(strings: list):
-    len_ = len(strings)
+def oxford_comma(iterable_of_strings: list):
+    lst = list(iterable_of_strings)
+    len_ = len(lst)
 
     if len_ == 0:
         return ''
     elif len_ == 1:
-        return strings[0]
+        return lst[0]
     elif len_ == 2:
-        return ' and '.join(strings)
+        return ' and '.join(lst)
     else:
-        str_ = ', '.join(strings[:-1] + [''])
-        str_ += 'and ' + strings[-1]
+        str_ = ', '.join(lst[:-1] + [''])
+        str_ += 'and ' + lst[-1]
         return str_

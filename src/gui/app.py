@@ -16,7 +16,7 @@ class Interface(QApplication):
     error_signal = pyqtSignal(int)
     connected_signal = pyqtSignal()
     login_signal = pyqtSignal()
-    hello_signal = pyqtSignal(str, bool, list)
+    hello_signal = pyqtSignal(str, bool, dict)
 
     def __new__(cls, *args, **kwargs):
         builtins.interface = super().__new__(cls, *args, **kwargs)
@@ -78,13 +78,13 @@ class Interface(QApplication):
         self._window = windows.ChatWindow(self)
         self._window.show()
 
-    @pyqtSlot(str, bool, list)
+    @pyqtSlot(str, bool, dict)
     def __hello(self, id_, is_group, participants):
         if not is_group:
             if conn.name not in participants:
                 if not windows.ConnectionDialog.getAnswer(
                     self._window,
-                    utils.oxford_comma(participants)):
+                    utils.oxford_comma(participants.values())):
                     return
 
                 # New private chat

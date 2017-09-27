@@ -17,11 +17,9 @@ class ClientAI(jugg.server.ClientAI):
         self.zones = pyarchy.data.ItemPool()
         self.zones.object_type = ZoneAI
 
-        self._commands[constants.CMD_HELLO] = self.handle_hello
-        self._commands[constants.CMD_READY] = self.handle_ready
-        self._commands[constants.CMD_LEAVE] = self.handle_leave
-        self._commands[constants.CMD_MSG] = self.handle_message
-        self._commands[constants.CMD_MSG_DEL] = self.handle_message
+        # Zone commands
+        zone_commands = dict.fromkeys(constants.ZONE_CMDS, self.handle_message)
+        self._commands.update(zone_commands)
 
     def verify_credentials(self, data):
         return super().verify_credentials(data)
@@ -39,13 +37,13 @@ class ClientAI(jugg.server.ClientAI):
 
         self.zones.clear()
 
-    async def send_hello(self, zone, participants):
+    async def send_hello(self, zone):
         await self.send(
             jugg.core.Datagram(
                 command = constants.CMD_HELLO,
                 sender = zone.id,
                 recipient = self.id,
-                data = [zone.is_group, participants]))
+                data = [zone.is_group, zone.participants]))
 
     async def handle_hello(self, dg):
         names = set(dg.data)
@@ -64,8 +62,12 @@ class ClientAI(jugg.server.ClientAI):
         except KeyError:
             # The client is opening a new zone
             zone = server.new_zone(dg.recipient)
-            names.add(self.name)
 
+        # Add ourself to the zone
+        zone.add(self)
+        self.zones.add(zone)
+
+        # Find the invitees
         clients = set()
         for name in names:
             try:
@@ -75,21 +77,14 @@ class ClientAI(jugg.server.ClientAI):
                 # This client is not online.
                 pass
 
-        if clients == {self}:
-            # If no one else is online, the chat becomes an empty group.
+        if len(clients) == 0:
+            # No invitees are online, so the chat becomes an empty group.
             zone.is_group = True
-            zone.add(self)
-            self.zones.add(zone)
             return
 
         for client in clients:
             if client not in zone:
-                if zone.is_group:
-                    # Send a HELLO for the group chat
-                    await client.send_hello(zone, zone.participants)
-                else:
-                    # Send a HELLO for the new private chat
-                    await client.send_hello(zone, [self.name])
+                await client.send_hello(zone)
             else:
                 # This client is already in the zone, so we don't need
                 # to send out another invite.
@@ -116,11 +111,7 @@ class ClientAI(jugg.server.ClientAI):
             zone = server.zones.get(id=dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
-            # Verify timestamp and message origin
-            if dg.data[0] >= time.time() or dg.data[1] != self.name:
-                return
-            else:
-                await zone.send(dg)
+            await zone.send(dg)
         except KeyError:
             pass
 
@@ -138,7 +129,7 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
 
     @property
     def participants(self):
-        return [(client.name, client.id) for client in self]
+        return {client.id: client.name for client in self}
 
     async def send(self, dg):
         for client in self:
@@ -155,7 +146,7 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
                 command = constants.CMD_UPDATE,
                 sender = self.id,
                 recipient = self.id,
-                data = [time.time(), self.participants]))
+                data = self.participants))
 
 
 class Server(jugg.server.Server, metaclass = pyarchy.meta.MetaSingleton):

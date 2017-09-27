@@ -32,8 +32,9 @@ class Client(jugg.client.Client):
         self._zones = pyarchy.data.ItemPool()
         self._zones.object_type = Zone
 
-        self._commands[constants.CMD_HELLO] = self.handle_hello
-        self._commands[constants.CMD_MSG] = self.handle_message
+        # Zone commands
+        zone_commands = dict.fromkeys(constants.ZONE_CMDS, self.handle_message)
+        self._commands.update(zone_commands)
 
     async def stop(self):
         await super().stop()
@@ -59,8 +60,8 @@ class Client(jugg.client.Client):
         await super().handle_handshake(dg)
         interface.connected_signal.emit()
 
-    async def handle_login(self, dg):
-        await super().handle_login(dg)
+    async def handle_authenticate(self, dg):
+        await super().handle_authenticate(dg)
         interface.login_signal.emit()
 
     async def do_error(self, errno):
@@ -90,13 +91,7 @@ class Zone(jugg.core.Node):
 
         self._client = client
         self._tab = tab
-        self._participants = {client.name: client.id}
-
-        self._commands = {
-            constants.CMD_UPDATE: self.handle_update,
-            constants.CMD_MSG: self.handle_message,
-            constants.CMD_MSG_DEL: self.handle_delete,
-        }
+        self._participants = {client.id: client.name}
 
     async def send(self, dg):
         await self._client.send(
@@ -106,32 +101,43 @@ class Zone(jugg.core.Node):
                 recipient = self.id,
                 data = str(dg)))
 
+    async def do_message(self, ts, sender, msg):
+        self._tab.add_message_signal.emit(ts, sender, msg)
+
     async def handle_message(self, dg):
-        self._tab.add_message_signal.emit(*dg.data)
+        await self.do_message(
+            dg.timestamp,
+            self._participants[dg.sender],
+            dg.data)
 
     async def handle_update(self, dg):
-        ts, participants = dg.data
-        participants = dict(participants)
-
-        for name in self._participants:
-            if name not in participants:
-                self._tab.add_message_signal.emit(
-                    ts,
+        for id_, name in self._participants.items():
+            if id_ not in dg.data:
+                await self.do_message(
+                    dg.timestamp,
                     'server',
                     name + ' left')
 
-        for name in participants:
-            if name not in self._participants:
-                self._tab.add_message_signal.emit(
-                    ts,
+        for id_, name in dg.data.items():
+            if id_ not in self._participants:
+                await self.do_message(
+                    dg.timestamp,
                     'server',
                     name + ' joined')
 
-        self._participants = participants
+        self._participants = dg.data
         self._tab.update_title_signal.emit()
 
-    async def handle_delete(self, dg):
-        self._tab.del_message_signal.emit(*dg.data)
+    async def handle_message_delete(self, dg):
+        self._tab.del_message_signal.emit(
+            dg.timestamp,
+            self._participants[dg.sender])
+
+    async def handle_message_edit(self, dg):
+        await self.do_message(dg.timestamp, *dg.data)
+
+    async def handle_message_typing(self, dg):
+        self._tab.typing_message_signal.emit(dg.timestamp, dg.data)
 
 
 __all__ = [
