@@ -163,23 +163,23 @@ class ChatWidget(QWidget):
         self.chat_input.clear()
 
     def delete_message(self, ts):
-        if ts in self._tab._chat_log and self._tab._zone:
+        if self._tab._zone:
             conn.synchronous_send(
-                command = constants.CMD_DEL_MSG,
+                command = constants.CMD_MSG_DEL,
                 recipient = self._tab._zone.id,
-                data = ts)
+                data = [ts, conn.name])
         else:
-            # Can't delete message without zone (or nonexistent message)
+            # Can't delete message without zone
             pass
 
     def goto_invite(self):
         self._tab.input_widget.text = ''
         self._tab.widget_stack.setCurrentIndex(0)
 
-    def update_chat(self, log):
+    def update_chat(self):
         full_log = ''
 
-        for ts, (sender, message) in sorted(log):
+        for (ts, sender), message in sorted(self._tab._chat_log.items()):
             if sender == 'server':
                 color = '#000000'
             elif sender == conn.name:
@@ -217,7 +217,7 @@ class ChatTab(QWidget):
 
     update_title_signal = pyqtSignal()
     add_message_signal = pyqtSignal(float, str, str)
-    del_message_signal = pyqtSignal(float)
+    del_message_signal = pyqtSignal(float, str)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -272,10 +272,11 @@ class ChatTab(QWidget):
 
     @pyqtSlot(float, str, str)
     def add_message(self, ts, sender, msg):
-        self._chat_log[ts] = [sender, msg]
-        self.chat_widget.update_chat(self._chat_log.items())
+        self._chat_log[ts, sender] = msg
+        self.chat_widget.update_chat()
 
-    @pyqtSlot(float)
-    def del_message(self, ts):
-        self._chat_log[ts][-1] = constants.MSG_DELETED_TEXT
-        self.chat_widget.update_chat(self._chat_log.items())
+    @pyqtSlot(float, str)
+    def del_message(self, ts, sender):
+        if (ts, sender) in self._chat_log:
+            self._chat_log[ts, sender] = constants.MSG_DELETED_TEXT
+            self.chat_widget.update_chat()

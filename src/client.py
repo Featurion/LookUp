@@ -131,7 +131,7 @@ class Zone(jugg.core.Node):
         self._tab.update_title_signal.emit()
 
     async def handle_delete(self, dg):
-        self._tab.del_message_signal.emit(dg.data)
+        self._tab.del_message_signal.emit(*dg.data)
 
 
 __all__ = [
