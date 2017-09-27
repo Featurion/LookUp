@@ -47,7 +47,7 @@ class Client(jugg.client.Client):
         kwargs.pop('sender', None)
         dg = jugg.core.Datagram(sender=self.id, **kwargs)
 
-        # Commands >= CMD_MSG go to their zone
+        # Send zone commands to the proper zone
         if dg.command >= constants.CMD_MSG:
             for zone in self._zones:
                 if zone.id == dg.recipient:
@@ -93,8 +93,9 @@ class Zone(jugg.core.Node):
         self._participants = {client.name: client.id}
 
         self._commands = {
-            constants.CMD_MSG: self.handle_message,
             constants.CMD_UPDATE: self.handle_update,
+            constants.CMD_MSG: self.handle_message,
+            constants.CMD_DEL_MSG: self.handle_delete,
         }
 
     async def send(self, dg):
@@ -128,6 +129,9 @@ class Zone(jugg.core.Node):
 
         self._participants = participants
         self._tab.update_title_signal.emit()
+
+    async def handle_delete(self, dg):
+        self._tab.del_message_signal.emit(dg.data)
 
 
 __all__ = [

@@ -162,6 +162,16 @@ class ChatWidget(QWidget):
 
         self.chat_input.clear()
 
+    def delete_message(self, ts):
+        if ts in self._tab._chat_log and self._tab._zone:
+            conn.synchronous_send(
+                command = constants.CMD_DEL_MSG,
+                recipient = self._tab._zone.id,
+                data = ts)
+        else:
+            # Can't delete message without zone (or nonexistent message)
+            pass
+
     def goto_invite(self):
         self._tab.input_widget.text = ''
         self._tab.widget_stack.setCurrentIndex(0)
@@ -217,7 +227,7 @@ class ChatTab(QWidget):
         self.del_message_signal.connect(self.del_message)
 
         self._zone = None
-        self.__chat_log = {}
+        self._chat_log = {}
         self.__unread = 0
 
         self.input_widget = Input(
@@ -262,10 +272,10 @@ class ChatTab(QWidget):
 
     @pyqtSlot(float, str, str)
     def add_message(self, ts, sender, msg):
-        self.__chat_log[ts] = [sender, msg]
-        self.chat_widget.update_chat(self.__chat_log.items())
+        self._chat_log[ts] = [sender, msg]
+        self.chat_widget.update_chat(self._chat_log.items())
 
     @pyqtSlot(float)
     def del_message(self, ts):
-        self.__chat_log[ts][-1] = constants.MSG_DELETED_TEXT
-        self.chat_widget.update_chat(self.__chat_log.items())
+        self._chat_log[ts][-1] = constants.MSG_DELETED_TEXT
+        self.chat_widget.update_chat(self._chat_log.items())
