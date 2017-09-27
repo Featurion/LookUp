@@ -264,3 +264,8 @@ class ChatTab(QWidget):
     def new_message(self, id_, data):
         self.__chat_log[id_] = data
         self.chat_widget.update_chat(self.__chat_log.values())
+
+    @pyqtSlot(str)
+    def del_message(self, id_):
+        self.__chat_log[id_][-1] = constants.MSG_DELETED_TEXT
+        self.chat_widget.update_chat(self.__chat_log.values())

@@ -30,6 +30,7 @@ ERROR_INFO_MAP.update({
 
 # GUI
 BLANK_TAB_TITLE = 'New Chat'
+MSG_DELETED_TEXT = '<font color="#BBBBBB">&lt;deleted&gt;</font>'
 
 # Chatting
 URL_REGEX = r"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?]))"
