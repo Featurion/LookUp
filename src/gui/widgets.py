@@ -169,9 +169,7 @@ class ChatWidget(QWidget):
     def update_chat(self, log):
         full_log = ''
 
-        for message in sorted(log, key=lambda e: e[0]):
-            ts, sender, message = message
-
+        for ts, (sender, message) in sorted(log):
             if sender == 'server':
                 color = '#000000'
             elif sender == conn.name:
@@ -208,7 +206,7 @@ class ChatWidget(QWidget):
 class ChatTab(QWidget):
 
     update_title_signal = pyqtSignal()
-    new_message_signal = pyqtSignal(str, list)
+    new_message_signal = pyqtSignal(float, str, str)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -260,12 +258,12 @@ class ChatTab(QWidget):
         self.window().chat_tabs.setTabText(index, title)
         self.widget_stack.currentWidget().title = title
 
-    @pyqtSlot(str, list)
-    def new_message(self, id_, data):
-        self.__chat_log[id_] = data
-        self.chat_widget.update_chat(self.__chat_log.values())
+    @pyqtSlot(float, str, str)
+    def new_message(self, ts, sender, msg):
+        self.__chat_log[ts] = [sender, msg]
+        self.chat_widget.update_chat(self.__chat_log.items())
 
-    @pyqtSlot(str)
-    def del_message(self, id_):
-        self.__chat_log[id_][-1] = constants.MSG_DELETED_TEXT
-        self.chat_widget.update_chat(self.__chat_log.values())
+    @pyqtSlot(float)
+    def del_message(self, ts):
+        self.__chat_log[ts][-1] = constants.MSG_DELETED_TEXT
+        self.chat_widget.update_chat(self.__chat_log.items())

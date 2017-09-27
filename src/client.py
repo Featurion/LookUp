@@ -106,24 +106,25 @@ class Zone(jugg.core.Node):
                 data = str(dg)))
 
     async def handle_message(self, dg):
-        id_, *data = dg.data
-        self._tab.new_message_signal.emit(id_, data)
+        self._tab.new_message_signal.emit(*dg.data)
 
     async def handle_update(self, dg):
-        id_, ts, participants = dg.data
+        ts, participants = dg.data
         participants = dict(participants)
 
         for name in self._participants:
             if name not in participants:
                 self._tab.new_message_signal.emit(
-                    id_,
-                    [ts, 'server', name + ' left'])
+                    ts,
+                    'server',
+                    name + ' left')
 
         for name in participants:
             if name not in self._participants:
                 self._tab.new_message_signal.emit(
-                    id_,
-                    [ts, 'server', name + ' joined'])
+                    ts,
+                    'server',
+                    name + ' joined')
 
         self._participants = participants
         self._tab.update_title_signal.emit()
