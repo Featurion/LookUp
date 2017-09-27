@@ -206,13 +206,15 @@ class ChatWidget(QWidget):
 class ChatTab(QWidget):
 
     update_title_signal = pyqtSignal()
-    new_message_signal = pyqtSignal(float, str, str)
+    add_message_signal = pyqtSignal(float, str, str)
+    del_message_signal = pyqtSignal(float)
 
     def __init__(self, parent):
         super().__init__(parent)
 
         self.update_title_signal.connect(self.update_title)
-        self.new_message_signal.connect(self.new_message)
+        self.add_message_signal.connect(self.add_message)
+        self.del_message_signal.connect(self.del_message)
 
         self._zone = None
         self.__chat_log = {}
@@ -259,7 +261,7 @@ class ChatTab(QWidget):
         self.widget_stack.currentWidget().title = title
 
     @pyqtSlot(float, str, str)
-    def new_message(self, ts, sender, msg):
+    def add_message(self, ts, sender, msg):
         self.__chat_log[ts] = [sender, msg]
         self.chat_widget.update_chat(self.__chat_log.items())
 
