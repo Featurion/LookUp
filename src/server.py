@@ -5,6 +5,7 @@ import pyarchy
 import socket
 import ssl
 import time
+import uuid
 
 from src import constants, settings
 
@@ -105,6 +106,7 @@ class ClientAI(jugg.server.ClientAI):
             zone = server.zones.get(id=dg.recipient)
 
             dg = jugg.core.Datagram.from_string(dg.data)
+            dg.data.insert(0, uuid.uuid4().hex)
             await zone.send(dg)
         except KeyError:
             pass
@@ -140,7 +142,7 @@ class ZoneAI(pyarchy.data.ItemPool, pyarchy.core.IdentifiedObject):
                 command = constants.CMD_UPDATE,
                 sender = self.id,
                 recipient = self.id,
-                data = [time.time(), self.participants]))
+                data = [uuid.uuid4().hex, time.time(), self.participants]))
 
 
 class Server(jugg.server.Server, metaclass = pyarchy.meta.MetaSingleton):
