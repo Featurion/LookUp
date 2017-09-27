@@ -21,7 +21,7 @@ class ClientAI(jugg.server.ClientAI):
         self._commands[constants.CMD_READY] = self.handle_ready
         self._commands[constants.CMD_LEAVE] = self.handle_leave
         self._commands[constants.CMD_MSG] = self.handle_message
-        self._commands[constants.CMD_DEL_MSG] = self.handle_message
+        self._commands[constants.CMD_MSG_DEL] = self.handle_message
 
     def verify_credentials(self, data):
         return super().verify_credentials(data)

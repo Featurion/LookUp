@@ -95,7 +95,7 @@ class Zone(jugg.core.Node):
         self._commands = {
             constants.CMD_UPDATE: self.handle_update,
             constants.CMD_MSG: self.handle_message,
-            constants.CMD_DEL_MSG: self.handle_delete,
+            constants.CMD_MSG_DEL: self.handle_delete,
         }
 
     async def send(self, dg):
