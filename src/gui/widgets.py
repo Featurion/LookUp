@@ -190,8 +190,9 @@ class ChatWidget(QWidget):
                 data = msg,
                 timestamp = ts or None)
         else:
-            # Can't send message without zone
-            pass
+            # There's no zone, so these messages don't actually go anywhere,
+            # but they do get added to the chat log.
+            self._tab.add_message(time.time(), conn.name, msg)
 
         self.chat_input.clear()
 
@@ -284,7 +285,7 @@ class ChatTab(QWidget):
     def connect(self, name):
         self.widget_stack.setCurrentIndex(1)
 
-        if name == conn.name:
+        if not name or name == conn.name:
             # Cannot invite yourself
             return
 
@@ -295,6 +296,8 @@ class ChatTab(QWidget):
         conn.synchronous_send(
             command = constants.CMD_HELLO,
             recipient = self._zone.id,
+            # This sends a list to keep the possibility of sending multiple
+            # invitations open.
             data = [name])
 
     @pyqtSlot()

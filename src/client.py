@@ -42,7 +42,7 @@ class Client(jugg.client.Client):
 
     def new_zone(self, tab, id_=None):
         tab._zone = Zone(tab, id_)
-        self._zones.add(zone)
+        self._zones.add(tab._zone)
         return tab._zone
 
     def synchronous_send(self, **kwargs):

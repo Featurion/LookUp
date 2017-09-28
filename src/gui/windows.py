@@ -187,12 +187,16 @@ class ChatWindow(QMainWindow):
     def close_tab(self, index):
         tab = self.chat_tabs.widget(index)
 
-        conn.synchronous_send(
-            command = constants.CMD_LEAVE,
-            recipient = tab._zone.id)
+        if tab._zone:
+            conn.synchronous_send(
+                command = constants.CMD_LEAVE,
+                recipient = tab._zone.id)
+            conn._zones.remove(tab._zone)
+        else:
+            # Can't leave nonexistent zone
+            pass
 
         self.chat_tabs.removeTab(index)
-        conn._zones.remove(tab._zone)
 
     def _tab_changed(self):
         self.status_bar.showMessage('')
