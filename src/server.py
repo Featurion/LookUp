@@ -79,7 +79,6 @@ class ClientAI(jugg.server.ClientAI):
                 zone = server.new_zone(is_group=True)
             else:
                 zone.is_group = True
-                return
 
         # Say hello
         for client in clients:
