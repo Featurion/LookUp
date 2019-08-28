@@ -1,82 +1,13 @@
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QDialog, QMessageBox, QAction
-from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QSystemTrayIcon
-from PyQt5.QtWidgets import QTabWidget, QToolButton, QToolBar, QMenu
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QAction, QMainWindow, QMenu, QSystemTrayIcon
+from PyQt5.QtWidgets import QStackedWidget, QTabWidget, QToolButton, QToolBar
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
-from src import client, constants, settings
-from src.gui import widgets, utils
-
-
-class ConnectionDialog(QMessageBox):
-
-    def __init__(self, parent, msg):
-        QMessageBox.__init__(self, parent)
-        self.accepted = False
-
-        self.setWindowTitle('Incoming Connection')
-        self.setText('Received connection request from ' + msg)
-        self.setIcon(QMessageBox.Question)
-
-        self.accept_button = QPushButton(
-            QIcon.fromTheme('dialog-ok'), 'Accept')
-        self.addButton(self.accept_button, QMessageBox.YesRole)
-
-        self.reject_button = QPushButton(
-            QIcon.fromTheme('dialog-cancel'), 'Reject')
-        self.addButton(self.reject_button, QMessageBox.NoRole)
-
-        self.buttonClicked.connect(self.answered)
-
-    def answered(self, button):
-        if button is self.accept_button:
-            self.accepted = True
-        else:
-            self.accepted = False
-
-        self.close()
-
-    @staticmethod
-    def getAnswer(parent, msg):
-        accept_dialog = ConnectionDialog(parent, msg)
-        accept_dialog.exec_()
-        return accept_dialog.accepted
-
-
-class LoginWindow(QDialog):
-
-    def __init__(self, interface):
-        super().__init__()
-
-        self.interface = interface
-
-        self.widget_stack = QStackedWidget(self)
-        self.widget_stack.addWidget(widgets.Connecting(self))
-
-        self.input = widgets.Input(
-            self,
-            'images/splash_icon.png', 200,
-            'Username:', 'Login',
-            constants.MAX_NAME_LENGTH,
-            self.__connect)
-        self.widget_stack.addWidget(self.input)
-
-        hbox = QHBoxLayout()
-        hbox.addWidget(self.widget_stack)
-        self.setLayout(hbox)
-
-        self.setWindowTitle(settings.APP_NAME)
-        self.setWindowIcon(QIcon('images/icon.png'))
-
-        utils.resize_window(self, 500, 200)
-        utils.center_window(self)
-
-    def __connect(self, username):
-        self.widget_stack.setCurrentIndex(0)
-        conn.synchronous_send(
-            command = constants.CMD_AUTH,
-            data = username)
+from src import constants, settings
+from src.gui import utils
+from src.gui.widgets.ChatTabWidget import ChatTabWidget
+from src.gui.widgets.ConnectingWidget import ConnectingWidget
 
 
 class ChatWindow(QMainWindow):
@@ -106,7 +37,7 @@ class ChatWindow(QMainWindow):
 
         # widget setup
         self.widget_stack = QStackedWidget(self)
-        self.widget_stack.addWidget(widgets.Connecting(self))
+        self.widget_stack.addWidget(ConnectingWidget(self))
 
         self.chat_tabs = QTabWidget(self)
         self.chat_tabs.setTabsClosable(True)
@@ -175,7 +106,7 @@ class ChatWindow(QMainWindow):
         utils.center_window(self)
 
     def open_tab(self, zone=None):
-        tab = widgets.ChatTab(self)
+        tab = ChatTabWidget(self)
         tab._zone = zone
 
         self.chat_tabs.addTab(tab, constants.BLANK_TAB_TITLE)

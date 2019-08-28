@@ -8,7 +8,10 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 
 from src import client, constants
-from src.gui import utils, windows
+from src.gui import utils
+from src.gui.windows.ChatWindow import ChatWindow
+from src.gui.windows.ConnectionDialog import ConnectionDialog
+from src.gui.windows.LoginWindow import LoginWindow
 
 
 class Interface(QApplication):
@@ -36,7 +39,7 @@ class Interface(QApplication):
         self.aboutToQuit.connect(self.stop)
 
     def start(self):
-        self._window = windows.LoginWindow(self)
+        self._window = LoginWindow(self)
         self._window.show()
 
         threading.Thread(
@@ -75,14 +78,14 @@ class Interface(QApplication):
     @pyqtSlot()
     def __logged_in(self):
         self._window.close()
-        self._window = windows.ChatWindow(self)
+        self._window = ChatWindow(self)
         self._window.show()
 
     @pyqtSlot(str, bool, dict)
     def __hello(self, id_, is_group, participants):
         if not is_group:
             if conn.name not in participants:
-                if not windows.ConnectionDialog.getAnswer(
+                if not ConnectionDialog.getAnswer(
                     self._window,
                     utils.oxford_comma(participants.values())):
                     return
